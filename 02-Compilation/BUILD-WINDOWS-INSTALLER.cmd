@@ -1,20 +1,22 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 set "ROOT=%~dp0.."
+for /f "usebackq delims=" %%V in ("%ROOT%\VERSION.txt") do set "VERSION=%%V"
+if not defined VERSION exit /b 1
 set "BINARY=%ROOT%\01-Application\binary"
-set "STAGE=%BINARY%\.staging-v40.2"
+set "STAGE=%BINARY%\.staging-v%VERSION%"
 if exist "%STAGE%" rmdir /s /q "%STAGE%"
 mkdir "%STAGE%" || exit /b 1
 if not exist "%BINARY%" mkdir "%BINARY%"
 cd /d "%ROOT%\03-Sources" || exit /b 1
-set "LOG=%BINARY%\build-v40.2.log"
+set "LOG=%BINARY%\build-v%VERSION%.log"
 set "PY="
 set "MODE=all"
 if /I "%~1"=="--portable-only" set "MODE=portable"
 if /I "%~1"=="--installer-only" set "MODE=installer"
 if /I "%~1"=="--exe-only" set "MODE=portable"
 rem Preserve previously validated executables until replacements pass all checks.
-echo OpenPDF Studio V40.2 build started > "%LOG%"
+echo OpenPDF Studio V%VERSION% build started > "%LOG%"
 where py >nul 2>&1
 if not errorlevel 1 (py -3.12 -c "import sys;assert sys.version_info[:2]==(3,12)" >nul 2>&1 && set "PY=py -3.12")
 if not defined PY if exist "%LocalAppData%\Programs\Python\Python312\python.exe" set "PY=%LocalAppData%\Programs\Python\Python312\python.exe"
@@ -48,15 +50,15 @@ if not exist "%ISCC%" (
 if not exist "%ISCC%" set "ISCC=%LocalAppData%\Programs\Inno Setup 6\ISCC.exe"
 if not exist "%ISCC%" if exist "C:\ProgramData\chocolatey\bin\ISCC.exe" set "ISCC=C:\ProgramData\chocolatey\bin\ISCC.exe"
 if not exist "%ISCC%" goto missing_inno
-"%ISCC%" "OpenPDF-Studio-V40.2.iss" >> "%LOG%" 2>&1 || goto fail
-if not exist "%STAGE%\OpenPDF-Studio-V40.2-Setup.exe" goto fail
-for %%F in ("%STAGE%\OpenPDF-Studio-V40.2-Setup.exe") do if %%~zF LEQ 0 goto fail
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0TEST-WINDOWS-INSTALLATION.ps1" -SetupExe "%STAGE%\OpenPDF-Studio-V40.2-Setup.exe" -ReportPath "%STAGE%\windows-installation-v40.2.json" >> "%LOG%" 2>&1 || goto fail
+"%ISCC%" "OpenPDF-Studio-V%VERSION%.iss" >> "%LOG%" 2>&1 || goto fail
+if not exist "%STAGE%\OpenPDF-Studio-V%VERSION%-Setup.exe" goto fail
+for %%F in ("%STAGE%\OpenPDF-Studio-V%VERSION%-Setup.exe") do if %%~zF LEQ 0 goto fail
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0TEST-WINDOWS-INSTALLATION.ps1" -SetupExe "%STAGE%\OpenPDF-Studio-V%VERSION%-Setup.exe" -ReportPath "%STAGE%\windows-installation-v%VERSION%.json" >> "%LOG%" 2>&1 || goto fail
 if /I "%MODE%"=="installer" goto publish
 :portable
-"%VPY%" -m PyInstaller --noconfirm --clean --windowed --onefile --name OpenPDF-Studio-Portable-V40.2 --collect-all fitz --collect-all pymupdf --hidden-import tkinter --add-data "..\VERSION.txt;." --distpath "%STAGE%" openpdf_studio.py >> "%LOG%" 2>&1 || goto fail
-if not exist "%STAGE%\OpenPDF-Studio-Portable-V40.2.exe" goto fail
-for %%F in ("%STAGE%\OpenPDF-Studio-Portable-V40.2.exe") do if %%~zF LEQ 0 goto fail
+"%VPY%" -m PyInstaller --noconfirm --clean --windowed --onefile --name OpenPDF-Studio-Portable-V%VERSION% --collect-all fitz --collect-all pymupdf --hidden-import tkinter --add-data "..\VERSION.txt;." --distpath "%STAGE%" openpdf_studio.py >> "%LOG%" 2>&1 || goto fail
+if not exist "%STAGE%\OpenPDF-Studio-Portable-V%VERSION%.exe" goto fail
+for %%F in ("%STAGE%\OpenPDF-Studio-Portable-V%VERSION%.exe") do if %%~zF LEQ 0 goto fail
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0TEST-WINDOWS-BINARIES.ps1" -Mode portable -SourceDir "%CD%" -ReportPath "%STAGE%\windows-smoke-portable.json" >> "%LOG%" 2>&1 || goto fail
 :publish
 rem Attach final artifact SHA256 to the staged smoke report, then publish both together.

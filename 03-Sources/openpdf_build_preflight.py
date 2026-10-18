@@ -3,7 +3,7 @@ from pathlib import Path
 import ast
 import json
 
-VERSION = "39.0"
+VERSION = (Path(__file__).resolve().parent.parent / "VERSION.txt").read_text().strip()
 
 def inspect_release(root):
     root=Path(root)

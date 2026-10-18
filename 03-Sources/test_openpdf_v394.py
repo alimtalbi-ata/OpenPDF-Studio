@@ -1,12 +1,14 @@
-import unittest,tempfile,json
+import unittest,tempfile,json,hashlib
 from pathlib import Path
 from unittest.mock import patch
-from openpdf_release_gate import validate,NAMES
+from openpdf_release_gate import validate,NAMES,VERSION
 class ReleaseGateTests(unittest.TestCase):
  def setup_artifacts(self,d,mode='all'):
   for k,n in NAMES.items():
    (d/n).write_bytes(b'MZ'+b'fake-test-data')
-   (d/f'windows-smoke-{k}.json').write_text(json.dumps({'version':'39.4','mode':k,'passed':True,'checks':[{'passed':True},{'passed':True}]}))
+   (d/f'windows-smoke-{k}.json').write_text(json.dumps({'version':VERSION,'mode':k,'passed':True,'artifact_name':n,'artifact_sha256':hashlib.sha256((d/n).read_bytes()).hexdigest(),'checks':[{'passed':True},{'passed':True}]}))
+   if k=='installer':
+    (d/f'windows-installation-v{VERSION}.json').write_text(json.dumps({'version':VERSION,'passed':True,'artifact_name':n,'artifact_sha256':hashlib.sha256((d/n).read_bytes()).hexdigest(),'steps':['silent_install_pass','installed_launch_pass','silent_uninstall_pass']}))
  def test_missing_binary_rejected(self):
   with tempfile.TemporaryDirectory() as t:
    with self.assertRaises(RuntimeError):validate(t)

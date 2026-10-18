@@ -4,6 +4,10 @@ from unittest.mock import patch
 import openpdf_release_gate as gate
 import openpdf_publish_binary as pub
 class ReleaseEvidenceTests(unittest.TestCase):
+ def test_current_packaging_inputs_exist_and_match(self):
+  from openpdf_build_preflight import inspect_release
+  result=inspect_release(Path(__file__).resolve().parents[1])
+  self.assertTrue(result['passed'],result['checks'])
  def test_missing_installer_rejected(self):
   with tempfile.TemporaryDirectory() as d:
    with self.assertRaises(RuntimeError):gate.validate(d,'installer')

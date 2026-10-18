@@ -18,7 +18,7 @@ try {
         $result.timed_out = $true
         Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
         $p.WaitForExit()
-      } else { $result.exit_code = $p.ExitCode }
+      } else { $p.Refresh(); $result.exit_code = [int]$p.ExitCode }
       $result.stdout = if (Test-Path -LiteralPath $markerFile) { Get-Content -Raw -LiteralPath $markerFile } else { Get-Content -Raw -LiteralPath $out -ErrorAction SilentlyContinue }
       $result.stderr = Get-Content -Raw -LiteralPath $err -ErrorAction SilentlyContinue
       $result.passed = (-not $result.timed_out -and $result.exit_code -eq 0 -and $result.stdout -match $check.marker)

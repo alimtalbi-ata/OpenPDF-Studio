@@ -5,6 +5,8 @@ import time
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from pathlib import Path
+
+APP_VERSION = (Path(__file__).resolve().parents[1] / 'VERSION.txt').read_text(encoding='utf-8').strip() if (Path(__file__).resolve().parents[1] / 'VERSION.txt').is_file() else '40.2'
 from openpdf_operations import OPERATIONS, run_operation, recover_split
 from openpdf_navigation import validate_request, next_page, previous_page, page_window
 from openpdf_jobs import JobState
@@ -30,7 +32,7 @@ LABELS = dict(zip(OPERATIONS, ('Compresser', 'Fusionner', 'Extraire', 'Découper
 class OpenPDFStudio(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title('OpenPDF Studio V38.5 — Abdelhalim Talbi')
+        self.title(f'OpenPDF Studio V{APP_VERSION} — Abdelhalim Talbi')
         self.geometry('1040x720'); self.minsize(800,560)
         self._job_started=None; self.job_state=JobState();self.sources=[]; self.events=queue.Queue(); self.busy=False; self.preview_page=0; self.preview_total=0; self._preview_source=None; self._preview_generation=0; self._preview_cache={}; self._preview_pending=set(); self._preview_lock=threading.Lock(); self._preview_inflight=0; self._preview_limit=2
         self.operation=tk.StringVar(value='compression'); self.destination=tk.StringVar()
@@ -40,7 +42,7 @@ class OpenPDFStudio(tk.Tk):
     def _build(self):
         header=ttk.Frame(self,padding=16);header.pack(fill='x')
         ttk.Label(header,text='OpenPDF Studio',font=('Segoe UI',19,'bold')).pack(side='left')
-        ttk.Label(header,text='V38.5  •  Espace de travail',font=('Segoe UI',10)).pack(side='right')
+        ttk.Label(header,text=f'V{APP_VERSION}  •  Espace de travail',font=('Segoe UI',10)).pack(side='right')
         body=ttk.Panedwindow(self,orient='horizontal');body.pack(fill='both',expand=True,padx=14,pady=6)
         left=ttk.Frame(body,padding=10);right=ttk.Frame(body,padding=10)
         body.add(left,weight=3);body.add(right,weight=2)

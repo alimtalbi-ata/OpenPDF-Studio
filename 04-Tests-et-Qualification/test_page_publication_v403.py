@@ -10,6 +10,8 @@ from unittest.mock import patch
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "03-Sources" / "openpdf_page_service_v345.py"
+import sys
+sys.path.insert(0, str(SOURCE.parent))
 spec = importlib.util.spec_from_file_location("openpdf_page_service_v345", SOURCE)
 module = importlib.util.module_from_spec(spec)
 import sys

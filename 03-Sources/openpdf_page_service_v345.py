@@ -100,7 +100,14 @@ def split(source,folder,chunk_size=1):
             receipt=extract(src,target,i+1,min(i+chunk_size,n))
             published.append(receipt)
     except BaseException:
+        # Do not delete a path merely by name: another process may have
+        # replaced it after our publication. Roll back only matching bytes.
         for receipt in published:
-            Path(receipt.outputs[0]).unlink(missing_ok=True)
+            output = Path(receipt.outputs[0])
+            try:
+                if output.is_file() and _digest(output) == receipt.sha256[0]:
+                    output.unlink()
+            except OSError:
+                pass
         raise
     return PageReceipt('split',tuple(x.outputs[0] for x in published),tuple(x.page_counts[0] for x in published),tuple(x.sha256[0] for x in published))

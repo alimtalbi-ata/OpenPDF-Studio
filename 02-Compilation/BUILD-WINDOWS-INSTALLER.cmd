@@ -78,6 +78,8 @@ exit /b 1
 echo Inno Setup 6 unavailable. See "%LOG%".
 exit /b 1
 :fail
+if exist "%STAGE%\windows-smoke-installer.json" copy /y "%STAGE%\windows-smoke-installer.json" "%BINARY%\failed-windows-smoke-installer.json" >nul
+if exist "%STAGE%\windows-smoke-portable.json" copy /y "%STAGE%\windows-smoke-portable.json" "%BINARY%\failed-windows-smoke-portable.json" >nul
 if exist "%STAGE%" rmdir /s /q "%STAGE%"
 echo BUILD FAILED. See "%LOG%". No validated binary is claimed.
 exit /b 1

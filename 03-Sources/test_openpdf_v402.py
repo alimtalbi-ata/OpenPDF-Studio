@@ -14,12 +14,12 @@ class WindowsBuildContract(unittest.TestCase):
  def test_windows_runner_contract(self):
   flow=(ROOT/'.github/workflows/windows-release.yml').read_text(encoding='utf-8')
   self.assertIn('windows-2022',flow)
-  self.assertIn('OpenPDF-Studio-V40.2-Setup.exe',flow)
-  self.assertIn('OpenPDF-Studio-Portable-V40.2.exe',flow)
+  self.assertIn('VERIFY-WINDOWS-RELEASE.ps1',flow)
+  self.assertIn('Upload qualified binaries',flow)
  def test_install_test_no_stale_temp_prefix(self):
   script=(ROOT/'02-Compilation/TEST-WINDOWS-INSTALLATION.ps1').read_text(encoding='utf-8')
   self.assertNotIn('OpenPDF-V398-',script)
-  self.assertIn('OpenPDF-V402-',script)
+  self.assertIn('OpenPDF-Install-',script)
  def test_build_validates_before_publish(self):
   s=(ROOT/'02-Compilation/BUILD-WINDOWS-INSTALLER.cmd').read_text(encoding='utf-8')
   self.assertLess(s.index('openpdf_release_gate.py "%STAGE%"'),s.index('openpdf_publish_binary.py'))

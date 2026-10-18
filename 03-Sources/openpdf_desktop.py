@@ -5,8 +5,18 @@ import time
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from pathlib import Path
+import sys
 
-APP_VERSION = (Path(__file__).resolve().parents[1] / 'VERSION.txt').read_text(encoding='utf-8').strip() if (Path(__file__).resolve().parents[1] / 'VERSION.txt').is_file() else '40.2'
+def _app_version():
+    # PyInstaller exposes bundled data via _MEIPASS (onedir and onefile).
+    candidates = [Path(getattr(sys, '_MEIPASS', '')) / 'VERSION.txt'] if getattr(sys, '_MEIPASS', None) else []
+    candidates.append(Path(__file__).resolve().parents[1] / 'VERSION.txt')
+    for path in candidates:
+        if path.is_file():
+            return path.read_text(encoding='utf-8').strip()
+    return '40.2'  # fallback for older unbundled distributions
+
+APP_VERSION = _app_version()
 from openpdf_operations import OPERATIONS, run_operation, recover_split
 from openpdf_navigation import validate_request, next_page, previous_page, page_window
 from openpdf_jobs import JobState

@@ -65,8 +65,11 @@ def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=T
         with fitz.open(tmp) as check:
             if check.page_count!=processed+skipped:raise RuntimeError('PDF OCR invalide')
         if Path(tmp).stat().st_size==0:raise RuntimeError('Sortie OCR vide')
+        # Compute the receipt before publishing: an audit failure must not leave
+        # a committed document with a failed operation result.
+        digest = _digest(tmp)
+        size = Path(tmp).stat().st_size
         publish_exclusive(tmp, destination)
-        os.unlink(tmp)
-        return OCRReceipt(str(source),str(destination),processed+skipped,processed,skipped,_digest(destination),destination.stat().st_size,language)
+        return OCRReceipt(str(source),str(destination),processed+skipped,processed,skipped,digest,size,language)
     finally:
         if os.path.exists(tmp):os.unlink(tmp)

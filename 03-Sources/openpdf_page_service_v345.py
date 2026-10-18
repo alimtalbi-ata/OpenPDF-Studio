@@ -40,8 +40,9 @@ def _publish(destination,writer):
         with fitz.open(tmp) as check:
             if check.page_count<1 or check.needs_pass:raise ValueError('PDF produit invalide')
             pages=check.page_count
+        digest = _digest(tmp)
         publish_exclusive(tmp, destination)
-        return str(destination),pages,_digest(destination)
+        return str(destination),pages,digest
     finally:
         if os.path.exists(tmp):os.unlink(tmp)
 

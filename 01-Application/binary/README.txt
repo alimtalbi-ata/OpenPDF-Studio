@@ -1,1 +1,1 @@
-V39.4: Les .exe sont absents tant que le build Windows natif n’a pas ete execute. Ne pas confondre scripts et binaires.
+Les fichiers EXE Windows ne sont pas disponibles avant une compilation native. Lancer 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd sur Windows.

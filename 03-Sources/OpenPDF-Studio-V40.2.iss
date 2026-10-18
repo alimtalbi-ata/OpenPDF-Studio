@@ -1,5 +1,5 @@
 #define AppName "OpenPDF Studio"
-#define AppVersion "40.0"
+#define AppVersion "40.2"
 [Setup]
 AppId={{A94653C4-3C6E-4B8D-BF1C-728A7EDB1C2A}
 AppName={#AppName}
@@ -7,8 +7,8 @@ AppVersion={#AppVersion}
 AppPublisher=Abdelhalim Talbi
 DefaultDirName={autopf}\OpenPDF Studio
 DefaultGroupName=OpenPDF Studio
-OutputDir=..\01-Application\binary\.staging-v40.0
-OutputBaseFilename=OpenPDF-Studio-V40.0-Setup
+OutputDir=..\01-Application\binary\.staging-v40.2
+OutputBaseFilename=OpenPDF-Studio-V40.2-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern

@@ -1,0 +1,1 @@
+V40.2: 14/14 tests Python ciblés PASS sous Linux (test_openpdf_v402, v385, v384). Tests historiques v399/v400 non exécutables en régression tels quels : assertions de numéros de versions figés ; exclus du build actif. Aucune compilation Windows réelle. Documentation rendue sur 2 pages et inspectée.

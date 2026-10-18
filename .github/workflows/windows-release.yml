@@ -3,26 +3,57 @@ on:
   workflow_dispatch:
   push:
     tags: ['v*']
+permissions:
+  contents: read
 jobs:
   build-windows:
     runs-on: windows-2022
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
-      - name: Build and qualify installer + portable
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          architecture: x64
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup --yes --no-progress
+          if ($LASTEXITCODE -ne 0) { throw 'Inno Setup installation failed' }
+      - name: Verify build prerequisites
+        shell: pwsh
+        run: |
+          py -3.12 --version
+          $candidates = @(
+            'C:\Program Files (x86)\Inno Setup 6\ISCC.exe',
+            'C:\Program Files\Inno Setup 6\ISCC.exe',
+            'C:\ProgramData\chocolatey\bin\ISCC.exe'
+          )
+          if (-not ($candidates | Where-Object { Test-Path $_ } | Select-Object -First 1)) { throw 'ISCC.exe not found' }
+      - name: Build and qualify installer and portable
         shell: cmd
         run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd
-      - name: Verify both binaries and reports
+      - name: Verify release files
         shell: pwsh
         run: |
           $dir = '01-Application/binary'
-          @('OpenPDF-Studio-V40.0-Setup.exe','OpenPDF-Studio-Portable-V40.0.exe','binary-manifest-v40.0.json','windows-installation-v40.0.json','windows-smoke-installer.json','windows-smoke-portable.json') | ForEach-Object {
-            if (!(Test-Path (Join-Path $dir $_))) { throw "Missing artifact: $_" }
+          @('OpenPDF-Studio-V40.2-Setup.exe','OpenPDF-Studio-Portable-V40.2.exe','binary-manifest-v40.2.json','windows-installation-v40.2.json','windows-smoke-installer.json','windows-smoke-portable.json') | ForEach-Object {
+            $path = Join-Path $dir $_
+            if (!(Test-Path $path) -or (Get-Item $path).Length -eq 0) { throw "Missing/empty artifact: $path" }
           }
-      - name: Upload verified binaries and reports
+      - name: Upload build evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenPDF-Studio-V40.2-build-evidence
+          path: |
+            01-Application/binary/*.log
+            01-Application/binary/*.json
+          if-no-files-found: warn
+      - name: Upload qualified binaries
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: OpenPDF-Studio-V40.0-Windows-binary
-          path: 01-Application/binary/
+          name: OpenPDF-Studio-V40.2-Windows-binary
+          path: 01-Application/binary/*.exe
           if-no-files-found: error

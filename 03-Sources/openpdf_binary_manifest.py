@@ -1,7 +1,7 @@
 """Generate a transparent inventory of genuine PE binaries after a Windows build."""
 import hashlib,json,sys,datetime
 from pathlib import Path
-VERSION='40.0'
+VERSION=(Path(__file__).resolve().parents[1]/'VERSION.txt').read_text().strip()
 def inspect(binary):
     binary=Path(binary)
     items=[]

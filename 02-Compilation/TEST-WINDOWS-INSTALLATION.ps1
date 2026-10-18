@@ -3,9 +3,9 @@ param(
  [Parameter(Mandatory=$true)][string]$ReportPath
 )
 $ErrorActionPreference='Stop'
-$report=[ordered]@{version='40.0';kind='real-installer-install-uninstall';passed=$false;steps=@();utc=(Get-Date).ToUniversalTime().ToString('o')}
-$folder=Join-Path $env:TEMP ('OpenPDF-V398-'+[guid]::NewGuid().ToString('N'))
-$marker=Join-Path $env:TEMP ('OpenPDF-V398-'+[guid]::NewGuid().ToString('N')+'.marker')
+$report=[ordered]@{version='40.2';kind='real-installer-install-uninstall';passed=$false;steps=@();utc=(Get-Date).ToUniversalTime().ToString('o')}
+$folder=Join-Path $env:TEMP ('OpenPDF-V402-'+[guid]::NewGuid().ToString('N'))
+$marker=Join-Path $env:TEMP ('OpenPDF-V402-'+[guid]::NewGuid().ToString('N')+'.marker')
 function Run-Checked([string]$file,[string[]]$arguments,[int]$timeout=120000) {
  $p=Start-Process -FilePath $file -ArgumentList $arguments -Wait:$false -PassThru
  if (-not $p.WaitForExit($timeout)) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue;throw "Timed out: $file" }

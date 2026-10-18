@@ -1,0 +1,1 @@
+V28.7 : correction des assertions de versions figées dans les tests hérités V28.5 et V28.6 ; ajout de contrôles de packaging ; mise à jour du point d’entrée, des scripts, du guide et du manifeste de captures. Auteur : Abdelhalim Talbi.

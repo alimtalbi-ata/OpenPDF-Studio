@@ -1,0 +1,12 @@
+test_absent (test_openpdf_v374.Tests.test_absent) ... ok
+test_confirmation (test_openpdf_v374.Tests.test_confirmation) ... ok
+test_legacy_refused (test_openpdf_v374.Tests.test_legacy_refused) ... ok
+test_live_owner (test_openpdf_v374.Tests.test_live_owner) ... ok
+test_recovery (test_openpdf_v374.Tests.test_recovery) ... ok
+test_regular_reservation (test_openpdf_v374.Tests.test_regular_reservation) ... ok
+test_remote_owner (test_openpdf_v374.Tests.test_remote_owner) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.006s
+
+OK

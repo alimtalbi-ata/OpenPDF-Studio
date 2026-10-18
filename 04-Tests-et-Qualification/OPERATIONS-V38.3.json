@@ -1,0 +1,40 @@
+{
+  "version": "38.3",
+  "synthetic": true,
+  "environment": "Linux / PyMuPDF; not Windows UI qualification",
+  "cases": [
+    {
+      "case": "merge",
+      "status": "PASS",
+      "seconds": 0.0089,
+      "result_type": "PageReceipt"
+    },
+    {
+      "case": "extract",
+      "status": "PASS",
+      "seconds": 0.003,
+      "result_type": "PageReceipt"
+    },
+    {
+      "case": "reorder",
+      "status": "PASS",
+      "seconds": 0.0036,
+      "result_type": "PageReceipt"
+    },
+    {
+      "case": "split-single",
+      "status": "PASS",
+      "files": 2,
+      "seconds": 0.0088
+    },
+    {
+      "case": "compression-publication",
+      "status": "PASS",
+      "published": true,
+      "seconds": 0.0063
+    }
+  ],
+  "passed": 5,
+  "total": 5,
+  "scope": "Canonical run_operation; no Windows GUI claims"
+}

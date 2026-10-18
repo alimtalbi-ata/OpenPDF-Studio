@@ -1,0 +1,29 @@
+COMMAND: /opt/pyvenv/bin/python -m unittest -v test_openpdf_v372 test_openpdf_v371 test_openpdf_v367
+EXIT: 0
+test_changed_token_preserved (test_openpdf_v372.Reservation372.test_changed_token_preserved) ... ok
+test_competing_process (test_openpdf_v372.Reservation372.test_competing_process) ... ok
+test_invalid_lock_is_not_deleted (test_openpdf_v372.Reservation372.test_invalid_lock_is_not_deleted) ... ok
+test_original_lock_released (test_openpdf_v372.Reservation372.test_original_lock_released) ... ok
+test_replacement_same_token_is_preserved (test_openpdf_v372.Reservation372.test_replacement_same_token_is_preserved) ... ok
+test_collision (test_openpdf_v371.TestReservation371.test_collision) ... ok
+test_diagnostics_read_only (test_openpdf_v371.TestReservation371.test_diagnostics_read_only) ... ok
+test_invalid_json (test_openpdf_v371.TestReservation371.test_invalid_json) ... ok
+test_legacy (test_openpdf_v371.TestReservation371.test_legacy) ... ok
+test_modified_lock_preserved (test_openpdf_v371.TestReservation371.test_modified_lock_preserved) ... ok
+test_owner_token (test_openpdf_v371.TestReservation371.test_owner_token) ... ok
+test_remote_host_not_pid_checked (test_openpdf_v371.TestReservation371.test_remote_host_not_pid_checked) ... ok
+test_concurrent_process_blocked (test_openpdf_v367.ReservationTests.test_concurrent_process_blocked) ... /usr/lib/python3.13/multiprocessing/popen_fork.py:67: DeprecationWarning: This process (pid=40926) is multi-threaded, use of fork() may lead to deadlocks in the child.
+  self.pid = os.fork()
+ok
+test_existing_lock_not_removed (test_openpdf_v367.ReservationTests.test_existing_lock_not_removed) ... ok
+test_release_after_failure (test_openpdf_v367.ReservationTests.test_release_after_failure) ... ok
+test_release_after_success (test_openpdf_v367.ReservationTests.test_release_after_success) ... ok
+test_split_collision_preserves_existing (test_openpdf_v367.ReservationTests.test_split_collision_preserves_existing) ... ok
+test_split_lock_cleanup (test_openpdf_v367.ReservationTests.test_split_lock_cleanup) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 0.053s
+
+OK
+
+Windows native build: NOT EXECUTED

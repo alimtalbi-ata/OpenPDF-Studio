@@ -1,0 +1,9 @@
+{
+  "version": "25.5",
+  "python_unittests_passed": 308,
+  "javascript_suites_passed": 22,
+  "new_browser_test": false,
+  "windows_native_tested": false,
+  "new_tests": 7,
+  "scope": "offline PDF-to-audit binding; V25.4 UI unchanged"
+}

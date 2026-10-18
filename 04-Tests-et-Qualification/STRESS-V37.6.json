@@ -1,0 +1,250 @@
+{
+  "schema": 1,
+  "synthetic": true,
+  "workers": 8,
+  "rounds": 5,
+  "passed": true,
+  "cases": [
+    {
+      "round": 1,
+      "acquired": 4,
+      "busy": 4,
+      "passed": true,
+      "workers": [
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "ACQUIRED",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "ACQUIRED",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "ACQUIRED",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "ACQUIRED",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "acquired": 4,
+      "busy": 4,
+      "passed": true,
+      "workers": [
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "ACQUIRED",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "ACQUIRED",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "ACQUIRED",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "ACQUIRED",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "acquired": 4,
+      "busy": 4,
+      "passed": true,
+      "workers": [
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "ACQUIRED",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "ACQUIRED",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "ACQUIRED",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "ACQUIRED",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "round": 4,
+      "acquired": 4,
+      "busy": 4,
+      "passed": true,
+      "workers": [
+        {
+          "returncode": 0,
+          "output": "ACQUIRED",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "ACQUIRED",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "ACQUIRED",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "ACQUIRED",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        }
+      ]
+    },
+    {
+      "round": 5,
+      "acquired": 3,
+      "busy": 5,
+      "passed": true,
+      "workers": [
+        {
+          "returncode": 0,
+          "output": "ACQUIRED",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "ACQUIRED",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "ACQUIRED",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        },
+        {
+          "returncode": 0,
+          "output": "BUSY",
+          "error": ""
+        }
+      ]
+    }
+  ],
+  "note": "Acquisitions sequentially after release may occur; test checks no failures and clean release, not strict mutual exclusion proof."
+}

@@ -1,0 +1,1 @@
+V34.1 — 11/11 tests ciblés Python PASS sous Linux. Vérification statique des sources PASS. Windows EXE, installer et captures Windows non qualifiés. Inventaire AST non exhaustif pour imports dynamiques.

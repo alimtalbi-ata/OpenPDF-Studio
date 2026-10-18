@@ -1,0 +1,16 @@
+{
+  "version": "39.0",
+  "platform": "Linux",
+  "native_windows_build": false,
+  "binary_directory": "01-Application/binary",
+  "notes": [
+    "Mode --windowed: stdout peut etre indisponible; marqueurs dans fichier via OPENPDF_SMOKE_OUTPUT",
+    "Effacement des anciens EXE de meme version avant build pour eviter les faux positifs",
+    "Taille non nulle exigee pour chaque sortie",
+    "Logs centralises dans binary"
+  ],
+  "tests_passed": true,
+  "test_output": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.119s\n\nOK\n",
+  "preflight_passed": true,
+  "preflight_output": "{\n  \"version\": \"39.0\",\n  \"passed\": true,\n  \"checks\": {\n    \"entrypoint_exists\": true,\n    \"desktop_exists\": true,\n    \"inno_exists\": true,\n    \"build_references_inno\": true,\n    \"smoke_script_exists\": true,\n    \"smoke_both_modes\": true,\n    \"build_portable\": true,\n    \"build_installer\": true,\n    \"build_uses_stable_entry\": true,\n    \"requirements_exist\": true,\n    \"build_has_no_legacy_verifier\": true,\n    \"inno_version_correct\": true,\n    \"inno_installer_filename_correct\": true,\n    \"syntax_openpdf_studio\": true,\n    \"syntax_openpdf_desktop\": true\n  }\n}\n"
+}

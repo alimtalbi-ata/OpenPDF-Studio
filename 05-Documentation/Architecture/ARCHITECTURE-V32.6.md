@@ -1,0 +1,1 @@
+Interface Tkinter → validation source/destination → diagnostic → profil → avertissement → rendu d’une page → compression d’une page temporaire → rendus avant/après → navigation/zoom → confirmation → compression intégrale → contrôle de pages → résultat.

@@ -1,0 +1,1 @@
+Architecture V32.1 : interface Tkinter → sélection source/cible/profil → validation → worker _run_pdf → compress_with_profile → moteur PyMuPDF → fichier temporaire → contrôle taille → os.replace si autorisé → rapport. Le profil smaller_only ne publie pas de résultat si la taille ne diminue pas.

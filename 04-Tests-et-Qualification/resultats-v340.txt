@@ -1,0 +1,24 @@
+test_busy (test_openpdf_v340.TestController.test_busy) ... ok
+test_compression (test_openpdf_v340.TestController.test_compression) ... ok
+test_merge (test_openpdf_v340.TestController.test_merge) ... ok
+test_missing_paths (test_openpdf_v340.TestController.test_missing_paths) ... ok
+test_same_file (test_openpdf_v340.TestController.test_same_file) ... ok
+test_unknown (test_openpdf_v340.TestController.test_unknown) ... ok
+test_valid (test_openpdf_v340.TestController.test_valid) ... ok
+test_busy_does_not_overwrite (test_openpdf_v339.OperationTests.test_busy_does_not_overwrite) ... ok
+test_failure_does_not_register (test_openpdf_v339.OperationTests.test_failure_does_not_register) ... ok
+test_other_does_not_register (test_openpdf_v339.OperationTests.test_other_does_not_register) ... ok
+test_other_unchanged (test_openpdf_v339.OperationTests.test_other_unchanged) ... ok
+test_register_after_dispatch (test_openpdf_v339.OperationTests.test_register_after_dispatch) ... ok
+test_resolve_legacy (test_openpdf_v339.OperationTests.test_resolve_legacy) ... ok
+test_resolve_receipt (test_openpdf_v339.OperationTests.test_resolve_receipt) ... ok
+test_missing_output (test_openpdf_v338.ReceiptTests.test_missing_output) ... ok
+test_no_gain_existing_output (test_openpdf_v338.ReceiptTests.test_no_gain_existing_output) ... ok
+test_success (test_openpdf_v338.ReceiptTests.test_success) ... ok
+test_tampering (test_openpdf_v338.ReceiptTests.test_tampering) ... ok
+test_wrong_destination (test_openpdf_v338.ReceiptTests.test_wrong_destination) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 0.006s
+
+OK

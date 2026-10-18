@@ -1,0 +1,403 @@
+{
+  "schema": "openpdf-batch-v1",
+  "corpus": "/mnt/data/v359/OpenPDF-Studio-V35.9/04-Tests-et-Qualification/Corpus-V35.9-Selection",
+  "cases": 9,
+  "passed": 9,
+  "failed": 0,
+  "results": [
+    {
+      "source": "01-texte-simple.pdf",
+      "format": "docx",
+      "status": "PASS",
+      "duration_s": 1.691,
+      "evidence": {
+        "source_sha256": "4722e53ccf98435ad6c9497e1231cfb480845b9e86924d164c0710a9cd0050f2",
+        "office_format": "docx",
+        "office_sha256": "7b4706758a635f5b30fd1ae8f5a54a224959ab9493b2d3164bd8ae823fe6594b",
+        "visual": {
+          "reference_pages": 1,
+          "candidate_pages": 1,
+          "compared_pages": 1,
+          "mean_absolute_error": 0.001487,
+          "page_errors": [
+            0.001487
+          ],
+          "warnings": []
+        },
+        "structure": {
+          "source_pages": 1,
+          "candidate_pages": 1,
+          "page_delta": 0,
+          "source_images": 0,
+          "candidate_images": 0,
+          "image_delta": 0,
+          "source_drawings": 0,
+          "candidate_drawings": 0,
+          "drawing_delta": 0,
+          "source_words": 6,
+          "candidate_words": 6,
+          "word_recall": 1.0,
+          "compared_pages": 1,
+          "warnings": []
+        },
+        "warnings": [
+          "Structure valide, mais fidélité de mise en page non mesurée",
+          "Couverture lexicale indicative : 100.0% (6/6 mots)"
+        ]
+      }
+    },
+    {
+      "source": "01-texte-simple.pdf",
+      "format": "xlsx",
+      "status": "PASS",
+      "duration_s": 1.615,
+      "evidence": {
+        "source_sha256": "4722e53ccf98435ad6c9497e1231cfb480845b9e86924d164c0710a9cd0050f2",
+        "office_format": "xlsx",
+        "office_sha256": "4b0279a1ef4623146144f96e993406cab80a0cecd0b35ee3dbd77a284733e0e8",
+        "visual": {
+          "reference_pages": 1,
+          "candidate_pages": 1,
+          "compared_pages": 1,
+          "mean_absolute_error": 0.001814,
+          "page_errors": [
+            0.001814
+          ],
+          "warnings": []
+        },
+        "structure": {
+          "source_pages": 1,
+          "candidate_pages": 1,
+          "page_delta": 0,
+          "source_images": 0,
+          "candidate_images": 0,
+          "image_delta": 0,
+          "source_drawings": 0,
+          "candidate_drawings": 0,
+          "drawing_delta": 0,
+          "source_words": 6,
+          "candidate_words": 13,
+          "word_recall": 1.0,
+          "compared_pages": 1,
+          "warnings": []
+        },
+        "warnings": [
+          "Structure valide, mais fidélité de mise en page non mesurée",
+          "Couverture lexicale indicative : 100.0% (6/6 mots)"
+        ]
+      }
+    },
+    {
+      "source": "01-texte-simple.pdf",
+      "format": "pptx",
+      "status": "PASS",
+      "duration_s": 1.756,
+      "evidence": {
+        "source_sha256": "4722e53ccf98435ad6c9497e1231cfb480845b9e86924d164c0710a9cd0050f2",
+        "office_format": "pptx",
+        "office_sha256": "1a293316d8b9aa52d135c1f03b5cc738bc32cb64bca9f42c7d51950c2585ca9c",
+        "visual": {
+          "reference_pages": 1,
+          "candidate_pages": 1,
+          "compared_pages": 1,
+          "mean_absolute_error": 0.003813,
+          "page_errors": [
+            0.003813
+          ],
+          "warnings": []
+        },
+        "structure": {
+          "source_pages": 1,
+          "candidate_pages": 1,
+          "page_delta": 0,
+          "source_images": 0,
+          "candidate_images": 0,
+          "image_delta": 0,
+          "source_drawings": 0,
+          "candidate_drawings": 2,
+          "drawing_delta": 2,
+          "source_words": 6,
+          "candidate_words": 8,
+          "word_recall": 1.0,
+          "compared_pages": 1,
+          "warnings": [
+            "Nombre de dessins vectoriels différent (pas une preuve de perte)"
+          ]
+        },
+        "warnings": [
+          "Nombre de dessins vectoriels différent (pas une preuve de perte)",
+          "Structure valide, mais fidélité de mise en page non mesurée",
+          "Couverture lexicale indicative : 100.0% (6/6 mots)"
+        ]
+      }
+    },
+    {
+      "source": "03-tableau-dessine.pdf",
+      "format": "docx",
+      "status": "PASS",
+      "duration_s": 1.598,
+      "evidence": {
+        "source_sha256": "f22e9129f70fbba11ee98c8563db520e2efc2b0f998cf99e585ed8a51fbd69d8",
+        "office_format": "docx",
+        "office_sha256": "4d6d26901135705cb870105319ce449c8adf695a4f8abdc79ac868bd9c4ff2ea",
+        "visual": {
+          "reference_pages": 1,
+          "candidate_pages": 1,
+          "compared_pages": 1,
+          "mean_absolute_error": 0.003408,
+          "page_errors": [
+            0.003408
+          ],
+          "warnings": []
+        },
+        "structure": {
+          "source_pages": 1,
+          "candidate_pages": 1,
+          "page_delta": 0,
+          "source_images": 0,
+          "candidate_images": 0,
+          "image_delta": 0,
+          "source_drawings": 6,
+          "candidate_drawings": 0,
+          "drawing_delta": -6,
+          "source_words": 4,
+          "candidate_words": 4,
+          "word_recall": 1.0,
+          "compared_pages": 1,
+          "warnings": [
+            "Nombre de dessins vectoriels différent (pas une preuve de perte)"
+          ]
+        },
+        "warnings": [
+          "Nombre de dessins vectoriels différent (pas une preuve de perte)",
+          "Structure valide, mais fidélité de mise en page non mesurée",
+          "Couverture lexicale indicative : 100.0% (4/4 mots)"
+        ]
+      }
+    },
+    {
+      "source": "03-tableau-dessine.pdf",
+      "format": "xlsx",
+      "status": "PASS",
+      "duration_s": 1.596,
+      "evidence": {
+        "source_sha256": "f22e9129f70fbba11ee98c8563db520e2efc2b0f998cf99e585ed8a51fbd69d8",
+        "office_format": "xlsx",
+        "office_sha256": "f36b9e78ee95b61867d56385e446250e8c322be08f7d76586458a58a2673fa52",
+        "visual": {
+          "reference_pages": 1,
+          "candidate_pages": 1,
+          "compared_pages": 1,
+          "mean_absolute_error": 0.003724,
+          "page_errors": [
+            0.003724
+          ],
+          "warnings": []
+        },
+        "structure": {
+          "source_pages": 1,
+          "candidate_pages": 1,
+          "page_delta": 0,
+          "source_images": 0,
+          "candidate_images": 0,
+          "image_delta": 0,
+          "source_drawings": 6,
+          "candidate_drawings": 0,
+          "drawing_delta": -6,
+          "source_words": 4,
+          "candidate_words": 9,
+          "word_recall": 1.0,
+          "compared_pages": 1,
+          "warnings": [
+            "Nombre de dessins vectoriels différent (pas une preuve de perte)"
+          ]
+        },
+        "warnings": [
+          "Nombre de dessins vectoriels différent (pas une preuve de perte)",
+          "Structure valide, mais fidélité de mise en page non mesurée",
+          "Couverture lexicale indicative : 100.0% (4/4 mots)"
+        ]
+      }
+    },
+    {
+      "source": "03-tableau-dessine.pdf",
+      "format": "pptx",
+      "status": "PASS",
+      "duration_s": 1.67,
+      "evidence": {
+        "source_sha256": "f22e9129f70fbba11ee98c8563db520e2efc2b0f998cf99e585ed8a51fbd69d8",
+        "office_format": "pptx",
+        "office_sha256": "6e812412423315310de9add14184e6d822aa5a6c15a68cf6d52f3d3b931f37a7",
+        "visual": {
+          "reference_pages": 1,
+          "candidate_pages": 1,
+          "compared_pages": 1,
+          "mean_absolute_error": 0.00465,
+          "page_errors": [
+            0.00465
+          ],
+          "warnings": []
+        },
+        "structure": {
+          "source_pages": 1,
+          "candidate_pages": 1,
+          "page_delta": 0,
+          "source_images": 0,
+          "candidate_images": 0,
+          "image_delta": 0,
+          "source_drawings": 6,
+          "candidate_drawings": 2,
+          "drawing_delta": -4,
+          "source_words": 4,
+          "candidate_words": 6,
+          "word_recall": 1.0,
+          "compared_pages": 1,
+          "warnings": [
+            "Nombre de dessins vectoriels différent (pas une preuve de perte)"
+          ]
+        },
+        "warnings": [
+          "Nombre de dessins vectoriels différent (pas une preuve de perte)",
+          "Structure valide, mais fidélité de mise en page non mesurée",
+          "Couverture lexicale indicative : 100.0% (4/4 mots)"
+        ]
+      }
+    },
+    {
+      "source": "05-embedded-image.pdf",
+      "format": "docx",
+      "status": "PASS",
+      "duration_s": 1.652,
+      "evidence": {
+        "source_sha256": "09b8bd37207e2156f47700ea061d67b4796f1b61545c8686afcf4f20c28fd6ea",
+        "office_format": "docx",
+        "office_sha256": "1678c3be54cd8e46f18206b8b609a732382d5043b8f9ea04cc3923b7fc9bc683",
+        "visual": {
+          "reference_pages": 1,
+          "candidate_pages": 1,
+          "compared_pages": 1,
+          "mean_absolute_error": 0.051235,
+          "page_errors": [
+            0.051235
+          ],
+          "warnings": []
+        },
+        "structure": {
+          "source_pages": 1,
+          "candidate_pages": 1,
+          "page_delta": 0,
+          "source_images": 1,
+          "candidate_images": 0,
+          "image_delta": -1,
+          "source_drawings": 0,
+          "candidate_drawings": 0,
+          "drawing_delta": 0,
+          "source_words": 4,
+          "candidate_words": 4,
+          "word_recall": 1.0,
+          "compared_pages": 1,
+          "warnings": [
+            "Nombre de références images différent (pas une preuve de perte)"
+          ]
+        },
+        "warnings": [
+          "Nombre de références images différent (pas une preuve de perte)",
+          "Structure valide, mais fidélité de mise en page non mesurée",
+          "Couverture lexicale indicative : 100.0% (4/4 mots)"
+        ]
+      }
+    },
+    {
+      "source": "05-embedded-image.pdf",
+      "format": "xlsx",
+      "status": "PASS",
+      "duration_s": 1.56,
+      "evidence": {
+        "source_sha256": "09b8bd37207e2156f47700ea061d67b4796f1b61545c8686afcf4f20c28fd6ea",
+        "office_format": "xlsx",
+        "office_sha256": "9ae9e4573d3a6db694b5e2c43edaa791f3bd1348a3b87f889300d7cb5e3dfbcd",
+        "visual": {
+          "reference_pages": 1,
+          "candidate_pages": 1,
+          "compared_pages": 1,
+          "mean_absolute_error": 0.051456,
+          "page_errors": [
+            0.051456
+          ],
+          "warnings": []
+        },
+        "structure": {
+          "source_pages": 1,
+          "candidate_pages": 1,
+          "page_delta": 0,
+          "source_images": 1,
+          "candidate_images": 0,
+          "image_delta": -1,
+          "source_drawings": 0,
+          "candidate_drawings": 0,
+          "drawing_delta": 0,
+          "source_words": 4,
+          "candidate_words": 9,
+          "word_recall": 1.0,
+          "compared_pages": 1,
+          "warnings": [
+            "Nombre de références images différent (pas une preuve de perte)"
+          ]
+        },
+        "warnings": [
+          "Nombre de références images différent (pas une preuve de perte)",
+          "Structure valide, mais fidélité de mise en page non mesurée",
+          "Couverture lexicale indicative : 100.0% (4/4 mots)"
+        ]
+      }
+    },
+    {
+      "source": "05-embedded-image.pdf",
+      "format": "pptx",
+      "status": "PASS",
+      "duration_s": 1.745,
+      "evidence": {
+        "source_sha256": "09b8bd37207e2156f47700ea061d67b4796f1b61545c8686afcf4f20c28fd6ea",
+        "office_format": "pptx",
+        "office_sha256": "4936dfefc7f0efaa7eeab9a92f363c3b3b11dd7fb15c836012bdb3702d266295",
+        "visual": {
+          "reference_pages": 1,
+          "candidate_pages": 1,
+          "compared_pages": 1,
+          "mean_absolute_error": 0.050063,
+          "page_errors": [
+            0.050063
+          ],
+          "warnings": []
+        },
+        "structure": {
+          "source_pages": 1,
+          "candidate_pages": 1,
+          "page_delta": 0,
+          "source_images": 1,
+          "candidate_images": 0,
+          "image_delta": -1,
+          "source_drawings": 0,
+          "candidate_drawings": 2,
+          "drawing_delta": 2,
+          "source_words": 4,
+          "candidate_words": 6,
+          "word_recall": 1.0,
+          "compared_pages": 1,
+          "warnings": [
+            "Nombre de références images différent (pas une preuve de perte)",
+            "Nombre de dessins vectoriels différent (pas une preuve de perte)"
+          ]
+        },
+        "warnings": [
+          "Nombre de références images différent (pas une preuve de perte)",
+          "Nombre de dessins vectoriels différent (pas une preuve de perte)",
+          "Structure valide, mais fidélité de mise en page non mesurée",
+          "Couverture lexicale indicative : 100.0% (4/4 mots)"
+        ]
+      }
+    }
+  ],
+  "scope": "3 synthetic source PDFs x 3 Office formats; actual executed conversions, Linux LibreOffice",
+  "elapsed_wall_s": 14.89
+}

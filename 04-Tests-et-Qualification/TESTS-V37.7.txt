@@ -1,0 +1,23 @@
+
+test_build_fails_closed (test_openpdf_build_v377.TestPackaging.test_build_fails_closed) ... ok
+test_mode_switches (test_openpdf_build_v377.TestPackaging.test_mode_switches) ... ok
+test_release (test_openpdf_build_v377.TestPackaging.test_release) ... ok
+test_ui_version (test_openpdf_build_v377.TestPackaging.test_ui_version) ... ok
+test_invalid_rounds (test_openpdf_v376.TestStress.test_invalid_rounds) ... ok
+test_invalid_workers (test_openpdf_v376.TestStress.test_invalid_workers) ... ok
+test_lock_released (test_openpdf_v376.TestStress.test_lock_released) ... ok
+test_stress_eight_workers (test_openpdf_v376.TestStress.test_stress_eight_workers) ... ok
+test_stress_four_workers (test_openpdf_v376.TestStress.test_stress_four_workers) ... ok
+test_active_owner_protected (test_openpdf_v375.TestReservation.test_active_owner_protected) ... ok
+test_crash_then_recover (test_openpdf_v375.TestReservation.test_crash_then_recover) ... /usr/lib/python3.13/multiprocessing/popen_fork.py:67: DeprecationWarning: This process (pid=43284) is multi-threaded, use of fork() may lead to deadlocks in the child.
+  self.pid = os.fork()
+ok
+test_cross_process_contention (test_openpdf_v375.TestReservation.test_cross_process_contention) ... ok
+test_legacy_owner_rejected (test_openpdf_v375.TestReservation.test_legacy_owner_rejected) ... ok
+test_recovery_requires_confirmation (test_openpdf_v375.TestReservation.test_recovery_requires_confirmation) ... ok
+test_remote_owner_rejected (test_openpdf_v375.TestReservation.test_remote_owner_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 5.909s
+
+OK

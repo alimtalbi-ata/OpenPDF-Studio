@@ -1,0 +1,1 @@
+Interface Tkinter → validation → diagnostic → choix du profil → aperçu avec perte → compression temporaire → vérification des pages et du texte → contrôle visuel échantillonné → publication atomique → bilan.

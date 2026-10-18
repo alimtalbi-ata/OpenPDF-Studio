@@ -1,0 +1,1 @@
+Interface → diagnostic → choix profil → confirmation perte → extraction page échantillon → compression temporaire → rendus PNG avant/après → validation utilisateur → compression complète asynchrone → vérification et résultat.

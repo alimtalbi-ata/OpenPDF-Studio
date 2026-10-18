@@ -1,0 +1,1 @@
+Interface Tkinter → diagnostic PyMuPDF → sélection profil → avertissement avec perte → fichier temporaire → rewrite_images → sauvegarde optimisée → contrôle nombre de pages → comparaison des tailles → remplacement atomique → rapport.

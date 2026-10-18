@@ -1,0 +1,1 @@
+V29.4 : audit AST complet des modules UI et moteurs, rapport JSON + synthèse, packaging Windows onefile portable en parallèle du onedir installable, vérification statique du PE portable, guide et limites de qualification. Auteur : Abdelhalim Talbi.

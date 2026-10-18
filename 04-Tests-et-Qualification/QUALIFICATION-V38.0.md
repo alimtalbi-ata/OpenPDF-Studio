@@ -1,0 +1,29 @@
+# V38.0 qualification
+
+...........
+----------------------------------------------------------------------
+Ran 11 tests in 0.908s
+
+OK
+
+Preflight: {
+  "version": "38.0",
+  "passed": true,
+  "checks": {
+    "entrypoint_exists": true,
+    "desktop_exists": true,
+    "inno_exists": true,
+    "build_references_inno": true,
+    "build_portable": true,
+    "build_installer": true,
+    "build_uses_stable_entry": true,
+    "requirements_exist": true,
+    "build_has_no_legacy_verifier": true,
+    "inno_version_correct": true,
+    "inno_installer_filename_correct": true,
+    "syntax_openpdf_studio": true,
+    "syntax_openpdf_desktop": true
+  }
+}
+
+Windows native build: NOT EXECUTED.

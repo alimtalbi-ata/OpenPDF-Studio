@@ -1,0 +1,14 @@
+{
+  "version": "V38.7",
+  "command": "/opt/pyvenv/bin/python -m unittest -v test_openpdf_v386 test_openpdf_v387",
+  "status": "PASS",
+  "cases": 8,
+  "output": "test_existing_destination_unchanged (test_openpdf_v386.ConversionSafety.test_existing_destination_unchanged) ... ok\ntest_failed_converter_cleans_temp (test_openpdf_v386.ConversionSafety.test_failed_converter_cleans_temp) ... ok\ntest_new_destination (test_openpdf_v386.ConversionSafety.test_new_destination) ... /mnt/data/v387/OpenPDF-Studio-V38.7/03-Sources/openpdf_conversion_service_v351.py:47: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpzfzpicqr/.openpdf-office-l6h1d_v1.docx'>\n  actual_sha256 = hashlib.file_digest(temporary.open('rb'), 'sha256').hexdigest()\nResourceWarning: Enable tracemalloc to get the object allocation traceback\nok\ntest_race_destination_created_before_publication (test_openpdf_v386.ConversionSafety.test_race_destination_created_before_publication) ... /mnt/data/v387/OpenPDF-Studio-V38.7/03-Sources/openpdf_conversion_service_v351.py:47: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpc3ei1bg0/.openpdf-office-x129x4ij.docx'>\n  actual_sha256 = hashlib.file_digest(temporary.open('rb'), 'sha256').hexdigest()\nResourceWarning: Enable tracemalloc to get the object allocation traceback\nok\ntest_reject_bad_format (test_openpdf_v386.ConversionSafety.test_reject_bad_format) ... ok\ntest_audit_failure_no_output (test_openpdf_v387.OfficeIntegrity.test_audit_failure_no_output) ... ok\ntest_digest_mismatch_never_publishes (test_openpdf_v387.OfficeIntegrity.test_digest_mismatch_never_publishes) ... /mnt/data/v387/OpenPDF-Studio-V38.7/03-Sources/openpdf_conversion_service_v351.py:47: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmpvciqwp5n/.openpdf-office-wr2ow7by.docx'>\n  actual_sha256 = hashlib.file_digest(temporary.open('rb'), 'sha256').hexdigest()\nResourceWarning: Enable tracemalloc to get the object allocation traceback\nok\ntest_digest_success (test_openpdf_v387.OfficeIntegrity.test_digest_success) ... /mnt/data/v387/OpenPDF-Studio-V38.7/03-Sources/openpdf_conversion_service_v351.py:47: ResourceWarning: unclosed file <_io.BufferedReader name='/tmp/tmp3xs9qppl/.openpdf-office-cihv5_oc.docx'>\n  actual_sha256 = hashlib.file_digest(temporary.open('rb'), 'sha256').hexdigest()\nResourceWarning: Enable tracemalloc to get the object allocation traceback\nok\n\n----------------------------------------------------------------------\nRan 8 tests in 0.032s\n\nOK\n",
+  "windows_native_compilation": "NOT_EXECUTED",
+  "windows_ui": "NOT_TESTED",
+  "notes": [
+    "Hash verification before publication",
+    "fsync temporary bytes",
+    "hard-link exclusive publish still requires filesystem support"
+  ]
+}

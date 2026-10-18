@@ -1,0 +1,115 @@
+{
+  "schema": "openpdf-diagnostic-v1",
+  "threshold": 0.02,
+  "cases": 9,
+  "review_count": 3,
+  "mean_mae": 0.019072,
+  "ranked_cases": [
+    {
+      "source": "05-embedded-image.pdf",
+      "format": "xlsx",
+      "execution": "PASS",
+      "visual_mae": 0.051456,
+      "word_recall": 1.0,
+      "page_delta": 0,
+      "error": "",
+      "flags": [
+        "visual_difference_above_threshold"
+      ],
+      "needs_review": true
+    },
+    {
+      "source": "05-embedded-image.pdf",
+      "format": "docx",
+      "execution": "PASS",
+      "visual_mae": 0.051235,
+      "word_recall": 1.0,
+      "page_delta": 0,
+      "error": "",
+      "flags": [
+        "visual_difference_above_threshold"
+      ],
+      "needs_review": true
+    },
+    {
+      "source": "05-embedded-image.pdf",
+      "format": "pptx",
+      "execution": "PASS",
+      "visual_mae": 0.050063,
+      "word_recall": 1.0,
+      "page_delta": 0,
+      "error": "",
+      "flags": [
+        "visual_difference_above_threshold"
+      ],
+      "needs_review": true
+    },
+    {
+      "source": "03-tableau-dessine.pdf",
+      "format": "pptx",
+      "execution": "PASS",
+      "visual_mae": 0.00465,
+      "word_recall": 1.0,
+      "page_delta": 0,
+      "error": "",
+      "flags": [],
+      "needs_review": false
+    },
+    {
+      "source": "01-texte-simple.pdf",
+      "format": "pptx",
+      "execution": "PASS",
+      "visual_mae": 0.003813,
+      "word_recall": 1.0,
+      "page_delta": 0,
+      "error": "",
+      "flags": [],
+      "needs_review": false
+    },
+    {
+      "source": "03-tableau-dessine.pdf",
+      "format": "xlsx",
+      "execution": "PASS",
+      "visual_mae": 0.003724,
+      "word_recall": 1.0,
+      "page_delta": 0,
+      "error": "",
+      "flags": [],
+      "needs_review": false
+    },
+    {
+      "source": "03-tableau-dessine.pdf",
+      "format": "docx",
+      "execution": "PASS",
+      "visual_mae": 0.003408,
+      "word_recall": 1.0,
+      "page_delta": 0,
+      "error": "",
+      "flags": [],
+      "needs_review": false
+    },
+    {
+      "source": "01-texte-simple.pdf",
+      "format": "xlsx",
+      "execution": "PASS",
+      "visual_mae": 0.001814,
+      "word_recall": 1.0,
+      "page_delta": 0,
+      "error": "",
+      "flags": [],
+      "needs_review": false
+    },
+    {
+      "source": "01-texte-simple.pdf",
+      "format": "docx",
+      "execution": "PASS",
+      "visual_mae": 0.001487,
+      "word_recall": 1.0,
+      "page_delta": 0,
+      "error": "",
+      "flags": [],
+      "needs_review": false
+    }
+  ],
+  "interpretation": "Threshold is a triage heuristic, not a validated quality acceptance criterion. Image mismatch cause remains unverified."
+}

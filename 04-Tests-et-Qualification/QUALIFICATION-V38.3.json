@@ -1,0 +1,9 @@
+{
+  "version": "38.2",
+  "linux_unittests": 14,
+  "linux_failed": 0,
+  "preflight": "PASS",
+  "windows_native_build": "NOT_RUN",
+  "windows_ui": "NOT_RUN",
+  "functional_pdf_roundtrip": "PASS"
+}

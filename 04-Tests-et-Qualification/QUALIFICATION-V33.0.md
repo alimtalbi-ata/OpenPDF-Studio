@@ -1,0 +1,1 @@
+Tests réels Linux : python -m unittest test_openpdf_v330 -v : 4 tests OK. Compilation Windows et captures natives non réalisées. Bilan Tk disponible comme module Python ; intégration asynchrone non qualifiée.

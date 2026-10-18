@@ -1,0 +1,1 @@
+Windows 10/11 : extraire le ZIP, lancer 02-Compilation/COMPILER-INSTALLATEUR.cmd ou COMPILER-PORTABLE.cmd. Python 3.12, PyInstaller et Inno Setup installés/contrôlés par script selon disponibilité. Les exécutables sont générés sous 03-Sources/dist, portable et installer. Tester sur machine Windows réelle.

@@ -1,0 +1,326 @@
+{
+  "release": "29.4",
+  "audit_kind": "AST static (not interactive Windows execution)",
+  "ui_modules": 34,
+  "ui_class_bases": {
+    "openpdf_windows_v260.py": [
+      "tk.Tk"
+    ],
+    "openpdf_windows_v261.py": [],
+    "openpdf_windows_v262.py": [
+      "tk.Toplevel",
+      "OpenPDFApp"
+    ],
+    "openpdf_windows_v263.py": [
+      "BasePageEditor",
+      "BaseStudio"
+    ],
+    "openpdf_windows_v264.py": [
+      "PreviousEditor",
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v265.py": [
+      "ttk.Frame",
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v266.py": [
+      "StudioV265"
+    ],
+    "openpdf_windows_v267.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v268.py": [],
+    "openpdf_windows_v269.py": [
+      "LegacyStudio"
+    ],
+    "openpdf_windows_v270.py": [
+      "LegacyStudio"
+    ],
+    "openpdf_windows_v271.py": [
+      "BaseStudio"
+    ],
+    "openpdf_windows_v272.py": [
+      "BaseStudio"
+    ],
+    "openpdf_windows_v273.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v274.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v275.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v276.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v277.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v278.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v279.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v280.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v281.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v282.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v283.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v284.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v285.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v286.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v287.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v288.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v289.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v291.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v292.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v293.py": [
+      "PreviousStudio"
+    ],
+    "openpdf_windows_v294.py": [
+      "PreviousStudio"
+    ]
+  },
+  "ui_methods_by_module": {
+    "openpdf_windows_v260.py": [
+      "__init__",
+      "_refresh",
+      "add_files",
+      "move_file",
+      "open_preview",
+      "clear_files",
+      "_sync_sidebar",
+      "_sidebar_select",
+      "browse_destination",
+      "run",
+      "poll"
+    ],
+    "openpdf_windows_v261.py": [],
+    "openpdf_windows_v262.py": [
+      "__init__",
+      "_build",
+      "_redraw",
+      "_selection_changed",
+      "move",
+      "rotate",
+      "delete",
+      "save",
+      "__init__",
+      "open_preview"
+    ],
+    "openpdf_windows_v263.py": [
+      "_build",
+      "_redraw",
+      "_render_gallery",
+      "_gallery_index",
+      "_drag_begin",
+      "_drag_end",
+      "_selection_changed",
+      "__init__",
+      "open_preview"
+    ],
+    "openpdf_windows_v264.py": [
+      "_build",
+      "change_zoom",
+      "_selection_changed",
+      "_scrollbar_set",
+      "_deferred_gallery",
+      "_wheel_scroll",
+      "_wheel_scroll_linux",
+      "_render_gallery",
+      "__init__",
+      "open_preview"
+    ],
+    "openpdf_windows_v265.py": [
+      "__init__",
+      "_build",
+      "load",
+      "_selection_changed",
+      "save",
+      "__init__",
+      "_create_workspace",
+      "_update_properties",
+      "open_preview"
+    ],
+    "openpdf_windows_v266.py": [
+      "__init__",
+      "_install_shortcuts"
+    ],
+    "openpdf_windows_v267.py": [
+      "__init__",
+      "_create_quick_toolbar",
+      "_choose_operation",
+      "_save_editor",
+      "_update_properties",
+      "_deliver_properties",
+      "_set_properties"
+    ],
+    "openpdf_windows_v268.py": [],
+    "openpdf_windows_v269.py": [
+      "__init__",
+      "_install_accessible_actions"
+    ],
+    "openpdf_windows_v270.py": [
+      "__init__",
+      "_install_workspace_commands",
+      "_invoke_action",
+      "_on_navigator_selection"
+    ],
+    "openpdf_windows_v271.py": [
+      "__init__",
+      "_close_v271"
+    ],
+    "openpdf_windows_v272.py": [
+      "__init__",
+      "_run_pdf",
+      "merge_async",
+      "compress_async",
+      "extract_async",
+      "_invoke_action"
+    ],
+    "openpdf_windows_v273.py": [
+      "__init__",
+      "_cancel_v273",
+      "_run_pdf",
+      "_poll_v273",
+      "_close_v273"
+    ],
+    "openpdf_windows_v274.py": [
+      "__init__",
+      "_run_pdf",
+      "_cancel_v273",
+      "_poll_v274",
+      "_close_v274"
+    ],
+    "openpdf_windows_v275.py": [
+      "__init__",
+      "report_callback_exception",
+      "_poll_v274"
+    ],
+    "openpdf_windows_v276.py": [
+      "__init__",
+      "_install_v276_toolbar",
+      "_run_command_v276"
+    ],
+    "openpdf_windows_v277.py": [
+      "__init__",
+      "_replace_command_toolbar",
+      "_refresh_command_states",
+      "_poll_v274"
+    ],
+    "openpdf_windows_v278.py": [
+      "__init__",
+      "_remove_duplicate_command_bars",
+      "_install_shortcuts_v278",
+      "_refresh_command_states"
+    ],
+    "openpdf_windows_v279.py": [
+      "__init__",
+      "_refresh_command_states",
+      "_update_command_states",
+      "_close_v274"
+    ],
+    "openpdf_windows_v280.py": [
+      "__init__",
+      "_poll_v274",
+      "_close_v274"
+    ],
+    "openpdf_windows_v281.py": [
+      "__init__"
+    ],
+    "openpdf_windows_v282.py": [
+      "__init__"
+    ],
+    "openpdf_windows_v283.py": [
+      "__init__"
+    ],
+    "openpdf_windows_v284.py": [
+      "__init__"
+    ],
+    "openpdf_windows_v285.py": [
+      "__init__"
+    ],
+    "openpdf_windows_v286.py": [
+      "__init__"
+    ],
+    "openpdf_windows_v287.py": [
+      "__init__"
+    ],
+    "openpdf_windows_v288.py": [
+      "__init__"
+    ],
+    "openpdf_windows_v289.py": [
+      "__init__"
+    ],
+    "openpdf_windows_v291.py": [
+      "__init__"
+    ],
+    "openpdf_windows_v292.py": [
+      "__init__"
+    ],
+    "openpdf_windows_v293.py": [
+      "__init__"
+    ],
+    "openpdf_windows_v294.py": [
+      "__init__"
+    ]
+  },
+  "core_public_functions": {
+    "openpdf_core_v260.py": [
+      "_inputs",
+      "_output",
+      "merge_pdfs",
+      "split_pdf",
+      "compress_pdf",
+      "extract_text",
+      "pdf_to_docx",
+      "pdf_to_xlsx",
+      "pdf_to_pptx"
+    ],
+    "openpdf_core_v261.py": [
+      "page_info",
+      "preview_png",
+      "edit_pages"
+    ]
+  },
+  "risks": [
+    "Inheritance chain across many release-specific GUI modules",
+    "No real Windows GUI end-to-end verification in this environment",
+    "Portable onefile startup may be slower due to extraction",
+    "Text-only editable exports cannot guarantee original layout fidelity",
+    "Windows antivirus may flag unsigned executables",
+    "Portable EXE and installer are build recipes, not compiled Windows binaries in this ZIP"
+  ],
+  "recommendations": [
+    "Replace historical GUI inheritance with a stable application shell and independent feature controllers",
+    "Centralize commands in a typed operation registry",
+    "Separate UI from PDF service layer and use dependency injection for testability",
+    "Add Windows VM CI with real launch, UI automation, file round-trips, installer uninstall",
+    "Publish SHA-256 and code-signing when available"
+  ]
+}

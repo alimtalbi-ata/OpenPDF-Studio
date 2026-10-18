@@ -1,0 +1,26 @@
+
+test_four_cases (test_openpdf_v357.CorpusTests.test_four_cases) ... ok
+test_identical_metrics (test_openpdf_v357.CorpusTests.test_identical_metrics) ... ok
+test_image (test_openpdf_v357.CorpusTests.test_image) ... ok
+test_manifest (test_openpdf_v357.CorpusTests.test_manifest) ... ok
+test_multilingual_text (test_openpdf_v357.CorpusTests.test_multilingual_text) ... ok
+test_multipage (test_openpdf_v357.CorpusTests.test_multipage) ... ok
+test_table_vectors (test_openpdf_v357.CorpusTests.test_table_vectors) ... ok
+test_bad_format (test_openpdf_v356.QualityTests.test_bad_format) ... ok
+test_bad_limit (test_openpdf_v356.QualityTests.test_bad_limit) ... ok
+test_different (test_openpdf_v356.QualityTests.test_different) ... ok
+test_export (test_openpdf_v356.QualityTests.test_export) ... ok
+test_identical (test_openpdf_v356.QualityTests.test_identical) ... ok
+test_missing (test_openpdf_v356.QualityTests.test_missing) ... ok
+test_page_limit (test_openpdf_v356.QualityTests.test_page_limit) ... ok
+test_roundtrip_docx (test_openpdf_v356.QualityTests.test_roundtrip_docx) ... ok
+test_invalid_format (test_openpdf_v355.RoundtripTests.test_invalid_format) ... ok
+test_invalid_timeout (test_openpdf_v355.RoundtripTests.test_invalid_timeout) ... ok
+test_missing_engine (test_openpdf_v355.RoundtripTests.test_missing_engine) ... ok
+test_missing_source (test_openpdf_v355.RoundtripTests.test_missing_source) ... ok
+test_roundtrip_docx (test_openpdf_v355.RoundtripTests.test_roundtrip_docx) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 4.043s
+
+OK

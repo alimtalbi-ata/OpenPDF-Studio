@@ -1,0 +1,1 @@
+Interface Tkinter → parcours guidé → diagnostic PyMuPDF (fitz) → profil utilisateur → compression existante sans perte → fichier temporaire → contrôle de taille → remplacement atomique ou conservation de l’existant.

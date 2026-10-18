@@ -1,0 +1,12 @@
+........................................................................ [ 28%]
+........................................................................ [ 56%]
+........................................................................ [ 84%]
+.........................................                                [100%]
+=============================== warnings summary ===============================
+test_dashboard_r34.py::R34Tests::test_real_highlight_changes_png
+  /mnt/data/OpenPDF-Studio-V22.5-Diagnostic-Addon/test_dashboard_r34.py:23: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    self.assertTrue(any(r>150 and g<110 and b<110 for r,g,b in im.getdata()))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+257 passed, 1 warning in 3.86s
+

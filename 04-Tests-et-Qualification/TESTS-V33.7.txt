@@ -1,0 +1,27 @@
+test_empty (test_openpdf_v337.ReceiptTests.test_empty) ... ok
+test_missing (test_openpdf_v337.ReceiptTests.test_missing) ... ok
+test_new_file (test_openpdf_v337.ReceiptTests.test_new_file) ... ok
+test_no_gain_old_file (test_openpdf_v337.ReceiptTests.test_no_gain_old_file) ... ok
+test_replaced_file (test_openpdf_v337.ReceiptTests.test_replaced_file) ... ok
+test_unchanged_existing (test_openpdf_v337.ReceiptTests.test_unchanged_existing) ... ok
+test_cancelled_cleans_handle (test_openpdf_v336.TestV336.test_cancelled_cleans_handle) ... ok
+test_exception_cleans_handle (test_openpdf_v336.TestV336.test_exception_cleans_handle) ... ok
+test_source_ast (test_openpdf_v336.TestV336.test_source_ast) ... ok
+test_stale_handle_is_not_completed (test_openpdf_v336.TestV336.test_stale_handle_is_not_completed) ... ok
+test_waiting_reschedules (test_openpdf_v336.TestV336.test_waiting_reschedules) ... ok
+test_cancelled (test_openpdf_v335.TestV335.test_cancelled) ... ok
+test_failed (test_openpdf_v335.TestV335.test_failed) ... ok
+test_no_global_presenter_monkeypatch (test_openpdf_v335.TestV335.test_no_global_presenter_monkeypatch) ... ok
+test_no_result (test_openpdf_v335.TestV335.test_no_result) ... ok
+test_v335_local_presenter (test_openpdf_v335.TestV335.test_v335_local_presenter) ... ok
+test_cancelled (test_openpdf_v334.Tests.test_cancelled) ... ok
+test_failed (test_openpdf_v334.Tests.test_failed) ... ok
+test_invalid_compression (test_openpdf_v334.Tests.test_invalid_compression) ... ok
+test_no_result (test_openpdf_v334.Tests.test_no_result) ... ok
+test_same_path (test_openpdf_v334.Tests.test_same_path) ... ok
+test_valid_compression (test_openpdf_v334.Tests.test_valid_compression) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 0.009s
+
+OK

@@ -1,0 +1,23 @@
+$ python -m unittest -v test_openpdf_v367 test_openpdf_v366 test_openpdf_v365
+test_concurrent_process_blocked (test_openpdf_v367.ReservationTests.test_concurrent_process_blocked) ... /usr/lib/python3.13/multiprocessing/popen_fork.py:67: DeprecationWarning: This process (pid=130353) is multi-threaded, use of fork() may lead to deadlocks in the child.
+  self.pid = os.fork()
+ok
+test_existing_lock_not_removed (test_openpdf_v367.ReservationTests.test_existing_lock_not_removed) ... ok
+test_release_after_failure (test_openpdf_v367.ReservationTests.test_release_after_failure) ... ok
+test_release_after_success (test_openpdf_v367.ReservationTests.test_release_after_success) ... ok
+test_split_collision_preserves_existing (test_openpdf_v367.ReservationTests.test_split_collision_preserves_existing) ... ok
+test_split_lock_cleanup (test_openpdf_v367.ReservationTests.test_split_lock_cleanup) ... ok
+test_existing_target_preserved (test_openpdf_v366.TransactionalGuardTests.test_existing_target_preserved) ... ok
+test_invalid_pdf_preserves_target_absence (test_openpdf_v366.TransactionalGuardTests.test_invalid_pdf_preserves_target_absence) ... ok
+test_missing_directory (test_openpdf_v366.TransactionalGuardTests.test_missing_directory) ... ok
+test_source_not_overwritten (test_openpdf_v366.TransactionalGuardTests.test_source_not_overwritten) ... ok
+test_split_collision_preserves_existing (test_openpdf_v366.TransactionalGuardTests.test_split_collision_preserves_existing) ... ok
+test_successful_publish (test_openpdf_v366.TransactionalGuardTests.test_successful_publish) ... ok
+test_unknown_operation (test_openpdf_v366.TransactionalGuardTests.test_unknown_operation) ... ok
+test_all_functional_scenarios (test_openpdf_v365.FunctionalTests.test_all_functional_scenarios) ... ok
+test_coverage (test_openpdf_v365.FunctionalTests.test_coverage) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.143s
+
+OK

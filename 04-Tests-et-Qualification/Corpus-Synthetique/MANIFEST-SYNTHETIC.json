@@ -1,0 +1,33 @@
+{
+  "origin": "SYNTHETIC - NOT REAL DOCUMENTS",
+  "cases": [
+    {
+      "name": "04-complex-table.pdf",
+      "kind": "table",
+      "pages": 1,
+      "bytes": 4779,
+      "sha256": "8c988695b0f0bb77583377daaef3f19596f5e5774f86fc2a5d508afdd9c9f9e6"
+    },
+    {
+      "name": "05-embedded-image.pdf",
+      "kind": "image",
+      "pages": 1,
+      "bytes": 8637,
+      "sha256": "09b8bd37207e2156f47700ea061d67b4796f1b61545c8686afcf4f20c28fd6ea"
+    },
+    {
+      "name": "06-multilingual.pdf",
+      "kind": "languages",
+      "pages": 1,
+      "bytes": 1629,
+      "sha256": "34693c768aedc1c38c0c99beba1f716033d068a79cab021f2a98e0680bf72a8a"
+    },
+    {
+      "name": "07-long-document.pdf",
+      "kind": "long",
+      "pages": 9,
+      "bytes": 48935,
+      "sha256": "9ac4896143f7dd448b043395ae8da57b500ed976748fd3aaa3bf5daecbd544f8"
+    }
+  ]
+}

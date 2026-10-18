@@ -1,0 +1,14 @@
+
+test_preview_debounce (test_openpdf_v383.V383.test_preview_debounce) ... ok
+test_preview_result_cleans_pending (test_openpdf_v383.V383.test_preview_result_cleans_pending) ... ok
+test_real_operations (test_openpdf_v383.V383.test_real_operations) ... ok
+test_version (test_openpdf_v383.V383.test_version) ... ok
+test_entrypoint_exposes_functional_mode (test_openpdf_v382.FunctionalSmokeTests.test_entrypoint_exposes_functional_mode) ... ok
+test_missing_dependency_fails_closed (test_openpdf_v382.FunctionalSmokeTests.test_missing_dependency_fails_closed) ... ok
+test_real_pdf_roundtrip (test_openpdf_v382.FunctionalSmokeTests.test_real_pdf_roundtrip) ... ok
+test_windows_smoke_has_timeout_and_two_checks (test_openpdf_v382.FunctionalSmokeTests.test_windows_smoke_has_timeout_and_two_checks) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.046s
+
+OK

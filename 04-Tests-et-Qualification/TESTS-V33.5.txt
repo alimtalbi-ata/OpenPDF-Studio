@@ -1,0 +1,10 @@
+test_cancelled (test_openpdf_v335.TestV335.test_cancelled) ... ok
+test_failed (test_openpdf_v335.TestV335.test_failed) ... ok
+test_no_global_presenter_monkeypatch (test_openpdf_v335.TestV335.test_no_global_presenter_monkeypatch) ... ok
+test_no_result (test_openpdf_v335.TestV335.test_no_result) ... ok
+test_v335_local_presenter (test_openpdf_v335.TestV335.test_v335_local_presenter) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.001s
+
+OK

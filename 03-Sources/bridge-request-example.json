@@ -1,0 +1,37 @@
+{
+  "schema": "openpdf.bridge.request.v1",
+  "source": [
+    {
+      "width": 600,
+      "height": 800,
+      "blocks": [
+        {
+          "text": "Bonjour",
+          "box": {
+            "x": 20,
+            "y": 30,
+            "w": 100,
+            "h": 20
+          }
+        }
+      ]
+    }
+  ],
+  "target": [
+    {
+      "width": 600,
+      "height": 800,
+      "blocks": [
+        {
+          "text": "Bonjour",
+          "box": {
+            "x": 20,
+            "y": 30,
+            "w": 100,
+            "h": 20
+          }
+        }
+      ]
+    }
+  ]
+}

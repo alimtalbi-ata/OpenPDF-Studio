@@ -1,0 +1,1 @@
+V35.0 : consolidation de la boucle asynchrone, état des tâches sans Tkinter, barre de progression indéterminée, tests de concurrence. Pas de faux pourcentage, pas de fausse annulation. Conversions Office et installateur Windows restent à qualifier.

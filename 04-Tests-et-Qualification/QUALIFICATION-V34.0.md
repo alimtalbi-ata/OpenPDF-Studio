@@ -1,0 +1,1 @@
+V34.0 : extraction initiale du contrôleur pur. Tests unitaires Linux : voir resultats-v340.txt. Aucun test GUI Windows ni capture réelle nouvelle. Les écrans historiques ne constituent pas des preuves V34.0.

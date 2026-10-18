@@ -1,0 +1,8 @@
+test_failed_conversion (test_openpdf_v359.TestDashboard.test_failed_conversion) ... ok
+test_measured_metrics (test_openpdf_v359.TestDashboard.test_measured_metrics) ... ok
+test_pass_does_not_invent_quality (test_openpdf_v359.TestDashboard.test_pass_does_not_invent_quality) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK

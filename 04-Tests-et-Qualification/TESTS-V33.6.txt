@@ -1,0 +1,17 @@
+test_cancelled_cleans_handle (test_openpdf_v336.TestV336.test_cancelled_cleans_handle) ... ok
+test_exception_cleans_handle (test_openpdf_v336.TestV336.test_exception_cleans_handle) ... ok
+test_source_ast (test_openpdf_v336.TestV336.test_source_ast) ... ok
+test_stale_handle_is_not_completed (test_openpdf_v336.TestV336.test_stale_handle_is_not_completed) ... ok
+test_waiting_reschedules (test_openpdf_v336.TestV336.test_waiting_reschedules) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.005s
+
+OK
+
+REGRESSION
+......................
+----------------------------------------------------------------------
+Ran 22 tests in 0.007s
+
+OK

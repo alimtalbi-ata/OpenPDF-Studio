@@ -1,0 +1,22 @@
+test_existing_target_preserved (test_openpdf_v366.TransactionalGuardTests.test_existing_target_preserved) ... ok
+test_invalid_pdf_preserves_target_absence (test_openpdf_v366.TransactionalGuardTests.test_invalid_pdf_preserves_target_absence) ... ok
+test_missing_directory (test_openpdf_v366.TransactionalGuardTests.test_missing_directory) ... ok
+test_source_not_overwritten (test_openpdf_v366.TransactionalGuardTests.test_source_not_overwritten) ... ok
+test_split_collision_preserves_existing (test_openpdf_v366.TransactionalGuardTests.test_split_collision_preserves_existing) ... ok
+test_successful_publish (test_openpdf_v366.TransactionalGuardTests.test_successful_publish) ... ok
+test_unknown_operation (test_openpdf_v366.TransactionalGuardTests.test_unknown_operation) ... ok
+test_all_functional_scenarios (test_openpdf_v365.FunctionalTests.test_all_functional_scenarios) ... ok
+test_coverage (test_openpdf_v365.FunctionalTests.test_coverage) ... ok
+test_canonical_entrypoint (test_openpdf_v364.RuntimeAuditTests.test_canonical_entrypoint) ... ok
+test_invalid_name_rejected (test_openpdf_v364.RuntimeAuditTests.test_invalid_name_rejected) ... ok
+test_json_report (test_openpdf_v364.RuntimeAuditTests.test_json_report) ... ok
+test_runtime_services (test_openpdf_v364.RuntimeAuditTests.test_runtime_services) ... ok
+test_static_audit (test_openpdf_v364.RuntimeAuditTests.test_static_audit) ... ok
+test_string_rejected (test_openpdf_v364.RuntimeAuditTests.test_string_rejected) ... ok
+test_ui_uses_stable_facades (test_openpdf_v364.RuntimeAuditTests.test_ui_uses_stable_facades) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.427s
+
+OK
+

@@ -1,0 +1,34 @@
+{
+  "requested": [
+    "openpdf_operations",
+    "openpdf_navigation",
+    "openpdf_jobs",
+    "openpdf_dependency_audit"
+  ],
+  "loaded": {
+    "openpdf_operations": "/mnt/data/v364work/OpenPDF-Studio-V36.4/03-Sources/openpdf_operations.py",
+    "openpdf_navigation": "/mnt/data/v364work/OpenPDF-Studio-V36.4/03-Sources/openpdf_navigation.py",
+    "openpdf_jobs": "/mnt/data/v364work/OpenPDF-Studio-V36.4/03-Sources/openpdf_jobs.py",
+    "openpdf_dependency_audit": "/mnt/data/v364work/OpenPDF-Studio-V36.4/03-Sources/openpdf_dependency_audit.py"
+  },
+  "errors": {},
+  "runtime_modules": [
+    "openpdf_compression_service_v344",
+    "openpdf_compression_v319",
+    "openpdf_compression_v320",
+    "openpdf_compression_v327",
+    "openpdf_dependency_audit",
+    "openpdf_engine_v271",
+    "openpdf_engine_v272",
+    "openpdf_job_controller_v350",
+    "openpdf_jobs",
+    "openpdf_navigation",
+    "openpdf_ocr_service_v347",
+    "openpdf_operations",
+    "openpdf_page_service_v345",
+    "openpdf_transaction_v338",
+    "openpdf_ui_controller_v348",
+    "openpdf_workspace_v349"
+  ],
+  "warning": "Only selected headless imports were traced; GUI, plugins and packaged execution not covered."
+}

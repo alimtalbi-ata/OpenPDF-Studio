@@ -1,0 +1,10 @@
+test_build_config (test_openpdf_v361.V361.test_build_config) ... ok
+test_canonical_entrypoint (test_openpdf_v361.V361.test_canonical_entrypoint) ... ok
+test_dependency_graph (test_openpdf_v361.V361.test_dependency_graph) ... ok
+test_iss (test_openpdf_v361.V361.test_iss) ... ok
+test_verifier (test_openpdf_v361.V361.test_verifier) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.782s
+
+OK

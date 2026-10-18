@@ -1,0 +1,1 @@
+Tkinter → diagnostic → sélection du profil → prévisualisation multipage → compression dans un fichier temporaire → contrôle pages et texte → publication atomique → rapport des tailles. En cas d’erreur, suppression du temporaire.

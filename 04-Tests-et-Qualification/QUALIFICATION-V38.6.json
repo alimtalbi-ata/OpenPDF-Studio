@@ -1,0 +1,10 @@
+{
+  "version": "V38.6",
+  "tests_exit": 0,
+  "tests_log": "test_existing_destination_unchanged (test_openpdf_v386.ConversionSafety.test_existing_destination_unchanged) ... ok\ntest_failed_converter_cleans_temp (test_openpdf_v386.ConversionSafety.test_failed_converter_cleans_temp) ... ok\ntest_new_destination (test_openpdf_v386.ConversionSafety.test_new_destination) ... ok\ntest_race_destination_created_before_publication (test_openpdf_v386.ConversionSafety.test_race_destination_created_before_publication) ... ok\ntest_reject_bad_format (test_openpdf_v386.ConversionSafety.test_reject_bad_format) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.017s\n\nOK\n",
+  "windows_binaries_executed": false,
+  "limitations": [
+    "hard links may be unavailable on some volumes",
+    "native Windows installer and UI not tested"
+  ]
+}

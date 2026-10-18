@@ -1,0 +1,8 @@
+test_cancel_profile (test_compression_v322.CompressionV322Tests.test_cancel_profile) ... ok
+test_invalid_profile (test_compression_v322.CompressionV322Tests.test_invalid_profile) ... ok
+test_profiles (test_compression_v322.CompressionV322Tests.test_profiles) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.012s
+
+OK

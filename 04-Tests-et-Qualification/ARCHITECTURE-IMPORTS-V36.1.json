@@ -1,0 +1,1584 @@
+{
+  "version": "36.1",
+  "files_python": 499,
+  "parsed": 499,
+  "parse_errors": {},
+  "entrypoint": "openpdf_windows_v358",
+  "reachable_modules": 29,
+  "reachable_versioned_ui_modules": [
+    "openpdf_windows_v351",
+    "openpdf_windows_v352",
+    "openpdf_windows_v354",
+    "openpdf_windows_v358"
+  ],
+  "unused_from_entrypoint_count": 470,
+  "warning": "Reachability is static and only follows literal Python imports; dynamic imports, plugin loading and subprocess calls are not included. Unreachable does not mean safe to delete.",
+  "dependencies": {
+    "test_openpdf_v341": [
+      "verify_release_v341"
+    ],
+    "openpdf_windows_v338": [
+      "openpdf_quality_dashboard_v332",
+      "openpdf_task_presenter_v334",
+      "openpdf_transaction_v338",
+      "openpdf_windows_v337"
+    ],
+    "verify_release_v293": [
+      "verify_release_v294",
+      "verify_release_v295"
+    ],
+    "report_quality": [],
+    "test_dashboard_v210": [
+      "diagnostic_dashboard"
+    ],
+    "test_openpdf_v319": [
+      "openpdf_compression_v319"
+    ],
+    "verify_release_v291": [
+      "verify_release_v292"
+    ],
+    "test_openpdf_v302": [
+      "openpdf_ui_bridge_v302",
+      "openpdf_windows_v302"
+    ],
+    "openpdf_ui_shell_v278": [],
+    "openpdf_windows_v310": [
+      "openpdf_ui_bridge_v310",
+      "openpdf_windows_v309"
+    ],
+    "ui_audit_v300": [
+      "openpdf_windows_v300"
+    ],
+    "verify_release_v306": [
+      "verify_release_v307"
+    ],
+    "diagnostic_pipeline": [
+      "visual_coordinate_transform",
+      "visual_text_correlation"
+    ],
+    "test_document_render_r25": [
+      "document_extract"
+    ],
+    "test_openpdf_v325": [
+      "openpdf_preview_v325"
+    ],
+    "openpdf_functional_v282": [
+      "openpdf_engine_v273"
+    ],
+    "test_dashboard_v207": [
+      "diagnostic_dashboard"
+    ],
+    "verify_release_v285": [],
+    "openpdf_workspace_v306": [
+      "openpdf_workspace_v304",
+      "openpdf_workspace_v305"
+    ],
+    "openpdf_windows_v340": [
+      "openpdf_controller_v340",
+      "openpdf_windows_v339"
+    ],
+    "table_fragment_audit": [],
+    "test_openpdf_v281": [
+      "openpdf_build_audit_v281"
+    ],
+    "openpdf_windows_v319": [
+      "openpdf_compression_v319",
+      "openpdf_windows_v318"
+    ],
+    "smoke_windows_v298": [
+      "windows_window_probe_v286"
+    ],
+    "test_filters_v225": [],
+    "openpdf_quality_v327": [],
+    "test_openpdf_windows_v262": [
+      "openpdf_windows_v262"
+    ],
+    "openpdf_windows_v273": [
+      "openpdf_engine_v273",
+      "openpdf_tasks_v273",
+      "openpdf_windows_v272"
+    ],
+    "openpdf_ui_bridge_v302": [
+      "openpdf_ui_bridge_v301"
+    ],
+    "test_dashboard_r32": [
+      "diagnostic_dashboard"
+    ],
+    "test_table_structure_r28": [
+      "table_structure_audit"
+    ],
+    "test_filters_v226": [],
+    "test_openpdf_v290": [
+      "qualify_installer_v291"
+    ],
+    "test_openpdf_v293": [
+      "ui_audit_v293"
+    ],
+    "openpdf_windows_v354": [
+      "openpdf_windows_v352"
+    ],
+    "openpdf_windows_v301": [
+      "openpdf_ui_bridge_v301",
+      "openpdf_windows_v293"
+    ],
+    "test_layout_tables_v235": [
+      "layout_table_audit_v235"
+    ],
+    "test_openpdf_v306": [
+      "openpdf_workspace_v306"
+    ],
+    "qualify_installer_v296": [
+      "openpdf_functional_v282",
+      "smoke_windows_v296"
+    ],
+    "verify_release_v348": [],
+    "qualify_installer_v298": [
+      "openpdf_functional_v282",
+      "smoke_windows_v298"
+    ],
+    "openpdf_windows_v271": [
+      "openpdf_tasks_v271",
+      "openpdf_windows_v270"
+    ],
+    "verify_release_v353": [],
+    "openpdf_workspace_v349": [
+      "openpdf_ui_controller_v348"
+    ],
+    "ui_audit_v304": [
+      "openpdf_windows_v304"
+    ],
+    "test_openpdf_windows_v263": [
+      "openpdf_windows_v263"
+    ],
+    "openpdf_windows_v293": [
+      "openpdf_windows_v292"
+    ],
+    "verify_release_v321": [],
+    "smoke_windows_v304": [
+      "windows_window_probe_v286"
+    ],
+    "test_openpdf_v280": [
+      "openpdf_ui_controller_v280"
+    ],
+    "smoke_windows_v313": [
+      "windows_window_probe_v286"
+    ],
+    "openpdf_compression_v320": [
+      "openpdf_compression_v319",
+      "openpdf_engine_v272"
+    ],
+    "ui_audit_v295": [
+      "openpdf_windows_v295"
+    ],
+    "openpdf_preview_v326": [
+      "openpdf_compression_v325"
+    ],
+    "openpdf_ui_lifecycle_v279": [],
+    "test_audit_assistant_v257": [
+      "audit_assistant_v257"
+    ],
+    "verify_release_v302": [],
+    "openpdf_windows_v349": [
+      "openpdf_ui_controller_v348",
+      "openpdf_workspace_v349"
+    ],
+    "verify_release_v289": [],
+    "test_openpdf_v337": [
+      "openpdf_output_receipt_v337"
+    ],
+    "test_correlation_v212": [
+      "visual_text_correlation"
+    ],
+    "openpdf_compression_v321": [
+      "openpdf_compression_v319",
+      "openpdf_compression_v320",
+      "openpdf_engine_v272"
+    ],
+    "test_openpdf_v323": [
+      "openpdf_compression_v323"
+    ],
+    "verify_release_v284": [],
+    "test_dashboard_v19_9": [
+      "diagnostic_dashboard"
+    ],
+    "openpdf_job_controller_v350": [],
+    "openpdf_windows_v313": [
+      "openpdf_guided_v313",
+      "openpdf_windows_v312"
+    ],
+    "openpdf_windows_v291": [
+      "openpdf_windows_v289"
+    ],
+    "openpdf_visual_fidelity_v354": [],
+    "qualify_installer_v303": [
+      "openpdf_functional_v282",
+      "smoke_windows_v303"
+    ],
+    "test_dashboard_r34": [
+      "diagnostic_dashboard"
+    ],
+    "test_boundary_r27": [
+      "boundary_audit"
+    ],
+    "smoke_windows_v309": [
+      "windows_window_probe_v286"
+    ],
+    "openpdf_task_presenter_v333": [],
+    "qualify_installer_v302": [
+      "openpdf_functional_v282",
+      "smoke_windows_v302"
+    ],
+    "browser_pdf_v233": [
+      "diagnostic_dashboard"
+    ],
+    "test_openpdf_v283": [
+      "verify_release_v283"
+    ],
+    "openpdf_quality_diagnostic": [],
+    "openpdf_engine_v273": [
+      "openpdf_engine_v271"
+    ],
+    "test_openpdf_v296": [
+      "openpdf_commands_v296",
+      "openpdf_engine_v271"
+    ],
+    "openpdf_guided_v313": [
+      "openpdf_essentials_v312",
+      "openpdf_ui_bridge_v310"
+    ],
+    "test_openpdf_v326": [
+      "openpdf_preview_v326"
+    ],
+    "test_openpdf_v332": [
+      "openpdf_quality_dashboard_v332"
+    ],
+    "qualify_portable_v300": [
+      "verify_release_v300"
+    ],
+    "openpdf_ui_bridge_v300": [
+      "openpdf_commands_v296",
+      "openpdf_engine_v273",
+      "openpdf_output_policy_v300"
+    ],
+    "openpdf_preview_v325": [
+      "openpdf_compression_v324"
+    ],
+    "openpdf_compression_v323": [
+      "openpdf_compression_v319",
+      "openpdf_compression_v320",
+      "openpdf_engine_v272"
+    ],
+    "test_openpdf_v359": [
+      "openpdf_quality_dashboard_v359"
+    ],
+    "verify_release_v303": [
+      "verify_release_v304"
+    ],
+    "verify_release_v346": [],
+    "test_openpdf_v321": [
+      "openpdf_compression_v321"
+    ],
+    "ui_audit_v301": [
+      "openpdf_windows_v301"
+    ],
+    "verify_release_v315": [
+      "verify_release_v316"
+    ],
+    "smoke_windows_v285": [],
+    "openpdf_windows_v295": [
+      "openpdf_windows_v293"
+    ],
+    "test_dashboard_r35": [
+      "diagnostic_dashboard"
+    ],
+    "test_dashboard_v208": [
+      "diagnostic_dashboard"
+    ],
+    "test_openpdf_v328": [
+      "openpdf_visual_quality_v328"
+    ],
+    "openpdf_windows_v268": [
+      "openpdf_windows_v267"
+    ],
+    "openpdf_quality_dashboard_v359": [],
+    "browser_keyboard_v248": [
+      "diagnostic_dashboard"
+    ],
+    "openpdf_windows_v336": [
+      "openpdf_quality_dashboard_v332",
+      "openpdf_task_presenter_v334",
+      "openpdf_windows_v335"
+    ],
+    "openpdf_ui_layout_v277": [],
+    "test_audit_assistant_v259": [
+      "audit_assistant_v257"
+    ],
+    "test_openpdf_v287": [
+      "verify_release_v287"
+    ],
+    "qualify_installer_v289": [
+      "smoke_windows_v289"
+    ],
+    "test_openpdf_v285": [
+      "smoke_windows_v285"
+    ],
+    "openpdf_windows_v343": [
+      "openpdf_orchestrator_v343",
+      "openpdf_transaction_v338",
+      "openpdf_windows_v342"
+    ],
+    "test_openpdf_v314": [
+      "openpdf_guided_v314"
+    ],
+    "test_openpdf_v330": [
+      "openpdf_quality_dashboard_v330"
+    ],
+    "openpdf_roundtrip_v355": [
+      "openpdf_conversion_service_v351",
+      "openpdf_visual_fidelity_v354"
+    ],
+    "openpdf_windows_v283": [
+      "openpdf_windows_v282"
+    ],
+    "openpdf_windows_v328": [
+      "openpdf_compression_v328",
+      "openpdf_windows_v327"
+    ],
+    "test_openpdf_v349": [
+      "openpdf_workspace_v349"
+    ],
+    "smoke_windows_v319": [
+      "windows_window_probe_v286"
+    ],
+    "openpdf_windows_v296": [
+      "openpdf_commands_v296",
+      "openpdf_windows_v293"
+    ],
+    "openpdf_windows_v302": [
+      "openpdf_ui_bridge_v302",
+      "openpdf_windows_v293"
+    ],
+    "openpdf_workspace_v305": [
+      "openpdf_workspace_v304"
+    ],
+    "openpdf_windows_v307": [
+      "openpdf_windows_v306"
+    ],
+    "verify_release_v345": [],
+    "windows_window_probe_v286": [],
+    "browser_page_keyboard_v249": [
+      "diagnostic_dashboard"
+    ],
+    "openpdf_windows_v334": [
+      "openpdf_windows_v333"
+    ],
+    "test_openpdf_v278": [
+      "openpdf_commands_v276",
+      "openpdf_ui_shell_v278"
+    ],
+    "openpdf_windows_v358": [
+      "openpdf_windows_v354"
+    ],
+    "openpdf_task_state_v274": [],
+    "test_openpdf_v318": [
+      "verify_release_v318"
+    ],
+    "openpdf_windows_v299": [
+      "openpdf_ui_bridge_v299",
+      "openpdf_windows_v293"
+    ],
+    "test_openpdf_v309": [
+      "openpdf_conversion_controller_v309",
+      "openpdf_core_v260",
+      "openpdf_ui_bridge_v309"
+    ],
+    "openpdf_windows_v285": [
+      "openpdf_windows_v284"
+    ],
+    "test_openpdf_v327": [
+      "openpdf_quality_v327"
+    ],
+    "openpdf_roundtrip_v356": [
+      "openpdf_conversion_service_v351",
+      "openpdf_quality_metrics_v356",
+      "openpdf_visual_fidelity_v354"
+    ],
+    "openpdf_windows_v261": [
+      "openpdf_windows_v260"
+    ],
+    "openpdf_windows_v294": [
+      "openpdf_windows_v293"
+    ],
+    "openpdf_windows_v337": [
+      "openpdf_output_receipt_v337",
+      "openpdf_quality_dashboard_v332",
+      "openpdf_task_presenter_v334",
+      "openpdf_windows_v336"
+    ],
+    "smoke_windows_v311": [
+      "windows_window_probe_v286"
+    ],
+    "test_openpdf_v358": [
+      "openpdf_batch_quality_v358"
+    ],
+    "test_dashboard_v206": [
+      "diagnostic_dashboard"
+    ],
+    "verify_release_v356": [],
+    "openpdf_windows_v308": [
+      "openpdf_ui_bridge_v308",
+      "openpdf_windows_v307"
+    ],
+    "openpdf_windows_v286": [
+      "openpdf_windows_v285"
+    ],
+    "openpdf_windows_v305": [
+      "openpdf_windows_v293",
+      "openpdf_workspace_v305"
+    ],
+    "qualify_installer_v299": [
+      "openpdf_functional_v282",
+      "smoke_windows_v299"
+    ],
+    "verify_release_v288": [
+      "verify_release_v291"
+    ],
+    "openpdf_windows_v331": [
+      "openpdf_quality_dashboard_v330",
+      "openpdf_task_state_v274",
+      "openpdf_windows_v330"
+    ],
+    "openpdf_transaction_v338": [
+      "openpdf_compression_v327"
+    ],
+    "verify_release_v341": [],
+    "browser_verified_v240": [
+      "diagnostic_dashboard"
+    ],
+    "openpdf_windows_v348": [
+      "openpdf_ui_controller_v348"
+    ],
+    "test_openpdf_core_v260": [
+      "openpdf_core_v260"
+    ],
+    "test_openpdf_v271": [
+      "openpdf_engine_v271",
+      "openpdf_tasks_v271"
+    ],
+    "openpdf_ui_controller_v348": [
+      "openpdf_compression_service_v344",
+      "openpdf_conversion_service_v351",
+      "openpdf_ocr_service_v347",
+      "openpdf_page_service_v345"
+    ],
+    "verify_release_v352": [],
+    "smoke_windows_v300": [
+      "windows_window_probe_v286"
+    ],
+    "openpdf_compression_v325": [
+      "openpdf_compression_v319",
+      "openpdf_compression_v320",
+      "openpdf_engine_v272",
+      "openpdf_preview_v325"
+    ],
+    "qualify_installer_v295": [
+      "openpdf_functional_v282",
+      "smoke_windows_v295"
+    ],
+    "openpdf_windows_v266": [
+      "openpdf_windows_v265"
+    ],
+    "openpdf_ui_bridge_v308": [
+      "openpdf_conversion_controller_v308",
+      "openpdf_ui_bridge_v301"
+    ],
+    "smoke_windows_v303": [
+      "windows_window_probe_v286"
+    ],
+    "qualify_installer_v300": [
+      "openpdf_functional_v282",
+      "smoke_windows_v300"
+    ],
+    "test_openpdf_v301": [
+      "openpdf_conversion_controller_v301",
+      "openpdf_core_v260",
+      "openpdf_ui_bridge_v301",
+      "openpdf_windows_v301"
+    ],
+    "test_openpdf_v288": [
+      "qualify_installer_v288",
+      "smoke_windows_v288"
+    ],
+    "smoke_windows_v299": [
+      "windows_window_probe_v286"
+    ],
+    "test_openpdf_v272": [
+      "openpdf_engine_v272"
+    ],
+    "test_ui_audit_v230": [
+      "diagnostic_dashboard",
+      "ui_audit"
+    ],
+    "test_openpdf_v310": [
+      "openpdf_ui_bridge_v310"
+    ],
+    "openpdf_windows_v311": [
+      "openpdf_essentials_v311",
+      "openpdf_windows_v310"
+    ],
+    "browser_pair_v242": [
+      "diagnostic_dashboard"
+    ],
+    "openpdf_quality_metrics_v356": [],
+    "ui_audit_v296": [
+      "openpdf_windows_v296"
+    ],
+    "test_navigation_v216": [
+      "diagnostic_dashboard",
+      "diagnostic_export"
+    ],
+    "openpdf_windows_v333": [
+      "openpdf_quality_dashboard_v332",
+      "openpdf_task_presenter_v333",
+      "openpdf_task_state_v274",
+      "openpdf_windows_v332"
+    ],
+    "openpdf_windows_v280": [
+      "openpdf_ui_controller_v280",
+      "openpdf_windows_v279"
+    ],
+    "openpdf_ui_controller_v280": [],
+    "test_sync_v229": [
+      "diagnostic_dashboard"
+    ],
+    "test_openpdf_v345": [
+      "openpdf_page_service_v345"
+    ],
+    "openpdf_windows_v332": [
+      "openpdf_quality_dashboard_v332",
+      "openpdf_task_state_v274",
+      "openpdf_windows_v331"
+    ],
+    "visual_coordinate_transform": [],
+    "test_openpdf_v340": [
+      "openpdf_controller_v340"
+    ],
+    "verify_release_v283": [
+      "verify_release_v284",
+      "verify_release_v287",
+      "verify_release_v288",
+      "verify_release_v289",
+      "verify_release_v294",
+      "verify_release_v295"
+    ],
+    "openpdf_conversion_controller_v301": [
+      "openpdf_core_v260",
+      "openpdf_output_policy_v300"
+    ],
+    "verify_release_v349": [],
+    "openpdf_fidelity_v352": [],
+    "openpdf_windows_v276": [
+      "openpdf_commands_v276",
+      "openpdf_windows_v275"
+    ],
+    "test_openpdf_v336": [
+      "openpdf_windows_v336"
+    ],
+    "openpdf_orchestrator_v343": [
+      "openpdf_operations_v342"
+    ],
+    "openpdf_windows_v265": [
+      "openpdf_core_v261",
+      "openpdf_windows_v262",
+      "openpdf_windows_v264"
+    ],
+    "qualify_installer_v290": [
+      "smoke_windows_v289"
+    ],
+    "test_openpdf_v273": [
+      "openpdf_engine_v273",
+      "openpdf_tasks_v273"
+    ],
+    "test_openpdf_v360": [
+      "openpdf_quality_diagnostic"
+    ],
+    "browser_proof_export_v252": [
+      "diagnostic_dashboard"
+    ],
+    "page_sequence_audit_v234": [],
+    "openpdf_compression_v322": [
+      "openpdf_compression_v319",
+      "openpdf_compression_v320",
+      "openpdf_engine_v272"
+    ],
+    "smoke_windows_v292": [
+      "windows_window_probe_v286"
+    ],
+    "openpdf_windows_v356": [
+      "openpdf_windows_v354"
+    ],
+    "test_layout_regions_v236": [
+      "diagnostic_dashboard",
+      "layout_table_audit_v235"
+    ],
+    "openpdf_windows_v344": [
+      "openpdf_compression_service_v344",
+      "openpdf_windows_v343"
+    ],
+    "test_multipage_r26": [
+      "multipage_audit"
+    ],
+    "openpdf_windows_v270": [
+      "openpdf_windows_v269",
+      "openpdf_workspace_v270"
+    ],
+    "smoke_windows_v288": [
+      "windows_window_probe_v286"
+    ],
+    "openpdf_ui_bridge_v310": [
+      "openpdf_ui_bridge_v303",
+      "openpdf_ui_bridge_v309"
+    ],
+    "test_dashboard_v205": [
+      "diagnostic_dashboard"
+    ],
+    "openpdf_ui_bridge_v301": [
+      "openpdf_conversion_controller_v301",
+      "openpdf_core_v260",
+      "openpdf_ui_bridge_v300"
+    ],
+    "openpdf_ui_bridge_v299": [
+      "openpdf_commands_v296",
+      "openpdf_engine_v273"
+    ],
+    "audit_dossier_v256": [
+      "bind_pdf_audit_v255"
+    ],
+    "openpdf_quality_report_v329": [],
+    "openpdf_windows_v260": [
+      "openpdf_core_v260",
+      "openpdf_core_v261"
+    ],
+    "smoke_windows_v318": [
+      "windows_window_probe_v286"
+    ],
+    "openpdf_windows_v330": [
+      "openpdf_windows_v329"
+    ],
+    "python_bridge": [],
+    "test_export_v215": [
+      "diagnostic_dashboard",
+      "diagnostic_export"
+    ],
+    "openpdf_ui_bridge_v309": [
+      "openpdf_conversion_controller_v309",
+      "openpdf_ui_bridge_v301"
+    ],
+    "ui_audit_v294": [
+      "openpdf_windows_v294"
+    ],
+    "openpdf_conversion_audit_v346": [
+      "openpdf_fidelity_v352"
+    ],
+    "qualify_portable_v296": [
+      "verify_release_v296"
+    ],
+    "openpdf_output_receipt_v337": [],
+    "test_report_quality_v20": [
+      "diagnostic_dashboard",
+      "report_quality"
+    ],
+    "smoke_windows_v314": [
+      "windows_window_probe_v286"
+    ],
+    "smoke_windows_v289": [
+      "windows_window_probe_v286"
+    ],
+    "test_pipeline_v214": [
+      "diagnostic_dashboard",
+      "diagnostic_pipeline"
+    ],
+    "openpdf_conversion_controller_v309": [
+      "openpdf_conversion_controller_v308"
+    ],
+    "verify_release_v311": [
+      "verify_release_v312"
+    ],
+    "openpdf_operations_v342": [],
+    "openpdf_windows_v272": [
+      "openpdf_engine_v272",
+      "openpdf_windows_v271"
+    ],
+    "browser_pdf_v232": [
+      "diagnostic_dashboard"
+    ],
+    "test_openpdf_v348": [
+      "openpdf_ui_controller_v348"
+    ],
+    "verify_release_v357": [],
+    "openpdf_windows_v297": [
+      "openpdf_ui_bridge_v297",
+      "openpdf_windows_v293"
+    ],
+    "openpdf_output_policy_v300": [],
+    "openpdf_windows_v335": [
+      "openpdf_quality_dashboard_v332",
+      "openpdf_task_presenter_v334",
+      "openpdf_windows_v334"
+    ],
+    "qualify_portable_v298": [
+      "verify_release_v298"
+    ],
+    "test_openpdf_v305": [
+      "openpdf_windows_v305",
+      "openpdf_workspace_v305"
+    ],
+    "openpdf_windows_v289": [
+      "openpdf_windows_v287"
+    ],
+    "openpdf_compression_v319": [
+      "openpdf_engine_v272"
+    ],
+    "openpdf_engine_v271": [],
+    "openpdf_ui_bridge_v298": [
+      "openpdf_commands_v296",
+      "openpdf_engine_v273"
+    ],
+    "openpdf_conversion_service_v351": [
+      "openpdf_conversion_audit_v346",
+      "openpdf_conversion_controller_v301",
+      "openpdf_conversion_controller_v309",
+      "openpdf_output_policy_v300"
+    ],
+    "test_openpdf_v331": [
+      "openpdf_task_state_v274",
+      "openpdf_windows_v331"
+    ],
+    "openpdf_windows_v326": [
+      "openpdf_compression_v326",
+      "openpdf_windows_v325"
+    ],
+    "openpdf_windows_v315": [
+      "openpdf_guided_v315",
+      "openpdf_windows_v314"
+    ],
+    "test_table_fragment_r30": [
+      "table_fragment_audit"
+    ],
+    "verify_release_v314": [
+      "verify_release_v320"
+    ],
+    "verify_release_v296": [],
+    "test_openpdf_v282": [
+      "openpdf_functional_v282"
+    ],
+    "browser_inspector_v239": [
+      "diagnostic_dashboard"
+    ],
+    "openpdf_windows_v288": [
+      "openpdf_windows_v287"
+    ],
+    "openpdf_windows_v304": [
+      "openpdf_windows_v293",
+      "openpdf_workspace_v304"
+    ],
+    "smoke_windows_v297": [
+      "windows_window_probe_v286"
+    ],
+    "openpdf_windows_v342": [
+      "openpdf_operations_v342",
+      "openpdf_windows_v341"
+    ],
+    "openpdf_windows_v341": [
+      "openpdf_windows_v340"
+    ],
+    "openpdf_conversion_controller_v308": [
+      "openpdf_conversion_controller_v301",
+      "openpdf_output_policy_v300"
+    ],
+    "test_region_sync_v220": [
+      "diagnostic_dashboard"
+    ],
+    "test_openpdf_v313": [
+      "openpdf_guided_v313"
+    ],
+    "openpdf_workspace_v270": [],
+    "verify_release_v312": [
+      "verify_release_v313"
+    ],
+    "test_windows_preflight_v258": [
+      "windows_preflight_v258"
+    ],
+    "verify_release_v307": [
+      "verify_release_v308"
+    ],
+    "smoke_windows_v296": [
+      "windows_window_probe_v286"
+    ],
+    "openpdf_windows_v269": [
+      "openpdf_windows_v267"
+    ],
+    "ui_audit_v293": [
+      "openpdf_windows_v293"
+    ],
+    "verify_release_v319": [],
+    "test_openpdf_v338": [
+      "openpdf_transaction_v338"
+    ],
+    "ui_audit_v303": [
+      "openpdf_windows_v303"
+    ],
+    "openpdf_windows_v339": [
+      "openpdf_transaction_v338",
+      "openpdf_windows_v338"
+    ],
+    "openpdf_compression_service_v344": [
+      "openpdf_compression_v327",
+      "openpdf_transaction_v338"
+    ],
+    "openpdf_windows_v346": [
+      "openpdf_conversion_audit_v346",
+      "openpdf_windows_v345"
+    ],
+    "openpdf_commands_v276": [],
+    "audit_assistant_v257": [
+      "audit_dossier_v256"
+    ],
+    "smoke_windows_v301": [
+      "windows_window_probe_v286"
+    ],
+    "browser_qualification_v232": [
+      "diagnostic_dashboard"
+    ],
+    "openpdf_quality_dashboard_v330": [
+      "openpdf_compression_v320"
+    ],
+    "openpdf_page_service_v345": [],
+    "test_openpdf_v350": [
+      "openpdf_job_controller_v350"
+    ],
+    "openpdf_windows_v327": [
+      "openpdf_compression_v327",
+      "openpdf_windows_v326"
+    ],
+    "test_openpdf_v329": [
+      "openpdf_quality_report_v329"
+    ],
+    "test_bidirectional_v223": [
+      "diagnostic_dashboard"
+    ],
+    "test_openpdf_v295": [
+      "ui_audit_v295",
+      "verify_release_v295"
+    ],
+    "openpdf_core_v260": [],
+    "test_dashboard_v202": [
+      "diagnostic_dashboard"
+    ],
+    "test_dashboard_v204": [
+      "diagnostic_dashboard"
+    ],
+    "test_openpdf_v335": [
+      "openpdf_task_presenter_v334"
+    ],
+    "table_structure_audit": [],
+    "test_openpdf_v316": [
+      "verify_release_v316"
+    ],
+    "openpdf_windows_v274": [
+      "openpdf_engine_v273",
+      "openpdf_task_state_v274",
+      "openpdf_windows_v273"
+    ],
+    "test_evidence_v222": [
+      "diagnostic_dashboard"
+    ],
+    "qualify_installer_v293": [
+      "openpdf_functional_v282",
+      "smoke_windows_v293"
+    ],
+    "test_openpdf_v304": [
+      "openpdf_windows_v304",
+      "openpdf_workspace_v304"
+    ],
+    "openpdf_windows_v350": [
+      "openpdf_job_controller_v350",
+      "openpdf_ui_controller_v348",
+      "openpdf_workspace_v349"
+    ],
+    "test_document_extract_r24": [
+      "document_extract"
+    ],
+    "test_openpdf_v347": [
+      "openpdf_ocr_service_v347"
+    ],
+    "browser_inspector_v238": [
+      "diagnostic_dashboard"
+    ],
+    "smoke_windows_v302": [
+      "windows_window_probe_v286"
+    ],
+    "smoke_windows_v293": [
+      "windows_window_probe_v286"
+    ],
+    "browser_pair_v241": [
+      "diagnostic_dashboard"
+    ],
+    "qualify_portable_v302": [
+      "verify_release_v302"
+    ],
+    "test_openpdf_v324": [
+      "openpdf_compression_v324"
+    ],
+    "verify_release_v347": [],
+    "qualify_portable_v299": [
+      "verify_release_v299"
+    ],
+    "test_openpdf_v351": [
+      "openpdf_conversion_service_v351",
+      "openpdf_ui_controller_v348",
+      "openpdf_workspace_v349"
+    ],
+    "verify_release_v297": [
+      "verify_release_v298"
+    ],
+    "test_openpdf_v291": [
+      "qualify_installer_v291"
+    ],
+    "openpdf_windows_v306": [
+      "openpdf_windows_v293",
+      "openpdf_workspace_v306"
+    ],
+    "test_multipage_v123": [
+      "multipage_audit"
+    ],
+    "openpdf_ui_bridge_v297": [
+      "openpdf_commands_v296"
+    ],
+    "verify_release_v300": [],
+    "openpdf_controller_v340": [],
+    "smoke_windows_v284": [],
+    "qualify_portable_v303": [
+      "verify_release_v303"
+    ],
+    "openpdf_windows_v355": [
+      "openpdf_windows_v354"
+    ],
+    "openpdf_windows_v352": [
+      "openpdf_windows_v351"
+    ],
+    "openpdf_engine_v272": [
+      "openpdf_engine_v271"
+    ],
+    "smoke_windows_v315": [
+      "windows_window_probe_v286"
+    ],
+    "ui_audit_v297": [
+      "openpdf_windows_v297"
+    ],
+    "browser_proof_audit_v253": [
+      "browser_proof_export_v252"
+    ],
+    "test_openpdf_v294": [
+      "verify_release_v294"
+    ],
+    "test_openpdf_v334": [
+      "openpdf_task_presenter_v334"
+    ],
+    "verify_release_v320": [],
+    "verify_release_v305": [
+      "verify_release_v306"
+    ],
+    "visual_text_correlation": [],
+    "openpdf_workspace_v304": [
+      "openpdf_ui_bridge_v302",
+      "openpdf_ui_bridge_v303"
+    ],
+    "qualify_installer_v301": [
+      "openpdf_functional_v282",
+      "smoke_windows_v301"
+    ],
+    "test_openpdf_core_v261": [
+      "openpdf_core_v261"
+    ],
+    "openpdf_diagnostics_v275": [],
+    "openpdf_essentials_v311": [
+      "openpdf_ui_bridge_v302",
+      "openpdf_ui_bridge_v310"
+    ],
+    "verify_release_v294": [
+      "verify_release_v295",
+      "verify_release_v312"
+    ],
+    "verify_release_v301": [],
+    "browser_proof_v244": [
+      "diagnostic_dashboard"
+    ],
+    "openpdf_build_audit_v281": [],
+    "test_qualification_v227": [
+      "diagnostic_dashboard"
+    ],
+    "smoke_windows_v320": [
+      "windows_window_probe_v286"
+    ],
+    "test_openpdf_v320": [
+      "openpdf_compression_v320"
+    ],
+    "qualify_portable_v297": [
+      "verify_release_v297"
+    ],
+    "qualify_portable_v295": [
+      "verify_release_v295"
+    ],
+    "boundary_audit": [],
+    "openpdf_commands_v296": [
+      "openpdf_engine_v273"
+    ],
+    "openpdf_guided_v314": [
+      "openpdf_essentials_v311",
+      "openpdf_guided_v313"
+    ],
+    "test_regions_v219": [
+      "diagnostic_dashboard"
+    ],
+    "browser_multipage_v251": [
+      "diagnostic_dashboard"
+    ],
+    "test_page_summary_v224": [],
+    "test_openpdf_workspace_v270": [
+      "openpdf_workspace_v270"
+    ],
+    "diagnostic_export": [
+      "diagnostic_pipeline"
+    ],
+    "verify_release_v309": [
+      "verify_release_v310"
+    ],
+    "verify_release_v287": [
+      "verify_release_v288",
+      "verify_release_v289",
+      "verify_release_v295",
+      "verify_release_v312"
+    ],
+    "test_openpdf_v355": [
+      "openpdf_roundtrip_v355"
+    ],
+    "test_openpdf_v353": [
+      "openpdf_fidelity_corpus_v353"
+    ],
+    "test_compression_v322": [
+      "openpdf_compression_v322"
+    ],
+    "test_openpdf_v286": [
+      "smoke_windows_v286",
+      "windows_window_probe_v286"
+    ],
+    "test_openpdf_v346": [
+      "openpdf_conversion_audit_v346"
+    ],
+    "test_openpdf_windows_v269_static": [],
+    "openpdf_windows_v281": [
+      "openpdf_windows_v280"
+    ],
+    "test_openpdf_v352": [
+      "openpdf_conversion_audit_v346",
+      "openpdf_fidelity_v352"
+    ],
+    "verify_release_v358": [],
+    "browser_proof_integrity_v254": [
+      "browser_proof_export_v252",
+      "verify_proof_audit_v254"
+    ],
+    "qualify_installer_v297": [
+      "openpdf_functional_v282",
+      "smoke_windows_v297"
+    ],
+    "openpdf_batch_quality_v358": [
+      "openpdf_roundtrip_v356"
+    ],
+    "ui_audit": [],
+    "test_openpdf_v339": [
+      "openpdf_compression_v327",
+      "openpdf_transaction_v338",
+      "openpdf_windows_v339"
+    ],
+    "openpdf_fidelity_corpus_v353": [
+      "openpdf_fidelity_v352"
+    ],
+    "verify_release_v298": [
+      "verify_release_v299"
+    ],
+    "test_openpdf_v277": [
+      "openpdf_commands_v276",
+      "openpdf_ui_layout_v277"
+    ],
+    "openpdf_windows_v357": [
+      "openpdf_windows_v354"
+    ],
+    "openpdf_compression_v328": [
+      "openpdf_compression_v319",
+      "openpdf_compression_v320",
+      "openpdf_engine_v272",
+      "openpdf_preview_v326",
+      "openpdf_quality_v327",
+      "openpdf_visual_quality_v328"
+    ],
+    "test_browser_v232": [
+      "diagnostic_dashboard"
+    ],
+    "bind_pdf_audit_v255": [
+      "verify_proof_audit_v254"
+    ],
+    "openpdf_ocr_service_v347": [],
+    "openpdf_windows_v298": [
+      "openpdf_ui_bridge_v298",
+      "openpdf_windows_v293"
+    ],
+    "openpdf_windows_v300": [
+      "openpdf_ui_bridge_v300",
+      "openpdf_windows_v293"
+    ],
+    "test_openpdf_v311": [
+      "openpdf_essentials_v311"
+    ],
+    "openpdf_windows_v347": [
+      "openpdf_ocr_service_v347",
+      "openpdf_windows_v346"
+    ],
+    "ui_audit_v298": [
+      "openpdf_windows_v298"
+    ],
+    "test_regions_v218": [
+      "diagnostic_dashboard"
+    ],
+    "test_dashboard_v203": [
+      "diagnostic_dashboard"
+    ],
+    "verify_release_v355": [],
+    "multipage_audit": [],
+    "test-python-bridge": [
+      "python_bridge"
+    ],
+    "openpdf_guided_v315": [
+      "openpdf_engine_v272",
+      "openpdf_guided_v314"
+    ],
+    "test_openpdf_v289": [
+      "qualify_installer_v289"
+    ],
+    "smoke_windows_v286": [
+      "windows_window_probe_v286"
+    ],
+    "test_openpdf_v342": [
+      "openpdf_operations_v342"
+    ],
+    "openpdf_tasks_v273": [],
+    "openpdf_windows_v329": [
+      "openpdf_windows_v328"
+    ],
+    "verify_release_v304": [
+      "verify_release_v305"
+    ],
+    "test_openpdf_v274": [
+      "openpdf_task_state_v274",
+      "openpdf_tasks_v273"
+    ],
+    "smoke_windows_v307": [
+      "windows_window_probe_v286"
+    ],
+    "test_openpdf_v298": [
+      "openpdf_commands_v296",
+      "openpdf_engine_v273",
+      "openpdf_ui_bridge_v298"
+    ],
+    "openpdf_tasks_v271": [],
+    "verify_release_v354": [],
+    "openpdf_windows_v267": [
+      "openpdf_windows_v265",
+      "openpdf_windows_v266"
+    ],
+    "test_openpdf_v292": [
+      "qualify_installer_v292",
+      "smoke_windows_v292",
+      "windows_window_probe_v286"
+    ],
+    "openpdf_windows_v263": [
+      "openpdf_core_v261",
+      "openpdf_windows_v262"
+    ],
+    "test_page_sequence_v234": [
+      "page_sequence_audit_v234"
+    ],
+    "verify_release_v295": [
+      "verify_release_v309"
+    ],
+    "test_pdf_table_audit": [
+      "pdf_table_audit"
+    ],
+    "qualify_installer_v288": [
+      "smoke_windows_v288"
+    ],
+    "test_audit_dossier_v256": [
+      "audit_dossier_v256",
+      "test_bind_pdf_audit_v255"
+    ],
+    "openpdf_visual_quality_v328": [],
+    "openpdf_windows_v279": [
+      "openpdf_commands_v276",
+      "openpdf_ui_lifecycle_v279",
+      "openpdf_ui_shell_v278",
+      "openpdf_windows_v278"
+    ],
+    "openpdf_windows_v351": [
+      "openpdf_job_controller_v350",
+      "openpdf_ui_controller_v348",
+      "openpdf_workspace_v349"
+    ],
+    "test_dashboard_v201": [
+      "diagnostic_dashboard"
+    ],
+    "verify_release_v292": [
+      "verify_release_v293"
+    ],
+    "test_consolidated_r31": [
+      "consolidated_table_compare"
+    ],
+    "test_openpdf_windows_v265": [
+      "openpdf_windows_v265"
+    ],
+    "verify_release_v316": [
+      "verify_release_v321"
+    ],
+    "test_bind_pdf_audit_v255": [
+      "bind_pdf_audit_v255",
+      "verify_proof_audit_v254"
+    ],
+    "openpdf_windows_v275": [
+      "openpdf_diagnostics_v275",
+      "openpdf_task_state_v274",
+      "openpdf_windows_v274"
+    ],
+    "openpdf_windows_v318": [
+      "openpdf_windows_v316"
+    ],
+    "openpdf_windows_v314": [
+      "openpdf_guided_v314",
+      "openpdf_windows_v313"
+    ],
+    "verify_release_v299": [
+      "verify_release_v300"
+    ],
+    "openpdf_compression_v327": [
+      "openpdf_compression_v319",
+      "openpdf_compression_v320",
+      "openpdf_engine_v272",
+      "openpdf_preview_v326",
+      "openpdf_quality_v327"
+    ],
+    "verify_release_v318": [
+      "verify_release_v321"
+    ],
+    "test_openpdf_v297": [
+      "openpdf_commands_v296",
+      "openpdf_engine_v272",
+      "openpdf_ui_bridge_v297",
+      "openpdf_windows_v297"
+    ],
+    "openpdf_windows_v309": [
+      "openpdf_ui_bridge_v309",
+      "openpdf_windows_v308"
+    ],
+    "test_dashboard_v209": [
+      "diagnostic_dashboard"
+    ],
+    "test_openpdf_v312": [
+      "openpdf_essentials_v311",
+      "openpdf_essentials_v312"
+    ],
+    "verify_release_v313": [
+      "verify_release_v314"
+    ],
+    "test_openpdf_v356": [
+      "openpdf_quality_metrics_v356",
+      "openpdf_roundtrip_v356"
+    ],
+    "openpdf_quality_dashboard_v332": [
+      "openpdf_quality_dashboard_v330"
+    ],
+    "test_openpdf_v315": [
+      "openpdf_guided_v315"
+    ],
+    "test_openpdf_v357": [
+      "openpdf_corpus_v357",
+      "openpdf_quality_metrics_v356"
+    ],
+    "smoke_windows_v294": [
+      "windows_window_probe_v286"
+    ],
+    "test_openpdf_v276": [
+      "openpdf_commands_v276"
+    ],
+    "qualify_installer_v294": [
+      "openpdf_functional_v282",
+      "smoke_windows_v294"
+    ],
+    "smoke_windows_v308": [
+      "windows_window_probe_v286"
+    ],
+    "test_openpdf_v300": [
+      "openpdf_engine_v273",
+      "openpdf_output_policy_v300",
+      "openpdf_ui_bridge_v300",
+      "openpdf_windows_v300"
+    ],
+    "smoke_windows_v291": [
+      "windows_window_probe_v286"
+    ],
+    "test_qualification_charts_v228": [
+      "diagnostic_dashboard"
+    ],
+    "verify_release_v351": [],
+    "pdf_table_audit": [
+      "consolidated_table_compare",
+      "table_fragment_audit",
+      "table_structure_audit"
+    ],
+    "windows_preflight_v258": [],
+    "test_openpdf_v279": [
+      "openpdf_ui_lifecycle_v279"
+    ],
+    "openpdf_compression_v324": [
+      "openpdf_compression_v319",
+      "openpdf_compression_v320",
+      "openpdf_engine_v272"
+    ],
+    "openpdf_core_v261": [
+      "openpdf_core_v260"
+    ],
+    "verify_proof_audit_v254": [],
+    "openpdf_windows_v284": [
+      "openpdf_windows_v283"
+    ],
+    "diagnostic_dashboard": [
+      "diagnostic_export",
+      "diagnostic_pipeline",
+      "report_quality",
+      "visual_coordinate_transform",
+      "visual_text_correlation"
+    ],
+    "test_openpdf_v307": [
+      "openpdf_conversion_controller_v301",
+      "openpdf_core_v260",
+      "openpdf_ui_bridge_v301"
+    ],
+    "test_openpdf_v343": [
+      "openpdf_orchestrator_v343"
+    ],
+    "smoke_windows_v295": [
+      "windows_window_probe_v286"
+    ],
+    "openpdf_essentials_v312": [
+      "openpdf_essentials_v311"
+    ],
+    "test_dashboard_r33": [
+      "diagnostic_dashboard"
+    ],
+    "qualify_installer_v292": [
+      "openpdf_functional_v282",
+      "smoke_windows_v292"
+    ],
+    "openpdf_windows_v324": [
+      "openpdf_compression_v324",
+      "openpdf_windows_v320"
+    ],
+    "test_openpdf_v284": [
+      "smoke_windows_v284"
+    ],
+    "openpdf_task_presenter_v334": [],
+    "layout_table_audit_v235": [
+      "page_sequence_audit_v234"
+    ],
+    "verify_release_v342": [],
+    "test_openpdf_v299": [
+      "openpdf_engine_v273",
+      "openpdf_ui_bridge_v299",
+      "openpdf_windows_v299"
+    ],
+    "openpdf_windows_v353": [
+      "openpdf_windows_v352"
+    ],
+    "test_openpdf_v354": [
+      "openpdf_visual_fidelity_v354"
+    ],
+    "openpdf_windows_v323": [
+      "openpdf_compression_v323",
+      "openpdf_windows_v320"
+    ],
+    "browser_inspector_v237": [
+      "diagnostic_dashboard"
+    ],
+    "document_extract": [
+      "boundary_audit",
+      "multipage_audit",
+      "pdf_table_audit",
+      "python_bridge",
+      "table_structure_audit"
+    ],
+    "openpdf_corpus_v357": [],
+    "ui_audit_v302": [
+      "openpdf_windows_v302"
+    ],
+    "test_openpdf_windows_v264": [
+      "openpdf_windows_v264"
+    ],
+    "openpdf_windows_v262": [
+      "openpdf_core_v261",
+      "openpdf_windows_v260"
+    ],
+    "openpdf_windows_v303": [
+      "openpdf_ui_bridge_v303",
+      "openpdf_windows_v293"
+    ],
+    "test_dashboard_r36": [
+      "diagnostic_dashboard"
+    ],
+    "openpdf_windows_v264": [
+      "openpdf_core_v261",
+      "openpdf_windows_v263"
+    ],
+    "browser_page_evidence_v250": [
+      "diagnostic_dashboard"
+    ],
+    "qualify_installer_v291": [
+      "smoke_windows_v291"
+    ],
+    "test_proof_integrity_v254": [
+      "verify_proof_audit_v254"
+    ],
+    "openpdf_windows_v316": [
+      "openpdf_windows_v315"
+    ],
+    "test_dashboard_v217": [
+      "diagnostic_dashboard"
+    ],
+    "openpdf_windows_v312": [
+      "openpdf_essentials_v312",
+      "openpdf_windows_v311"
+    ],
+    "openpdf_windows_v322": [
+      "openpdf_compression_v322",
+      "openpdf_windows_v320"
+    ],
+    "smoke_windows_v321": [
+      "windows_window_probe_v286"
+    ],
+    "ui_audit_v299": [
+      "openpdf_windows_v299"
+    ],
+    "openpdf_windows_v278": [
+      "openpdf_commands_v276",
+      "openpdf_ui_shell_v278",
+      "openpdf_windows_v277"
+    ],
+    "consolidated_table_compare": [
+      "pdf_table_audit",
+      "table_fragment_audit"
+    ],
+    "test_document_extract": [
+      "document_extract"
+    ],
+    "test_openpdf_v303": [
+      "openpdf_ui_bridge_v303",
+      "openpdf_windows_v303"
+    ],
+    "openpdf_windows_v292": [
+      "openpdf_windows_v289"
+    ],
+    "openpdf_windows_v287": [
+      "openpdf_windows_v285"
+    ],
+    "verify_release_v286": [],
+    "verify_release_v343": [],
+    "test_openpdf_v344": [
+      "openpdf_compression_service_v344",
+      "openpdf_transaction_v338"
+    ],
+    "verify_release_v310": [
+      "verify_release_v311"
+    ],
+    "openpdf_compression_v326": [
+      "openpdf_compression_v319",
+      "openpdf_compression_v320",
+      "openpdf_engine_v272",
+      "openpdf_preview_v326"
+    ],
+    "openpdf_windows_v321": [
+      "openpdf_compression_v321",
+      "openpdf_windows_v320"
+    ],
+    "browser_proof_v246": [
+      "diagnostic_dashboard"
+    ],
+    "openpdf_ui_bridge_v303": [
+      "openpdf_core_v260",
+      "openpdf_ui_bridge_v302"
+    ],
+    "verify_release_v308": [],
+    "smoke_windows_v316": [
+      "windows_window_probe_v286"
+    ],
+    "test_openpdf_v308": [
+      "openpdf_conversion_controller_v308",
+      "openpdf_core_v260",
+      "openpdf_ui_bridge_v308"
+    ],
+    "openpdf_windows_v325": [
+      "openpdf_compression_v325",
+      "openpdf_windows_v324"
+    ],
+    "test_openpdf_windows_v266": [
+      "openpdf_windows_v260"
+    ],
+    "test_transform_v213": [
+      "visual_coordinate_transform",
+      "visual_text_correlation"
+    ],
+    "openpdf_windows_v320": [
+      "openpdf_compression_v320",
+      "openpdf_windows_v319"
+    ],
+    "openpdf_windows_v345": [
+      "openpdf_page_service_v345",
+      "openpdf_windows_v344"
+    ],
+    "openpdf_windows_v277": [
+      "openpdf_commands_v276",
+      "openpdf_ui_layout_v277",
+      "openpdf_windows_v276"
+    ],
+    "test_openpdf_v275": [
+      "openpdf_diagnostics_v275"
+    ],
+    "test_openpdf_windows_v267": [
+      "openpdf_windows_v267"
+    ],
+    "test_evidence_v221": [
+      "diagnostic_dashboard"
+    ],
+    "qualify_portable_v301": [
+      "verify_release_v301"
+    ],
+    "smoke_windows_v310": [
+      "windows_window_probe_v286"
+    ],
+    "openpdf_windows_v282": [
+      "openpdf_windows_v281"
+    ],
+    "smoke_windows_v312": [
+      "windows_window_probe_v286"
+    ],
+    "test_openpdf_v333": [
+      "openpdf_task_presenter_v333"
+    ]
+  }
+}

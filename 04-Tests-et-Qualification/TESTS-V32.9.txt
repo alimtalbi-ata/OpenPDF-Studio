@@ -1,0 +1,10 @@
+test_bad (test_openpdf_v329.TestReport.test_bad) ... ok
+test_measured (test_openpdf_v329.TestReport.test_measured) ... ok
+test_missing (test_openpdf_v329.TestReport.test_missing) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+
+Exit code: 0

@@ -3,7 +3,7 @@ Not an atomic multi-file transaction; readers can see intermediate versions.
 """
 import os,sys,shutil,uuid
 from pathlib import Path
-VERSION='39.8'
+VERSION='40.0'
 NAMES={'installer':f'OpenPDF-Studio-V{VERSION}-Setup.exe','portable':f'OpenPDF-Studio-Portable-V{VERSION}.exe'}
 def publish(stage,binary,mode='all',validator=None):
     stage,binary=Path(stage),Path(binary)

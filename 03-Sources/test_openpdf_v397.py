@@ -1,5 +1,6 @@
 import unittest
 from pathlib import Path
+from openpdf_release_gate import VERSION
 ROOT=Path(__file__).resolve().parent.parent
 class TestWindowsInstallationWiring(unittest.TestCase):
  def test_integration_script_present(self):
@@ -11,5 +12,5 @@ class TestWindowsInstallationWiring(unittest.TestCase):
   s=(ROOT/'02-Compilation'/'TEST-WINDOWS-INSTALLATION.ps1').read_text()
   for token in ('/VERYSILENT','unins000.exe','OPENPDF_SELF_TEST_OK','WaitForExit','silent_install_pass'):self.assertIn(token,s)
  def test_version(self):
-  self.assertEqual((ROOT/'VERSION.txt').read_text().strip(),'39.8')
+  self.assertEqual((ROOT/'VERSION.txt').read_text().strip(),VERSION)
 if __name__=='__main__':unittest.main()

@@ -1,7 +1,7 @@
 """Generate a transparent inventory of genuine PE binaries after a Windows build."""
 import hashlib,json,sys,datetime
 from pathlib import Path
-VERSION='39.8'
+VERSION='40.0'
 def inspect(binary):
     binary=Path(binary)
     items=[]
@@ -15,6 +15,6 @@ def inspect(binary):
 if __name__=='__main__':
     d=Path(sys.argv[1])
     r=inspect(d)
-    (d/'binary-manifest-v39.8.json').write_text(json.dumps(r,indent=2),encoding='utf-8')
+    (d/'binary-manifest-v40.0.json').write_text(json.dumps(r,indent=2),encoding='utf-8')
     print(json.dumps(r,indent=2))
     if any(x['present'] and not x['pe_mz_header'] for x in r['binaries']):sys.exit(1)

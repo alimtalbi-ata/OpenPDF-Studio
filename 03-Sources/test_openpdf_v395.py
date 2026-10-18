@@ -2,13 +2,13 @@ import unittest,tempfile,json,hashlib
 from pathlib import Path
 from unittest.mock import patch
 from openpdf_bind_smoke import bind
-from openpdf_release_gate import validate
+from openpdf_release_gate import validate, VERSION
 class ReleaseBindingTests(unittest.TestCase):
  def setUp(self):
   self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
-  self.exe=self.root/'OpenPDF-Studio-Portable-V39.8.exe';self.exe.write_bytes(b'MZdummy')
+  self.exe=self.root/f'OpenPDF-Studio-Portable-V{VERSION}.exe';self.exe.write_bytes(b'MZdummy')
   self.report=self.root/'windows-smoke-portable.json'
-  self.report.write_text(json.dumps({'version':'39.8','mode':'portable','passed':True,'checks':[{'passed':True},{'passed':True}]}))
+  self.report.write_text(json.dumps({'version':VERSION,'mode':'portable','passed':True,'checks':[{'passed':True},{'passed':True}]}))
  def test_bind_and_gate(self):
   with patch('openpdf_bind_smoke.verify',return_value=True),patch('openpdf_release_gate.verify',return_value=True):
    bind(self.root,'portable');self.assertTrue(validate(self.root,'portable')['qualified'])

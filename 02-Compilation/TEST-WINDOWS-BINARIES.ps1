@@ -1,8 +1,8 @@
 param([Parameter(Mandatory=$true)][ValidateSet('installer','portable')][string]$Mode,[Parameter(Mandatory=$true)][string]$SourceDir,[Parameter(Mandatory=$true)][string]$ReportPath)
 $ErrorActionPreference = 'Stop'
 $source = (Resolve-Path $SourceDir).Path
-$exe = if ($Mode -eq 'installer') { Join-Path $source 'dist\OpenPDF-Studio\OpenPDF-Studio.exe' } else { Join-Path $source '..\01-Application\binary\.staging-v39.8\OpenPDF-Studio-Portable-V39.8.exe' }
-$report = [ordered]@{version='39.8';mode=$Mode;host=$env:COMPUTERNAME;exe=$exe;exists=$false;checks=@();passed=$false;utc=(Get-Date).ToUniversalTime().ToString('o')}
+$exe = if ($Mode -eq 'installer') { Join-Path $source 'dist\OpenPDF-Studio\OpenPDF-Studio.exe' } else { Join-Path (Split-Path -Parent $ReportPath) 'OpenPDF-Studio-Portable-V40.0.exe' }
+$report = [ordered]@{version='40.0';mode=$Mode;host=$env:COMPUTERNAME;exe=$exe;exists=$false;checks=@();passed=$false;utc=(Get-Date).ToUniversalTime().ToString('o')}
 try {
   if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) { throw "Executable missing: $exe" }
   $report.exists = $true

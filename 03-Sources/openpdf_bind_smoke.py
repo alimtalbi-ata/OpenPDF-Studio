@@ -2,7 +2,7 @@
 import sys,json,hashlib
 from pathlib import Path
 from openpdf_verify_pe import verify
-VERSION='39.8'
+VERSION='40.0'
 def bind(stage,mode):
     stage=Path(stage)
     editions=('installer','portable') if mode=='all' else (mode,)

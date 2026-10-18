@@ -1,0 +1,28 @@
+name: Windows release qualification
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+jobs:
+  build-windows:
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and qualify installer + portable
+        shell: cmd
+        run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd
+      - name: Verify both binaries and reports
+        shell: pwsh
+        run: |
+          $dir = '01-Application/binary'
+          @('OpenPDF-Studio-V40.0-Setup.exe','OpenPDF-Studio-Portable-V40.0.exe','binary-manifest-v40.0.json','windows-installation-v40.0.json','windows-smoke-installer.json','windows-smoke-portable.json') | ForEach-Object {
+            if (!(Test-Path (Join-Path $dir $_))) { throw "Missing artifact: $_" }
+          }
+      - name: Upload verified binaries and reports
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenPDF-Studio-V40.0-Windows-binary
+          path: 01-Application/binary/
+          if-no-files-found: error

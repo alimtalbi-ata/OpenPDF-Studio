@@ -2,7 +2,7 @@
 import json,sys,hashlib
 from pathlib import Path
 from openpdf_verify_pe import verify
-VERSION='39.8'
+VERSION='40.0'
 NAMES={'installer':f'OpenPDF-Studio-V{VERSION}-Setup.exe','portable':f'OpenPDF-Studio-Portable-V{VERSION}.exe'}
 
 def validate(directory,mode='all'):

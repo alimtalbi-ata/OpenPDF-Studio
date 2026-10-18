@@ -21,9 +21,9 @@ $setup = Join-Path $binary $required[0]
 $report = Get-Content (Join-Path $binary "windows-installation-v$version.json") -Raw | ConvertFrom-Json
 if ($report.passed -ne $true) { throw 'Windows installation qualification did not pass' }
 $hash = (Get-FileHash -LiteralPath $setup -Algorithm SHA256).Hash.ToLowerInvariant()
-if (-not $report.setup_sha256 -and -not $report.installer_sha256) {
-  throw 'Installation report lacks installer SHA256'
+if (-not $report.artifact_sha256) {
+  throw 'Installation report lacks bound artifact SHA256'
 }
-$reportedHash = if ($report.setup_sha256) { $report.setup_sha256 } else { $report.installer_sha256 }
+$reportedHash = $report.artifact_sha256
 if ($reportedHash.ToLowerInvariant() -ne $hash) { throw 'Installer hash differs from installation report' }
 Write-Host "Qualified Windows artifacts verified for V$version"

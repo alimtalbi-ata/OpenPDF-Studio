@@ -100,8 +100,8 @@ def split(source,folder,chunk_size=1):
             receipt=extract(src,target,i+1,min(i+chunk_size,n))
             published.append(receipt)
     except BaseException:
-        # Rollback is best effort. Only unlink the same inode we published:
-        # a concurrent replacement must never be removed by filename.
+        # Rollback is best effort: a matching digest reduces accidental removal,
+        # but cannot prevent a concurrent replacement between hash and unlink.
         for receipt in published:
             output = Path(receipt.outputs[0])
             try:

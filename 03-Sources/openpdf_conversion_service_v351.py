@@ -49,8 +49,8 @@ def convert_office(source, destination, *, output_format=None):
         if audit.sha256.lower() != actual_sha256:
             raise RuntimeError('Empreinte de conversion incoherente : sortie non publiee')
         # Flush converted bytes before exposing the result to another process.
-        with temporary.open('rb') as stream:
-            import os
+        with temporary.open('r+b') as stream:
+            stream.flush()
             os.fsync(stream.fileno())
         # Atomic exclusive publication on local filesystems supporting hard links.
         # Unlike os.replace, this never silently overwrites an existing document.

@@ -5,12 +5,14 @@ ROOT=Path(__file__).resolve().parent.parent
 class WindowsBuildContract(unittest.TestCase):
  def test_inno_config_exists(self):
   script=(ROOT/'02-Compilation/BUILD-WINDOWS-INSTALLER.cmd').read_text(encoding='utf-8')
-  self.assertIn('OpenPDF-Studio-V40.2.iss',script)
-  self.assertTrue((ROOT/'03-Sources/OpenPDF-Studio-V40.2.iss').exists())
+  self.assertIn('OpenPDF-Studio-V%VERSION%.iss',script)
+  version=(ROOT/'VERSION.txt').read_text().strip()
+  self.assertTrue((ROOT/f'03-Sources/OpenPDF-Studio-V{version}.iss').exists())
  def test_installer_stage_path(self):
-  config=(ROOT/'03-Sources/OpenPDF-Studio-V40.2.iss').read_text(encoding='utf-8')
-  self.assertIn('binary\\.staging-v40.2',config)
-  self.assertIn('OpenPDF-Studio-V40.2-Setup',config)
+  version=(ROOT/'VERSION.txt').read_text().strip()
+  config=(ROOT/f'03-Sources/OpenPDF-Studio-V{version}.iss').read_text(encoding='utf-8')
+  self.assertIn(f'binary\\.staging-v{version}',config)
+  self.assertIn(f'OpenPDF-Studio-V{version}-Setup',config)
  def test_windows_runner_contract(self):
   flow=(ROOT/'.github/workflows/windows-release.yml').read_text(encoding='utf-8')
   self.assertIn('windows-2022',flow)

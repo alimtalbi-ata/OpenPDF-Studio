@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, asdict
 from pathlib import Path
 import hashlib, os, tempfile, re
+from openpdf_atomic_output import publish_exclusive
 
 @dataclass(frozen=True)
 class OCRReceipt:
@@ -64,11 +65,7 @@ def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=T
         with fitz.open(tmp) as check:
             if check.page_count!=processed+skipped:raise RuntimeError('PDF OCR invalide')
         if Path(tmp).stat().st_size==0:raise RuntimeError('Sortie OCR vide')
-        # Publication exclusive: do not overwrite a file created by another process.
-        try:
-            os.link(tmp,destination)
-        except FileExistsError:
-            raise FileExistsError(f'Destination créée pendant le traitement : {destination}')
+        publish_exclusive(tmp, destination)
         os.unlink(tmp)
         return OCRReceipt(str(source),str(destination),processed+skipped,processed,skipped,_digest(destination),destination.stat().st_size,language)
     finally:

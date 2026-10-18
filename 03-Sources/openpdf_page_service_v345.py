@@ -100,8 +100,8 @@ def split(source,folder,chunk_size=1):
             receipt=extract(src,target,i+1,min(i+chunk_size,n))
             published.append(receipt)
     except BaseException:
-        # Do not delete a path merely by name: another process may have
-        # replaced it after our publication. Roll back only matching bytes.
+        # Rollback is best effort. Only unlink the same inode we published:
+        # a concurrent replacement must never be removed by filename.
         for receipt in published:
             output = Path(receipt.outputs[0])
             try:

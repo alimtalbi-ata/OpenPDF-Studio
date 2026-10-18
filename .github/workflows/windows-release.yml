@@ -47,6 +47,7 @@ jobs:
           path: |
             01-Application/binary/*.log
             01-Application/binary/*.json
+            01-Application/binary/.staging-*/windows-*.json
           if-no-files-found: warn
       - name: Upload qualified binaries
         if: success()

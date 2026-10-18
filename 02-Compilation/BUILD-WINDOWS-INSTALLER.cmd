@@ -33,7 +33,7 @@ set "VPY=%CD%\.venv\Scripts\python.exe"
 "%VPY%" openpdf_build_preflight.py >> "%LOG%" 2>&1 || goto fail
 "%VPY%" -m unittest test_openpdf_v402 test_openpdf_v385 test_openpdf_v384 >> "%LOG%" 2>&1 || goto fail
 if /I "%MODE%"=="portable" goto portable
-"%VPY%" -m PyInstaller --noconfirm --clean --windowed --onedir --name OpenPDF-Studio --collect-all fitz --collect-all pymupdf --hidden-import tkinter openpdf_studio.py >> "%LOG%" 2>&1 || goto fail
+"%VPY%" -m PyInstaller --noconfirm --clean --windowed --onedir --name OpenPDF-Studio --collect-all fitz --collect-all pymupdf --hidden-import tkinter --add-data "..\VERSION.txt;." openpdf_studio.py >> "%LOG%" 2>&1 || goto fail
 if not exist "dist\OpenPDF-Studio\OpenPDF-Studio.exe" goto fail
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0TEST-WINDOWS-BINARIES.ps1" -Mode installer -SourceDir "%CD%" -ReportPath "%STAGE%\windows-smoke-installer.json" >> "%LOG%" 2>&1 || goto fail
 set "ISCC=%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe"
@@ -54,7 +54,7 @@ for %%F in ("%STAGE%\OpenPDF-Studio-V40.2-Setup.exe") do if %%~zF LEQ 0 goto fai
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0TEST-WINDOWS-INSTALLATION.ps1" -SetupExe "%STAGE%\OpenPDF-Studio-V40.2-Setup.exe" -ReportPath "%STAGE%\windows-installation-v40.2.json" >> "%LOG%" 2>&1 || goto fail
 if /I "%MODE%"=="installer" goto publish
 :portable
-"%VPY%" -m PyInstaller --noconfirm --clean --windowed --onefile --name OpenPDF-Studio-Portable-V40.2 --collect-all fitz --collect-all pymupdf --hidden-import tkinter --distpath "%STAGE%" openpdf_studio.py >> "%LOG%" 2>&1 || goto fail
+"%VPY%" -m PyInstaller --noconfirm --clean --windowed --onefile --name OpenPDF-Studio-Portable-V40.2 --collect-all fitz --collect-all pymupdf --hidden-import tkinter --add-data "..\VERSION.txt;." --distpath "%STAGE%" openpdf_studio.py >> "%LOG%" 2>&1 || goto fail
 if not exist "%STAGE%\OpenPDF-Studio-Portable-V40.2.exe" goto fail
 for %%F in ("%STAGE%\OpenPDF-Studio-Portable-V40.2.exe") do if %%~zF LEQ 0 goto fail
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0TEST-WINDOWS-BINARIES.ps1" -Mode portable -SourceDir "%CD%" -ReportPath "%STAGE%\windows-smoke-portable.json" >> "%LOG%" 2>&1 || goto fail

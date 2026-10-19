@@ -35,6 +35,16 @@ class AtomicOutputTests(unittest.TestCase):
                     publish_exclusive(temp, dest)
             self.assertFalse(dest.exists())
 
+    def test_cross_directory_staging_rejected(self):
+        with tempfile.TemporaryDirectory() as root:
+            a, b = Path(root) / 'stage', Path(root) / 'out'
+            a.mkdir(); b.mkdir()
+            temporary, destination = a / 'temp.bin', b / 'final.bin'
+            temporary.write_bytes(b'payload')
+            with self.assertRaises(ValueError):
+                publish_exclusive(temporary, destination)
+            self.assertFalse(destination.exists())
+
     def test_empty_output_rejected(self):
         with tempfile.TemporaryDirectory() as root:
             temp, dest = Path(root) / "temp.bin", Path(root) / "final.bin"

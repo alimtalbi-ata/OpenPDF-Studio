@@ -24,6 +24,10 @@ class DesktopScrollContractTests(unittest.TestCase):
         self.assertIn("self.recover_button=ttk.Button(footer,", SOURCE)
         self.assertIn("self.progress=ttk.Progressbar(left_host,", SOURCE)
 
+    def test_destination_validation_focus(self):
+        self.assertIn("if 'destination' in str(exc).lower() or 'dossier' in str(exc).lower():", SOURCE)
+        self.assertIn("self._focus_destination()", SOURCE)
+
     def test_destination_is_reachable_from_fixed_footer(self):
         self.assertIn("command=self._focus_destination", SOURCE)
         self.assertIn("self._form_canvas.yview_moveto(1.0)", SOURCE)

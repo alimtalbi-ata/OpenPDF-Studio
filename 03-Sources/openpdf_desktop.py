@@ -269,7 +269,11 @@ class OpenPDFStudio(tk.Tk):
         try:
             sources,dest=validate_request(op,sources,dest)
         except (ValueError,OSError) as exc:
-            messagebox.showerror('Paramètres invalides',str(exc),parent=self);return
+            messagebox.showerror('Paramètres invalides',str(exc),parent=self)
+            # Validation failures should guide the user to the field they can fix.
+            if 'destination' in str(exc).lower() or 'dossier' in str(exc).lower():
+                self._focus_destination()
+            return
         job_id=self.job_state.start(op);self._job_started=time.monotonic();self._set_busy(True);self.progress.start(12);self.status.configure(text='Traitement en cours…');self._append(f'Démarrage : {LABELS[op]} — tâche {job_id}')
         def worker():
             try:self.events.put((job_id,'success',run_operation(op,sources,dest,**kwargs)))

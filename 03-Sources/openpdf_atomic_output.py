@@ -26,6 +26,9 @@ def publish_exclusive(temporary, destination):
     with temporary.open("r+b") as stream:
         stream.flush()
         os.fsync(stream.fileno())
+    # Same-directory staging is required: linking across filesystems is not atomic.
+    if temporary.parent.resolve() != destination.parent.resolve():
+        raise ValueError('Le fichier temporaire doit etre dans le dossier de destination')
     try:
         os.link(temporary, destination)
     except FileExistsError:

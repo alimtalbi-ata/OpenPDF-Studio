@@ -46,6 +46,18 @@ OPERATION_GROUPS = (
     ('Convertir en Office', ('docx', 'xlsx', 'pptx')),
 )
 
+def suggested_output_name(source, operation):
+    """Suggest a filename only; never create or overwrite an output automatically."""
+    ext = {'docx': '.docx', 'xlsx': '.xlsx', 'pptx': '.pptx'}.get(operation, '.pdf')
+    stem = Path(source).stem if source else 'document'
+    suffix = {
+        'compression': '_compresse', 'fusion': '_fusion', 'extraction': '_extrait',
+        'reorganisation': '_reorganise', 'ocr': '_ocr',
+        'docx': '', 'xlsx': '', 'pptx': '',
+    }.get(operation, '_resultat')
+    return f'{stem}{suffix}{ext}'
+
+
 class OpenPDFStudio(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -179,7 +191,10 @@ class OpenPDFStudio(tk.Tk):
         if self.operation.get()=='decoupage':p=filedialog.askdirectory(parent=self)
         else:
             ext={'docx':'.docx','xlsx':'.xlsx','pptx':'.pptx'}.get(self.operation.get(),'.pdf')
-            p=filedialog.asksaveasfilename(parent=self,defaultextension=ext,filetypes=[('Document de sortie',f'*{ext}')])
+            suggested = suggested_output_name(self.sources[0] if self.sources else None, self.operation.get())
+            p=filedialog.asksaveasfilename(parent=self,defaultextension=ext,
+                                           initialfile=suggested,
+                                           filetypes=[('Document de sortie',f'*{ext}')])
         if p:self.destination.set(p)
     def _select_preview(self):
         idx=self.files.curselection()

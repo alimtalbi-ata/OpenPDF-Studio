@@ -47,6 +47,7 @@ jobs:
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_output_safety_v406.py' -v
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_pdf_functional_v407.py' -v
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_ocr_functional_v408.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_office_functional_v409.py' -v
       - name: Build and qualify installer and portable
         shell: cmd
         run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd

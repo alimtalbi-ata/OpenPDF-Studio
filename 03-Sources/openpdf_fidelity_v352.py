@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 import re
 from pathlib import Path
+import unicodedata
 import fitz
 
 @dataclass(frozen=True)

@@ -24,6 +24,12 @@ class DesktopScrollContractTests(unittest.TestCase):
         self.assertIn("self.recover_button=ttk.Button(footer,", SOURCE)
         self.assertIn("self.progress=ttk.Progressbar(left_host,", SOURCE)
 
+    def test_destination_is_reachable_from_fixed_footer(self):
+        self.assertIn("command=self._focus_destination", SOURCE)
+        self.assertIn("self._form_canvas.yview_moveto(1.0)", SOURCE)
+        self.assertIn("self.destination_entry.focus_set()", SOURCE)
+        self.assertIn("'<Control-l>'", SOURCE)
+
     def test_conversion_destinations(self):
         self.assertIn("asksaveasfilename", SOURCE)
         for extension in ("'docx':'.docx'", "'xlsx':'.xlsx'", "'pptx':'.pptx'"):

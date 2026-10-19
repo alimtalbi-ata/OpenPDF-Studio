@@ -126,14 +126,18 @@ class OpenPDFStudio(tk.Tk):
             else: ttk.Entry(frame,textvariable=var,width=28).pack(side='left')
         ttk.Label(left,text='3. Destination',font=('Segoe UI',12,'bold')).pack(anchor='w',pady=(12,4))
         dest=ttk.Frame(left);dest.pack(fill='x')
-        ttk.Entry(dest,textvariable=self.destination).pack(side='left',fill='x',expand=True)
+        self.destination_entry=ttk.Entry(dest,textvariable=self.destination);self.destination_entry.pack(side='left',fill='x',expand=True)
         self.browse_button=ttk.Button(dest,text='Parcourir',command=self._browse_destination);self.browse_button.pack(side='left',padx=5)
+        self.destination_shortcut=ttk.Button(footer,text='Destination ↓',command=self._focus_destination)
+        self.destination_shortcut.pack(side='left',padx=(0,8),pady=4)
         self.go=ttk.Button(footer,text='Exécuter l’opération',command=self._run);self.go.pack(side='right',pady=4)
         self.bind('<Control-o>',lambda event:self._add() if not self.busy else None)
+        self.bind('<Control-l>',lambda event:self._focus_destination() if not self.busy else None)
         self.bind('<Control-Return>',lambda event:self._run() if not self.busy else None)
         self.bind('<Escape>',lambda event:self.focus_set())
         self.operation.trace_add('write',lambda *_:self._on_operation_changed())
         self.recover_button=ttk.Button(footer,text='Récupérer',command=self._recover_dialog);self.recover_button.pack(side='left',pady=4)
+        self._form_canvas=canvas
         bind_wheel(left)
         ttk.Label(right,text='Aperçu du document',font=('Segoe UI',12,'bold')).pack(anchor='w')
         self.preview=ttk.Label(right,text='Sélectionnez un document',anchor='center');self.preview.pack(fill='both',expand=True,pady=10)
@@ -143,10 +147,18 @@ class OpenPDFStudio(tk.Tk):
         self.log=tk.Text(right,height=8,wrap='word',state='disabled');self.log.pack(fill='x',pady=6)
         self.status=ttk.Label(self,text='Prêt — sélectionnez des PDF, une opération et une destination',padding=(16,6));self.status.pack(anchor='w')
         self._refresh()
+    def _focus_destination(self):
+        """Bring output location into view and focus its entry, including at high DPI."""
+        if self.busy:
+            return
+        self.update_idletasks()
+        self._form_canvas.yview_moveto(1.0)
+        self.destination_entry.focus_set()
+
     def _set_busy(self, busy):
         self.busy=busy
         state='disabled' if busy else 'normal'
-        for widget in (self.go,self.add_button,self.remove_button,self.browse_button,self.recover_button,*self.operation_buttons):
+        for widget in (self.go,self.add_button,self.remove_button,self.browse_button,self.recover_button,self.destination_shortcut,*self.operation_buttons):
             widget.configure(state=state)
         self.files.configure(state=state)
 

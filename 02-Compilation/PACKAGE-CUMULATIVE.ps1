@@ -42,7 +42,7 @@ $hashes | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $manifestDir 'WINDOWS
   "Windows GitHub Actions qualification: automated build and static/unit checks."
   "Real Windows desktop visual inspection: NOT PERFORMED by this CI."
   "Screenshots: only actual existing files, if any; none are fabricated."
-  "Existing Word/PDF documentation is included as found in repository; no claim of version-specific refresh."
+  "Version-specific Word/PDF documentation generated from current release metadata; historical documents may also be present."
 ) | Set-Content (Join-Path $manifestDir 'RELEASE-QUALIFICATION-LIMITS.txt') -Encoding UTF8
 # Integrity inventory covers every staged payload file (excluding the inventory itself).
 # Sorted paths and SHA256 make archive contents independently verifiable.

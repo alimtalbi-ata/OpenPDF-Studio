@@ -15,6 +15,9 @@ class DesktopScrollContractTests(unittest.TestCase):
         self.assertIn("scrollregion=canvas.bbox('all')", SOURCE)
         self.assertIn("canvas.itemconfigure(window_id,width=event.width)", SOURCE)
         self.assertIn("bind_wheel(left)", SOURCE)
+        self.assertIn("canvas.bbox('all')[3] <= canvas.winfo_height()", SOURCE)
+        self.assertLess(SOURCE.index("footer=ttk.Frame(left_host"), SOURCE.index("scroll_host=ttk.Frame(left_host"))
+        self.assertLess(SOURCE.index("self.progress=ttk.Progressbar(left_host"), SOURCE.index("scroll_host=ttk.Frame(left_host"))
 
     def test_actions_stay_outside_scrollable_form(self):
         self.assertIn("self.go=ttk.Button(footer,", SOURCE)

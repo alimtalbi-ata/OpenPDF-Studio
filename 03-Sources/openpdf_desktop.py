@@ -63,6 +63,10 @@ class OpenPDFStudio(tk.Tk):
         body=ttk.Panedwindow(self,orient='horizontal');body.pack(fill='both',expand=True,padx=14,pady=6)
         left_host=ttk.Frame(body);right=ttk.Frame(body,padding=10)
         body.add(left_host,weight=3);body.add(right,weight=2)
+        # Reserve footer/progress space before the scrolling area: controls stay visible
+        # even when Windows display scaling leaves very little vertical room.
+        footer=ttk.Frame(left_host,padding=8);footer.pack(side='bottom',fill='x')
+        self.progress=ttk.Progressbar(left_host,mode='indeterminate');self.progress.pack(side='bottom',fill='x',padx=8)
         scroll_host=ttk.Frame(left_host);scroll_host.pack(fill='both',expand=True)
         canvas=tk.Canvas(scroll_host,highlightthickness=0)
         scrollbar=ttk.Scrollbar(scroll_host,orient='vertical',command=canvas.yview)
@@ -73,15 +77,18 @@ class OpenPDFStudio(tk.Tk):
         left.bind('<Configure>',lambda event:canvas.configure(scrollregion=canvas.bbox('all')))
         canvas.bind('<Configure>',lambda event:canvas.itemconfigure(window_id,width=event.width))
         def scroll_form(event):
+            # Do not consume wheel events when the form fits; do not overscroll.
+            if canvas.bbox('all') is None or canvas.bbox('all')[3] <= canvas.winfo_height():
+                return
             if event.delta:
-                canvas.yview_scroll(-1 if event.delta>0 else 1,'units')
+                units = max(1, abs(event.delta) // 120)
+                canvas.yview_scroll(-units if event.delta > 0 else units, 'units')
             elif event.num in (4,5):
-                canvas.yview_scroll(-1 if event.num==4 else 1,'units')
+                canvas.yview_scroll(-1 if event.num == 4 else 1, 'units')
         def bind_wheel(widget):
             for event_name in ('<MouseWheel>','<Button-4>','<Button-5>'):
                 widget.bind(event_name,scroll_form,add='+')
             for child in widget.winfo_children():bind_wheel(child)
-        footer=ttk.Frame(left_host,padding=8);footer.pack(side='bottom',fill='x')
         ttk.Label(left,text='1. Documents PDF',font=('Segoe UI',12,'bold')).pack(anchor='w')
         bar=ttk.Frame(left);bar.pack(fill='x',pady=7)
         self.add_button=ttk.Button(bar,text='Ajouter des PDF',command=self._add);self.add_button.pack(side='left')
@@ -115,7 +122,6 @@ class OpenPDFStudio(tk.Tk):
         self.bind('<Escape>',lambda event:self.focus_set())
         self.operation.trace_add('write',lambda *_:self._on_operation_changed())
         self.recover_button=ttk.Button(footer,text='Récupérer',command=self._recover_dialog);self.recover_button.pack(side='left',pady=4)
-        self.progress=ttk.Progressbar(left_host,mode='indeterminate');self.progress.pack(side='bottom',fill='x',padx=8)
         bind_wheel(left)
         ttk.Label(right,text='Aperçu du document',font=('Segoe UI',12,'bold')).pack(anchor='w')
         self.preview=ttk.Label(right,text='Sélectionnez un document',anchor='center');self.preview.pack(fill='both',expand=True,pady=10)

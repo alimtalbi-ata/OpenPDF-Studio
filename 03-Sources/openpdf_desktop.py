@@ -14,7 +14,7 @@ def _app_version():
     for path in candidates:
         if path.is_file():
             return path.read_text(encoding='utf-8').strip()
-    return '40.2'  # fallback for older unbundled distributions
+    return 'version inconnue'  # avoid presenting a stale release as current
 
 APP_VERSION = _app_version()
 from openpdf_operations import OPERATIONS, run_operation, recover_split
@@ -39,6 +39,13 @@ def explain_error(error):
     return f'{hint}\n\nDétail technique : {msg}'
 
 LABELS = dict(zip(OPERATIONS, ('Compresser', 'Fusionner', 'Extraire', 'Découper', 'Réorganiser', 'OCR', 'Vers Word', 'Vers Excel', 'Vers PowerPoint')))
+# Group operations by user intent; keep the stable operation identifiers unchanged.
+OPERATION_GROUPS = (
+    ('Organiser les pages', ('fusion', 'extraction', 'decoupage', 'reorganisation')),
+    ('Optimiser et rechercher', ('compression', 'ocr')),
+    ('Convertir en Office', ('docx', 'xlsx', 'pptx')),
+)
+
 class OpenPDFStudio(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -63,8 +70,15 @@ class OpenPDFStudio(tk.Tk):
         self.files=tk.Listbox(left,height=7,selectmode='extended',exportselection=False);self.files.pack(fill='x')
         ttk.Label(left,text='2. Opération',font=('Segoe UI',12,'bold')).pack(anchor='w',pady=(18,4))
         choices=ttk.Frame(left);choices.pack(fill='x');self.operation_buttons=[]
-        for i,(key,label) in enumerate(LABELS.items()):
-            button=ttk.Radiobutton(choices,text=label,variable=self.operation,value=key,command=self._refresh);button.grid(row=i//3,column=i%3,sticky='w',padx=8,pady=5);self.operation_buttons.append(button)
+        self.operation.set('compression')
+        for group_name, keys in OPERATION_GROUPS:
+            section=ttk.LabelFrame(choices,text=group_name,padding=(8,4))
+            section.pack(fill='x',pady=(0,5))
+            for column,key in enumerate(keys):
+                if key not in LABELS:continue
+                button=ttk.Radiobutton(section,text=LABELS[key],variable=self.operation,value=key,command=self._refresh)
+                button.grid(row=0,column=column,sticky='w',padx=7,pady=3)
+                self.operation_buttons.append(button)
         self.options=ttk.LabelFrame(left,text='Paramètres',padding=10);self.options.pack(fill='x',pady=10)
         self.opts={}
         for name,var in [('Profil',self.profile),('Début',self.first),('Fin',self.last),('Pages par fichier',self.chunk),('Ordre des pages',self.order),('Langue OCR',self.language)]:

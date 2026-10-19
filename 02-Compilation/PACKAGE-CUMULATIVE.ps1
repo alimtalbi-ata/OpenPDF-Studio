@@ -59,7 +59,7 @@ $inventory = @(
     }
 )
 $inventory | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $manifestDir 'RELEASE-FILES-SHA256.json') -Encoding UTF8
-$zip = Join-Path $release "OpenPDF-Studio-V$version-Windows-Cumulative.zip"
+$zip = Join-Path $release "OpenPDF Studio V$version --- Windows Cumulative.zip"
 if (Test-Path $zip) { Remove-Item $zip -Force }
 Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $zip -CompressionLevel Optimal
 if (!(Test-Path $zip)) { throw 'ZIP was not generated' }

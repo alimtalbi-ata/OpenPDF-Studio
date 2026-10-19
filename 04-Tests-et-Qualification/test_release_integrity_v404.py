@@ -12,6 +12,9 @@ class ReleaseIntegrityTests(unittest.TestCase):
     def test_required_release_folders(self):
         for folder in ('01-Application', '02-Compilation', '03-Sources', '04-Tests-et-Qualification', '05-Documentation', '06-Historique', '07-Manifestes'):
             self.assertIn(folder, SCRIPT)
+    def test_exact_zip_filename(self):
+        self.assertIn('OpenPDF Studio V$version --- Windows Cumulative.zip', SCRIPT)
+
     def test_temp_fallback(self):
         self.assertIn('[System.IO.Path]::GetTempPath()', SCRIPT)
 

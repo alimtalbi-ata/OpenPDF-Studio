@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from pathlib import Path
 import sys
+import os
 
 def _app_version():
     # PyInstaller exposes bundled data via _MEIPASS (onedir and onefile).
@@ -138,6 +139,7 @@ class OpenPDFStudio(tk.Tk):
         self.bind('<Escape>',lambda event:self.focus_set())
         self.operation.trace_add('write',lambda *_:self._on_operation_changed())
         self.recover_button=ttk.Button(footer,text='Récupérer',command=self._recover_dialog);self.recover_button.pack(side='left',pady=4)
+        self.audit_button=ttk.Button(footer,text='Audit',command=self._audit_dialog);self.audit_button.pack(side='left',padx=5,pady=4)
         self._form_canvas=canvas
         bind_wheel(left)
         ttk.Label(right,text='Aperçu du document',font=('Segoe UI',12,'bold')).pack(anchor='w')
@@ -161,7 +163,7 @@ class OpenPDFStudio(tk.Tk):
     def _set_busy(self, busy):
         self.busy=busy
         state='disabled' if busy else 'normal'
-        for widget in (self.go,self.add_button,self.remove_button,self.browse_button,self.recover_button,self.destination_shortcut,*self.operation_buttons):
+        for widget in (self.go,self.add_button,self.remove_button,self.browse_button,self.recover_button,self.audit_button,self.destination_shortcut,*self.operation_buttons):
             widget.configure(state=state)
         self.files.configure(state=state)
 
@@ -173,6 +175,49 @@ class OpenPDFStudio(tk.Tk):
         if getattr(self,'_preview_after_id',None) is not None:
             self.after_cancel(self._preview_after_id)
         self.destroy()
+
+    def _audit_dialog(self):
+        """Manage local opt-in audit without showing document names or contents."""
+        from openpdf_audit_export_v416 import export_snapshot, verify_snapshot
+        window=tk.Toplevel(self)
+        window.title('Audit local — confidentialité')
+        window.geometry('520x300')
+        window.transient(self)
+        window.grab_set()
+        frame=ttk.Frame(window,padding=16);frame.pack(fill='both',expand=True)
+        enabled=tk.BooleanVar(value=os.environ.get('OPENPDF_AUDIT')=='1')
+        ttk.Label(frame,text='Audit des opérations',font=('Segoe UI',13,'bold')).pack(anchor='w')
+        ttk.Label(frame,text='Sans noms de fichiers, chemins ni contenus PDF.',wraplength=460).pack(anchor='w',pady=8)
+        def toggle():
+            if enabled.get():
+                os.environ['OPENPDF_AUDIT']='1'
+            else:
+                os.environ.pop('OPENPDF_AUDIT',None)
+        ttk.Checkbutton(frame,text='Activer le journal pour cette session',variable=enabled,command=toggle).pack(anchor='w',pady=8)
+        def export():
+            folder=Path(os.environ.get('OPENPDF_AUDIT_DIR') or Path.home()/'.openpdf-studio')
+            source=folder/'operations.jsonl'
+            if not source.is_file():
+                messagebox.showinfo('Audit','Aucun journal disponible.',parent=window);return
+            destination=filedialog.asksaveasfilename(parent=window,title='Exporter le journal',defaultextension='.json',filetypes=[('JSON','*.json')])
+            if not destination:return
+            try:
+                digest=export_snapshot(source,destination)
+                messagebox.showinfo('Export terminé',f'Empreinte SHA-256 : {digest}',parent=window)
+            except Exception as exc:
+                messagebox.showerror('Export impossible',str(exc),parent=window)
+        def verify():
+            source=filedialog.askopenfilename(parent=window,title='Vérifier un export',filetypes=[('JSON','*.json')])
+            if not source:return
+            try:
+                ok=verify_snapshot(source)
+                messagebox.showinfo('Vérification','Empreinte cohérente.' if ok else 'Empreinte incohérente : export modifié.',parent=window)
+            except Exception as exc:
+                messagebox.showerror('Vérification impossible',str(exc),parent=window)
+        buttons=ttk.Frame(frame);buttons.pack(fill='x',pady=12)
+        ttk.Button(buttons,text='Exporter',command=export).pack(side='left',padx=(0,8))
+        ttk.Button(buttons,text='Vérifier',command=verify).pack(side='left')
+        ttk.Label(frame,text='Activation limitée à la session. SHA-256 ne prouve pas l’authenticité.',wraplength=460).pack(anchor='w',pady=8)
 
     def _recover_dialog(self):
         folder=filedialog.askdirectory(parent=self,title="Dossier à récupérer")

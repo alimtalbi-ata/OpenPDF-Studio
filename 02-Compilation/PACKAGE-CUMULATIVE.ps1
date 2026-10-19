@@ -52,7 +52,7 @@ $inventory = @(
     Sort-Object FullName |
     ForEach-Object {
       [pscustomobject]@{
-        path = $_.FullName.Substring($stage.Length + 1).Replace('\\','/')
+        path = $_.FullName.Substring($stage.Length + 1).Replace('\','/')
         bytes = $_.Length
         sha256 = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
       }

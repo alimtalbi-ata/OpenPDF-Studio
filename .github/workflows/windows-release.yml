@@ -40,6 +40,7 @@ jobs:
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_atomic_output_v403.py' -v
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_split_rollback_v403.py' -v
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_ui_navigation_v403.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_desktop_scroll_v403.py' -v
       - name: Build and qualify installer and portable
         shell: cmd
         run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd

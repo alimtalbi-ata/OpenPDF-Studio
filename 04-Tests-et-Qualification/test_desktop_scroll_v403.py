@@ -1,34 +1,31 @@
-"""Static regression checks for the V40.3 scrollable desktop form.
-
-These checks verify the layout contract without requiring a Windows display.
-They do not replace visual testing on a real Windows desktop.
-Author: Abdelhalim Talbi.
-"""
+"""V40.3 desktop layout contract checks (headless). Author: Abdelhalim Talbi."""
 import ast
+import unittest
 from pathlib import Path
 
 SOURCE = (Path(__file__).resolve().parents[1] / "03-Sources" / "openpdf_desktop.py").read_text(encoding="utf-8")
 
 
-def test_desktop_python_parses():
-    ast.parse(SOURCE)
+class DesktopScrollContractTests(unittest.TestCase):
+    def test_desktop_python_parses(self):
+        ast.parse(SOURCE)
+
+    def test_form_scrolls_and_resizes(self):
+        self.assertIn("yscrollcommand=scrollbar.set", SOURCE)
+        self.assertIn("scrollregion=canvas.bbox('all')", SOURCE)
+        self.assertIn("canvas.itemconfigure(window_id,width=event.width)", SOURCE)
+        self.assertIn("bind_wheel(left)", SOURCE)
+
+    def test_actions_stay_outside_scrollable_form(self):
+        self.assertIn("self.go=ttk.Button(footer,", SOURCE)
+        self.assertIn("self.recover_button=ttk.Button(footer,", SOURCE)
+        self.assertIn("self.progress=ttk.Progressbar(left_host,", SOURCE)
+
+    def test_conversion_destinations(self):
+        self.assertIn("asksaveasfilename", SOURCE)
+        for extension in ("'docx':'.docx'", "'xlsx':'.xlsx'", "'pptx':'.pptx'"):
+            self.assertIn(extension, SOURCE)
 
 
-def test_form_is_scrollable_and_resizes():
-    assert "yscrollcommand=scrollbar.set" in SOURCE
-    assert "scrollregion=canvas.bbox('all')" in SOURCE
-    assert "canvas.itemconfigure(window_id,width=event.width)" in SOURCE
-    assert "bind_wheel(left)" in SOURCE
-
-
-def test_actions_are_outside_scrollable_form():
-    assert "self.go=ttk.Button(footer," in SOURCE
-    assert "self.recover_button=ttk.Button(footer," in SOURCE
-    assert "self.progress=ttk.Progressbar(left_host," in SOURCE
-
-
-def test_conversion_destination_dialog_remains_available():
-    assert "asksaveasfilename" in SOURCE
-    assert "'docx':'.docx'" in SOURCE
-    assert "'xlsx':'.xlsx'" in SOURCE
-    assert "'pptx':'.pptx'" in SOURCE
+if __name__ == "__main__":
+    unittest.main()

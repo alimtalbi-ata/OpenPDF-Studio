@@ -48,6 +48,17 @@ jobs:
         shell: pwsh
         run: |
           & '02-Compilation/VERIFY-WINDOWS-RELEASE.ps1'
+      - name: Package cumulative Windows release
+        shell: pwsh
+        run: |
+          & '02-Compilation/PACKAGE-CUMULATIVE.ps1'
+      - name: Upload cumulative release
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenPDF-Studio-Windows-cumulative
+          path: 01-Application/release/*.zip
+          if-no-files-found: error
       - name: Upload build evidence even on failure
         if: always()
         uses: actions/upload-artifact@v4

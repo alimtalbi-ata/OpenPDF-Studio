@@ -194,8 +194,12 @@ class OpenPDFStudio(tk.Tk):
         key=self.operation.get();show={'compression':('Profil',),'extraction':('Début','Fin'),'decoupage':('Pages par fichier',),'reorganisation':('Ordre des pages',),'ocr':('Langue OCR',)}.get(key,())
         for name,frame in self.opts.items():frame.pack(fill='x',pady=2) if name in show else frame.pack_forget()
     def _add(self):
+        known={str(Path(p).resolve()).casefold() for p in self.sources}
         for path in filedialog.askopenfilenames(parent=self,filetypes=[('PDF','*.pdf')]):
-            if path not in self.sources:self.sources.append(path);self.files.insert('end',Path(path).name)
+            normalized=str(Path(path).resolve())
+            if normalized.casefold() not in known:
+                self.sources.append(normalized);self.files.insert('end',Path(normalized).name)
+                known.add(normalized.casefold())
         if self.sources and not self.files.curselection():self.files.selection_set(0)
         self._select_preview()
     def _remove(self):

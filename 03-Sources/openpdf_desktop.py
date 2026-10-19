@@ -134,6 +134,7 @@ class OpenPDFStudio(tk.Tk):
         self.bind('<Control-o>',lambda event:self._add() if not self.busy else None)
         self.bind('<Control-l>',lambda event:self._focus_destination() if not self.busy else None)
         self.bind('<Control-Return>',lambda event:self._run() if not self.busy else None)
+        self.bind('<F6>',lambda event:self._focus_destination() if not self.busy else None)
         self.bind('<Escape>',lambda event:self.focus_set())
         self.operation.trace_add('write',lambda *_:self._on_operation_changed())
         self.recover_button=ttk.Button(footer,text='Récupérer',command=self._recover_dialog);self.recover_button.pack(side='left',pady=4)
@@ -143,9 +144,11 @@ class OpenPDFStudio(tk.Tk):
         self.preview=ttk.Label(right,text='Sélectionnez un document',anchor='center');self.preview.pack(fill='both',expand=True,pady=10)
         nav=ttk.Frame(right);nav.pack(fill='x');ttk.Button(nav,text='◀ Précédente',command=self._prev_page).pack(side='left');self.page_label=ttk.Label(nav,text='Page — / —');self.page_label.pack(side='left',padx=12);ttk.Button(nav,text='Suivante ▶',command=self._next_page).pack(side='left')
         self.files.bind('<<ListboxSelect>>',lambda e:self._select_preview())
+        self.files.bind('<Delete>',lambda event:self._remove() if not self.busy else None)
         ttk.Label(right,text='Résultat et journal',font=('Segoe UI',12,'bold')).pack(anchor='w')
         self.log=tk.Text(right,height=8,wrap='word',state='disabled');self.log.pack(fill='x',pady=6)
         self.status=ttk.Label(self,text='Prêt — sélectionnez des PDF, une opération et une destination',padding=(16,6));self.status.pack(anchor='w')
+        self.bind('<Control-Shift-O>',lambda event:self._browse_destination() if not self.busy else None)
         self._refresh()
     def _focus_destination(self):
         """Bring output location into view and focus its entry, including at high DPI."""

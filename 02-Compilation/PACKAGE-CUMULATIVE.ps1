@@ -11,6 +11,12 @@ $tempRoot = if ($env:RUNNER_TEMP) { $env:RUNNER_TEMP } else { [System.IO.Path]::
 $stage = Join-Path $tempRoot "OpenPDF-Studio-V$version-Windows-Cumulative"
 if (Test-Path $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
 New-Item -ItemType Directory -Path $stage | Out-Null
+$requiredDocs = @("OpenPDF-Studio-V$version-Guide.docx", "OpenPDF-Studio-V$version-Guide.pdf")
+foreach ($doc in $requiredDocs) {
+  $file = Join-Path $root "05-Documentation/$doc"
+  if (!(Test-Path -LiteralPath $file -PathType Leaf)) { throw "Missing version-specific documentation: $doc" }
+  if ((Get-Item -LiteralPath $file).Length -lt 1000) { throw "Empty or suspicious documentation: $doc" }
+}
 $folders = @('01-Application','02-Compilation','03-Sources','04-Tests-et-Qualification','05-Documentation','06-Historique','07-Manifestes')
 foreach ($folder in $folders) {
   $src = Join-Path $root $folder
@@ -72,6 +78,10 @@ $archive = [System.IO.Compression.ZipFile]::OpenRead($zip)
 try {
   $entry = $archive.Entries | Where-Object { $_.FullName -eq '07-Manifestes/RELEASE-FILES-SHA256.json' } | Select-Object -First 1
   if (-not $entry) { throw 'Integrity inventory missing from ZIP' }
+  foreach ($doc in $requiredDocs) {
+    $inside = "05-Documentation/$doc"
+    if (-not ($archive.Entries | Where-Object { $_.FullName -eq $inside } | Select-Object -First 1)) { throw "Missing documentation inside ZIP: $inside" }
+  }
   if ($archive.Entries.Count -lt $inventory.Count) { throw 'ZIP entries unexpectedly incomplete' }
 } finally { $archive.Dispose() }
 Write-Host "Integrity inventory: $($inventory.Count) files"

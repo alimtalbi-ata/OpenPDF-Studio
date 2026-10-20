@@ -52,6 +52,10 @@ def compress_with_profile(source, destination, profile="smaller_only"):
     try:
         (compress_images(source,tmp) if profile=="images_balanced" else compress_pdf(source,tmp))
         after=Path(tmp).stat().st_size
+        # A candidate that cannot be published must not trigger expensive
+        # full-document text, image and raster quality checks.
+        if profile=='smaller_only' and after>=before:
+            return f"Aucun gain : original {format_bytes(before)}, candidat {format_bytes(after)}. Aucun fichier de sortie modifié."
         from openpdf_quality_v327 import assess_candidate,quality_summary
         assessment=assess_candidate(source,tmp)
         if assessment['pages_texte_modifie']:
@@ -61,8 +65,6 @@ def compress_with_profile(source, destination, profile="smaller_only"):
             validate_lossless_images(source,tmp)
             from openpdf_render_quality_v425 import validate_rendered_pages
             validate_rendered_pages(source,tmp)
-        if profile=="smaller_only" and after>=before:
-            return f"Aucun gain : original {format_bytes(before)}, candidat {format_bytes(after)}. Aucun fichier de sortie modifié."
         # Never overwrite a destination created while compression was running.
         publish_exclusive(tmp,destination)
         change=(before-after)*100/before if before else 0

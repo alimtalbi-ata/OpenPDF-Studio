@@ -56,6 +56,9 @@ def compress_with_profile(source, destination, profile="smaller_only"):
         # A candidate that cannot be published must not trigger expensive
         # full-document text, image and raster quality checks.
         if profile=='smaller_only' and after>=before:
+            current_stat=Path(source).stat()
+            if (current_stat.st_size,current_stat.st_mtime_ns,current_stat.st_ino)!=(source_stat.st_size,source_stat.st_mtime_ns,source_stat.st_ino):
+                raise RuntimeError('Source modifiée pendant la compression : sortie rejetée')
             return f"Aucun gain : original {format_bytes(before)}, candidat {format_bytes(after)}. Aucun fichier de sortie modifié."
         from openpdf_quality_v327 import assess_candidate,quality_summary
         assessment=assess_candidate(source,tmp)

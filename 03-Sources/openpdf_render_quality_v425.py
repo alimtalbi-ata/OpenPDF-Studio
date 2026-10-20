@@ -26,8 +26,15 @@ def validate_rendered_pages(source,candidate,*,scale=0.5,max_pixels=12000000):
         if original.page_count != optimized.page_count:
             raise ValueError('Nombre de pages modifié')
         for index in range(original.page_count):
-            a=_page_digest(original[index],scale,max_pixels)
-            b=_page_digest(optimized[index],scale,max_pixels)
+            source_page=original[index]
+            candidate_page=optimized[index]
+            # A low-resolution bitmap alone cannot certify the PDF page boxes.
+            boxes=lambda p: (tuple(round(float(v),4) for v in p.mediabox),
+                             tuple(round(float(v),4) for v in p.cropbox),int(p.rotation))
+            if boxes(source_page) != boxes(candidate_page):
+                raise RuntimeError(f'Géométrie PDF modifiée à la page {index+1} : sortie rejetée')
+            a=_page_digest(source_page,scale,max_pixels)
+            b=_page_digest(candidate_page,scale,max_pixels)
             if a != b:
                 raise RuntimeError(f'Rendu visuel modifié à la page {index+1} : sortie rejetée')
         return {'pages_rendered':original.page_count,'scale':scale}

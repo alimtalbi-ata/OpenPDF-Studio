@@ -58,6 +58,7 @@ jobs:
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_compression_exclusive_v419.py' -v
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_audit_outcome_v420.py' -v
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_compression_destination_v421.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_compression_images_v422.py' -v
       - name: Build and qualify installer and portable
         shell: cmd
         run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd

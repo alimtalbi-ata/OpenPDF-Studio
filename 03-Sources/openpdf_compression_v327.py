@@ -56,6 +56,9 @@ def compress_with_profile(source, destination, profile="smaller_only"):
         assessment=assess_candidate(source,tmp)
         if assessment['pages_texte_modifie']:
             raise RuntimeError('Le texte extrait diffère sur certaines pages : sortie rejetée')
+        if profile in ('standard','smaller_only'):
+            from openpdf_compression_quality_v422 import validate_lossless_images
+            validate_lossless_images(source,tmp)
         if profile=="smaller_only" and after>=before:
             return f"Aucun gain : original {format_bytes(before)}, candidat {format_bytes(after)}. Aucun fichier de sortie modifié."
         # Never overwrite a destination created while compression was running.

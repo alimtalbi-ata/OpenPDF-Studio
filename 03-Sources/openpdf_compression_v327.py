@@ -44,6 +44,8 @@ def compress_images(source, destination, *, dpi_target=150, quality=75):
 def compress_with_profile(source, destination, profile="smaller_only"):
     if profile not in PROFILES: raise ValueError("Profil inconnu")
     source,destination=validate_compression(source,destination)
+    if Path(destination).exists() or Path(destination).is_symlink():
+        raise FileExistsError(f'Destination existante : {destination}')
     before=Path(source).stat().st_size
     fd,tmp=tempfile.mkstemp(prefix=".openpdf-",suffix=".pdf",dir=str(Path(destination).parent))
     os.close(fd)

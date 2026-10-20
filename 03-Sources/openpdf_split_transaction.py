@@ -94,7 +94,7 @@ def split_transaction(source,folder,chunk_size=1):
         targets=[dest/name for name in names]
         if any(p.exists() or p.is_symlink() for p in targets): raise FileExistsError("Collision")
         for p in outputs:
-            with p.open("rb") as f: os.fsync(f.fileno())
+            with p.open("r+b") as f: os.fsync(f.fileno())
         _sync_dir(stage)
         _journal(stage,names)
         if _source_identity(src)!=identity:

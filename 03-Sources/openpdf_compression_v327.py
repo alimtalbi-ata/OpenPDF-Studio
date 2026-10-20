@@ -4,6 +4,7 @@ import os,tempfile
 from openpdf_compression_v319 import validate_compression
 from openpdf_engine_v272 import compress_pdf
 from openpdf_compression_v320 import format_bytes
+from openpdf_atomic_output import publish_exclusive
 
 def diagnose_pdf(source):
     """Mesures factuelles du PDF ; aucune promesse de réduction."""
@@ -55,7 +56,8 @@ def compress_with_profile(source, destination, profile="smaller_only"):
             raise RuntimeError('Le texte extrait diffère sur certaines pages : sortie rejetée')
         if profile=="smaller_only" and after>=before:
             return f"Aucun gain : original {format_bytes(before)}, candidat {format_bytes(after)}. Aucun fichier de sortie modifié."
-        os.replace(tmp,destination)
+        # Never overwrite a destination created while compression was running.
+        publish_exclusive(tmp,destination)
         change=(before-after)*100/before if before else 0
         return f"{destination}\n{quality_summary(assessment)}"
     finally:

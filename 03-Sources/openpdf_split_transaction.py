@@ -8,7 +8,7 @@ import json
 import os
 import shutil
 import tempfile
-from openpdf_page_service_v345 import split as legacy_split
+from openpdf_page_service_v345 import split as legacy_split, _source_identity, _source
 
 PREFIX = ".openpdf-stage-"
 JOURNAL = "transaction.json"
@@ -77,6 +77,8 @@ def recover_transactions(folder):
     return report
 
 def split_transaction(source,folder,chunk_size=1):
+    src=_source(source)
+    identity=_source_identity(src)
     dest=Path(folder).resolve()
     if not dest.is_dir(): raise ValueError("Dossier de destination inexistant")
     # Never silently proceed over a crash residue: caller must recover explicitly.
@@ -85,7 +87,7 @@ def split_transaction(source,folder,chunk_size=1):
     stage=Path(tempfile.mkdtemp(prefix=PREFIX,dir=dest))
     published=[]
     try:
-        receipt=legacy_split(source,stage,chunk_size)
+        receipt=legacy_split(src,stage,chunk_size)
         outputs=[Path(p) for p in receipt.outputs]
         names=[p.name for p in outputs]
         if not _safe_names(names): raise ValueError("Noms de sortie non valides")
@@ -95,6 +97,8 @@ def split_transaction(source,folder,chunk_size=1):
             with p.open("rb") as f: os.fsync(f.fileno())
         _sync_dir(stage)
         _journal(stage,names)
+        if _source_identity(src)!=identity:
+            raise RuntimeError('Source modifiée pendant le découpage : sortie rejetée')
         for staged,target in zip(outputs,targets):
             os.link(staged,target)
             published.append(target)

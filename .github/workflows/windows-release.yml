@@ -61,6 +61,7 @@ jobs:
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_compression_images_v422.py' -v
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_compression_page_images_v423.py' -v
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_compression_image_placement_v424.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_render_quality_v425.py' -v
       - name: Build and qualify installer and portable
         shell: cmd
         run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd

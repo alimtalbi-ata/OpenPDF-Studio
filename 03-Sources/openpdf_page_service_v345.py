@@ -79,6 +79,7 @@ def merge(sources,destination):
 
 def extract(source,destination,first,last):
     src=_source(source);dest=_target(destination,{src})
+    identity=_source_identity(src)
     if not isinstance(first,int) or isinstance(first,bool) or not isinstance(last,int) or isinstance(last,bool) or first<1 or last<first:raise ValueError('Plage invalide')
     def writer(tmp):
         with fitz.open(src) as doc:
@@ -86,11 +87,15 @@ def extract(source,destination,first,last):
             with fitz.open() as out:
                 out.insert_pdf(doc,from_page=first-1,to_page=last-1)
                 out.save(tmp,garbage=3,deflate=True)
-    p,n,h=_publish(dest,writer,expected_pages=last-first+1)
+    def verify_source():
+        if _source_identity(src)!=identity:
+            raise RuntimeError('Source modifiée pendant extraction : sortie rejetée')
+    p,n,h=_publish(dest,writer,expected_pages=last-first+1,pre_publish=verify_source)
     return PageReceipt('extract',(p,),(n,),(h,))
 
 def reorder(source,destination,indices):
     src=_source(source);dest=_target(destination,{src})
+    identity=_source_identity(src)
     if not isinstance(indices,(list,tuple)) or not indices or any(not isinstance(i,int) or isinstance(i,bool) for i in indices):raise ValueError('Ordre invalide')
     def writer(tmp):
         with fitz.open(src) as doc:
@@ -98,7 +103,10 @@ def reorder(source,destination,indices):
             with fitz.open() as out:
                 for i in indices:out.insert_pdf(doc,from_page=i-1,to_page=i-1)
                 out.save(tmp,garbage=3,deflate=True)
-    p,n,h=_publish(dest,writer,expected_pages=len(indices))
+    def verify_source():
+        if _source_identity(src)!=identity:
+            raise RuntimeError('Source modifiée pendant réorganisation : sortie rejetée')
+    p,n,h=_publish(dest,writer,expected_pages=len(indices),pre_publish=verify_source)
     return PageReceipt('reorder',(p,),(n,),(h,))
 
 def split(source,folder,chunk_size=1):

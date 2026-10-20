@@ -67,6 +67,7 @@ jobs:
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_compression_source_change_v428.py' -v
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_compression_no_gain_concurrent_v429.py' -v
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_merge_source_change_v430.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_page_source_change_v431.py' -v
       - name: Build and qualify installer and portable
         shell: cmd
         run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd

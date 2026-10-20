@@ -16,7 +16,7 @@ def write_event(operation, status, duration_ms, *, directory=None, max_bytes=104
         return False
     if operation not in {'compression','fusion','extraction','decoupage','reorganisation','ocr','docx','xlsx','pptx'}:
         return False
-    if status not in {'success','failure'}:
+    if status not in {'success','failure','no_output'}:
         return False
     try:
         folder=Path(directory or os.environ.get('OPENPDF_AUDIT_DIR') or Path.home()/'.openpdf-studio').expanduser()

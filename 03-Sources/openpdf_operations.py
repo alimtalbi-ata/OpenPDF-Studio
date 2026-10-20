@@ -40,7 +40,12 @@ def run_operation(operation, sources, destination, **kwargs):
                 result=split_transaction(inputs[0], output, int(kwargs.get("chunk", 1)))
             else:
                 result=_legacy_run_operation(operation, sources, destination, **kwargs)
-            status='success'
+            # Compression 'smaller_only' can legitimately yield no new output.
+            # Audit must distinguish that outcome from a published document.
+            if operation == 'compression' and getattr(result,'published',True) is False:
+                status='no_output'
+            else:
+                status='success'
             return result
     finally:
         write_event(operation,status,round((monotonic()-started)*1000))

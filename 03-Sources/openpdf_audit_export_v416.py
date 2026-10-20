@@ -16,7 +16,7 @@ def _validate(lines):
         record=json.loads(line)
         if not isinstance(record,dict) or set(record)!=FIELDS:
             raise ValueError('Schéma audit invalide')
-        if record['operation'] not in OPERATIONS or record['status'] not in ('success','failure'):
+        if record['operation'] not in OPERATIONS or record['status'] not in ('success','failure','no_output'):
             raise ValueError('Événement audit invalide')
         if type(record['duration_ms']) is not int or record['duration_ms']<0:
             raise ValueError('Durée audit invalide')

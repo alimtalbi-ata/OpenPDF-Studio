@@ -59,6 +59,17 @@ def suggested_output_name(source, operation):
     return f'{stem}{suffix}{ext}'
 
 
+def move_selected_source(sources, selected, direction):
+    """Return reordered PDF list and selected index; preserve all sources."""
+    items=list(sources)
+    if direction not in (-1,1):raise ValueError('Direction invalide')
+    if not isinstance(selected,int) or not 0 <= selected < len(items):
+        return items,selected
+    target=selected+direction
+    if not 0 <= target < len(items):return items,selected
+    items[selected],items[target]=items[target],items[selected]
+    return items,target
+
 class OpenPDFStudio(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -106,6 +117,8 @@ class OpenPDFStudio(tk.Tk):
         bar=ttk.Frame(left);bar.pack(fill='x',pady=7)
         self.add_button=ttk.Button(bar,text='Ajouter des PDF',command=self._add);self.add_button.pack(side='left')
         self.remove_button=ttk.Button(bar,text='Retirer',command=self._remove);self.remove_button.pack(side='left',padx=6)
+        self.up_button=ttk.Button(bar,text='↑ Monter',command=lambda:self._move_source(-1));self.up_button.pack(side='left',padx=3)
+        self.down_button=ttk.Button(bar,text='↓ Descendre',command=lambda:self._move_source(1));self.down_button.pack(side='left',padx=3)
         self.files=tk.Listbox(left,height=7,selectmode='extended',exportselection=False);self.files.pack(fill='x')
         ttk.Label(left,text='2. Opération',font=('Segoe UI',12,'bold')).pack(anchor='w',pady=(18,4))
         choices=ttk.Frame(left);choices.pack(fill='x');self.operation_buttons=[]
@@ -163,7 +176,7 @@ class OpenPDFStudio(tk.Tk):
     def _set_busy(self, busy):
         self.busy=busy
         state='disabled' if busy else 'normal'
-        for widget in (self.go,self.add_button,self.remove_button,self.browse_button,self.recover_button,self.audit_button,self.destination_shortcut,*self.operation_buttons):
+        for widget in (self.go,self.add_button,self.remove_button,self.up_button,self.down_button,self.browse_button,self.recover_button,self.audit_button,self.destination_shortcut,*self.operation_buttons):
             widget.configure(state=state)
         self.files.configure(state=state)
 
@@ -251,6 +264,19 @@ class OpenPDFStudio(tk.Tk):
         for i in reversed(self.files.curselection()):self.files.delete(i);self.sources.pop(i)
         if self.sources:self.files.selection_set(0)
         self._select_preview()
+    def _move_source(self,direction):
+        selected=self.files.curselection()
+        if self.busy or len(selected)!=1:return
+        index=selected[0]
+        updated,target=move_selected_source(self.sources,index,direction)
+        if target==index:return
+        self.sources=updated
+        self.files.delete(0,'end')
+        for path in self.sources:self.files.insert('end',Path(path).name)
+        self.files.selection_set(target)
+        self.files.see(target)
+        self._select_preview()
+
     def _browse_destination(self):
         if self.operation.get()=='decoupage':p=filedialog.askdirectory(parent=self)
         else:

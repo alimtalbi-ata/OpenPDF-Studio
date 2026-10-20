@@ -70,6 +70,7 @@ jobs:
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_page_source_change_v431.py' -v
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_split_source_change_v432.py' -v
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_split_windows_fsync_v433.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_merge_order_ui_v434.py' -v
       - name: Build and qualify installer and portable
         shell: cmd
         run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd

@@ -32,7 +32,7 @@ def _target(path,sources):
     if p.exists():raise FileExistsError(f'Destination existante : {p}')
     return p
 
-def _publish(destination,writer):
+def _publish(destination,writer,expected_pages=None):
     fd,tmp=tempfile.mkstemp(prefix='.openpdf-pages-',suffix='.pdf',dir=destination.parent)
     os.close(fd)
     try:
@@ -40,6 +40,8 @@ def _publish(destination,writer):
         with fitz.open(tmp) as check:
             if check.page_count<1 or check.needs_pass:raise ValueError('PDF produit invalide')
             pages=check.page_count
+            if expected_pages is not None and pages != expected_pages:
+                raise ValueError(f'Nombre de pages inattendu : {pages} au lieu de {expected_pages}')
         digest = _digest(tmp)
         publish_exclusive(tmp, destination)
         return str(destination),pages,digest
@@ -50,6 +52,11 @@ def merge(sources,destination):
     paths=[_source(p) for p in sources]
     if not paths:raise ValueError('Aucune source')
     dest=_target(destination,set(paths))
+    expected=0
+    for path in paths:
+        with fitz.open(path) as document:
+            if document.needs_pass or document.page_count==0:raise ValueError('PDF source vide ou protégé')
+            expected+=document.page_count
     def writer(tmp):
         with fitz.open() as result:
             for path in paths:
@@ -57,7 +64,7 @@ def merge(sources,destination):
                     if doc.needs_pass or doc.page_count==0:raise ValueError('PDF source vide ou protégé')
                     result.insert_pdf(doc)
             result.save(tmp,garbage=3,deflate=True)
-    p,n,h=_publish(dest,writer)
+    p,n,h=_publish(dest,writer,expected_pages=expected)
     return PageReceipt('merge',(p,),(n,),(h,))
 
 def extract(source,destination,first,last):
@@ -69,7 +76,7 @@ def extract(source,destination,first,last):
             with fitz.open() as out:
                 out.insert_pdf(doc,from_page=first-1,to_page=last-1)
                 out.save(tmp,garbage=3,deflate=True)
-    p,n,h=_publish(dest,writer)
+    p,n,h=_publish(dest,writer,expected_pages=last-first+1)
     return PageReceipt('extract',(p,),(n,),(h,))
 
 def reorder(source,destination,indices):
@@ -81,7 +88,7 @@ def reorder(source,destination,indices):
             with fitz.open() as out:
                 for i in indices:out.insert_pdf(doc,from_page=i-1,to_page=i-1)
                 out.save(tmp,garbage=3,deflate=True)
-    p,n,h=_publish(dest,writer)
+    p,n,h=_publish(dest,writer,expected_pages=len(indices))
     return PageReceipt('reorder',(p,),(n,),(h,))
 
 def split(source,folder,chunk_size=1):

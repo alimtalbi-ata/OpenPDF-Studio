@@ -32,7 +32,7 @@ def _target(path,sources):
     if p.exists():raise FileExistsError(f'Destination existante : {p}')
     return p
 
-def _publish(destination,writer,expected_pages=None):
+def _publish(destination,writer,expected_pages=None,pre_publish=None):
     fd,tmp=tempfile.mkstemp(prefix='.openpdf-pages-',suffix='.pdf',dir=destination.parent)
     os.close(fd)
     try:
@@ -43,15 +43,21 @@ def _publish(destination,writer,expected_pages=None):
             if expected_pages is not None and pages != expected_pages:
                 raise ValueError(f'Nombre de pages inattendu : {pages} au lieu de {expected_pages}')
         digest = _digest(tmp)
+        if pre_publish is not None:pre_publish()
         publish_exclusive(tmp, destination)
         return str(destination),pages,digest
     finally:
         if os.path.exists(tmp):os.unlink(tmp)
 
+def _source_identity(path):
+    stat=Path(path).stat()
+    return (stat.st_size,stat.st_mtime_ns,stat.st_ino)
+
 def merge(sources,destination):
     paths=[_source(p) for p in sources]
     if not paths:raise ValueError('Aucune source')
     dest=_target(destination,set(paths))
+    identities={path:_source_identity(path) for path in paths}
     expected=0
     for path in paths:
         with fitz.open(path) as document:
@@ -64,7 +70,11 @@ def merge(sources,destination):
                     if doc.needs_pass or doc.page_count==0:raise ValueError('PDF source vide ou protégé')
                     result.insert_pdf(doc)
             result.save(tmp,garbage=3,deflate=True)
-    p,n,h=_publish(dest,writer,expected_pages=expected)
+    def verify_sources():
+        for path,identity in identities.items():
+            if _source_identity(path)!=identity:
+                raise RuntimeError('Source modifiée pendant la fusion : sortie rejetée')
+    p,n,h=_publish(dest,writer,expected_pages=expected,pre_publish=verify_sources)
     return PageReceipt('merge',(p,),(n,),(h,))
 
 def extract(source,destination,first,last):

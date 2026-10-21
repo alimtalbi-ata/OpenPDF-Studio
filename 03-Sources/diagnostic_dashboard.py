@@ -6,6 +6,7 @@ import html
 import json
 import math
 from pathlib import Path
+from openpdf_preview_budget_v452 import safe_preview_scale, MAX_PREVIEW_PIXELS, MAX_PREVIEW_PNG_BYTES, MAX_TOTAL_PREVIEW_PNG_BYTES
 
 MAX_REPORT_BYTES = 25 * 1024 * 1024
 

@@ -100,6 +100,14 @@ def preview_page_for_source(selected_source, preview_source, preview_page, previ
         return None
     return preview_page+1
 
+def preview_cache_key(source,page):
+    """Invalidate rendered pages when the underlying PDF changes on disk."""
+    try:
+        stat=Path(source).stat()
+        return (str(source),int(page),stat.st_size,stat.st_mtime_ns)
+    except OSError:
+        return (str(source),int(page),None,None)
+
 class OpenPDFStudio(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -356,7 +364,7 @@ class OpenPDFStudio(tk.Tk):
         self._preview_generation += 1
         generation=self._preview_generation
         page=self.preview_page
-        cache_key=(source,page)
+        cache_key=preview_cache_key(source,page)
         if cache_key in self._preview_cache:
             self._show_preview(generation,self._preview_cache[cache_key]);return
         # Debounce fast navigation: only the latest request is dispatched.
@@ -388,9 +396,10 @@ class OpenPDFStudio(tk.Tk):
         self._photo=ImageTk.PhotoImage(image)
         self.preview.configure(image=self._photo,text='')
         self.page_label.configure(text=f'Page {self.preview_page+1} / {self.preview_total}')
-        if len(self._preview_cache)>=12 and (result['source'],result['page']) not in self._preview_cache:
+        cache_key=preview_cache_key(result['source'],result['page'])
+        if len(self._preview_cache)>=12 and cache_key not in self._preview_cache:
             self._preview_cache.pop(next(iter(self._preview_cache)))
-        self._preview_cache[(result['source'],result['page'])]=result
+        self._preview_cache[cache_key]=result
     def _append(self,text):
         self.log.configure(state='normal');self.log.insert('end',str(text)+'\n');self.log.see('end');self.log.configure(state='disabled')
     def _run(self):

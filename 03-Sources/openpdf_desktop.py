@@ -70,6 +70,28 @@ def move_selected_source(sources, selected, direction):
     items[selected],items[target]=items[target],items[selected]
     return items,target
 
+def validate_page_options(operation, *, first='1', last='1', chunk='1', order='1,2'):
+    """Validate operation-specific page options before starting a background job."""
+    if operation == 'extraction':
+        try:
+            start=int(str(first).strip());end=int(str(last).strip())
+        except (TypeError,ValueError):
+            raise ValueError('Extraction : indiquez des numéros de pages entiers.')
+        if start < 1 or end < start:
+            raise ValueError('Extraction : la page de début doit être >= 1 et la fin >= au début.')
+    elif operation == 'decoupage':
+        try: count=int(str(chunk).strip())
+        except (TypeError,ValueError):
+            raise ValueError('Découpage : indiquez un nombre entier de pages par fichier.')
+        if count < 1:raise ValueError('Découpage : au moins une page par fichier.')
+    elif operation == 'reorganisation':
+        parts=[item.strip() for item in str(order).split(',')]
+        if not parts or any(not part or not part.isdecimal() for part in parts):
+            raise ValueError('Réorganisation : liste de pages attendue, par exemple 3,1,2.')
+        if any(int(part)<1 for part in parts):
+            raise ValueError('Réorganisation : les pages commencent à 1.')
+    return True
+
 class OpenPDFStudio(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -346,6 +368,7 @@ class OpenPDFStudio(tk.Tk):
         kwargs=dict(profile=self.profile.get(),first=self.first.get(),last=self.last.get(),chunk=self.chunk.get(),order=self.order.get(),language=self.language.get())
         try:
             sources,dest=validate_request(op,sources,dest)
+            validate_page_options(op,first=kwargs['first'],last=kwargs['last'],chunk=kwargs['chunk'],order=kwargs['order'])
         except (ValueError,OSError) as exc:
             messagebox.showerror('Paramètres invalides',str(exc),parent=self)
             # Validation failures should guide the user to the field they can fix.

@@ -373,8 +373,18 @@ def main(argv=None):
     parser.add_argument('--source-pdf',type=Path,help='Optional PDF for real source page previews')
     parser.add_argument('--target-pdf',type=Path,help='Optional PDF for real target page previews')
     args=parser.parse_args(argv)
-    if args.input.stat().st_size>MAX_REPORT_BYTES:parser.error('Report exceeds 25 MiB')
-    data=json.loads(args.input.read_text(encoding='utf-8'))
-    args.output.write_text(build_dashboard(data,source_pdf=args.source_pdf,target_pdf=args.target_pdf),encoding='utf-8')
+    # V45.1: preserve existing outputs, refuse source races and publish only a
+    # fully written HTML file. Never silently replace a destination or symlink.
+    from openpdf_safe_html_v451 import export_html_report
+    from openpdf_static_dashboard_v450 import missing_dashboard_assets, build_static_dashboard
+    missing = missing_dashboard_assets()
+    def render(data):
+        if missing:
+            return build_static_dashboard(data, source_pdf=args.source_pdf,
+                                          target_pdf=args.target_pdf, missing_assets=missing)
+        return build_dashboard(data, source_pdf=args.source_pdf,
+                               target_pdf=args.target_pdf)
+    receipt = export_html_report(args.input, args.output, render)
+    print(f"Diagnostic published: {receipt['size_bytes']} bytes; SHA-256 {receipt['sha256']}")
 
 if __name__=='__main__':main()

@@ -367,13 +367,14 @@ class OpenPDFStudio(tk.Tk):
         self._preview_after_id=None
         if generation!=self._preview_generation:return
         key=(source,page)
-        if key in self._preview_pending:return
-        self._preview_pending.add(key)
+        # A previous worker for this key may belong to an obsolete generation.
+        # Do not suppress the current request: stale results are ignored later.
+        self._preview_pending.add((key,generation))
         def worker():
             from openpdf_preview import render_preview
             try: result=render_preview(source,page)
             except Exception as exc: result={'error':str(exc)}
-            self.events.put(('preview',generation,result,key))
+            self.events.put(('preview',generation,result,(key,generation)))
         threading.Thread(target=worker,daemon=True).start()
     def _show_preview(self,generation,result):
         if generation!=self._preview_generation:return

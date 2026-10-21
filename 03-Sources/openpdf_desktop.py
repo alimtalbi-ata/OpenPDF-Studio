@@ -105,7 +105,7 @@ class OpenPDFStudio(tk.Tk):
         super().__init__()
         self.title(f'OpenPDF Studio V{APP_VERSION} — Abdelhalim Talbi')
         self.geometry('1040x720'); self.minsize(800,560)
-        self._job_started=None; self.job_state=JobState();self.sources=[]; self.events=queue.Queue(); self.busy=False; self.preview_page=0; self.preview_total=0; self._preview_source=None; self._preview_generation=0; self._preview_cache={}; self._preview_pending=set(); self._preview_lock=threading.Lock(); self._preview_inflight=0; self._preview_limit=2
+        self._job_started=None; self.job_state=JobState();self.sources=[]; self.events=queue.Queue(); self.busy=False; self.preview_page=0; self.preview_total=0; self._preview_source=None; self._preview_loaded_source=None; self._preview_generation=0; self._preview_cache={}; self._preview_pending=set(); self._preview_lock=threading.Lock(); self._preview_inflight=0; self._preview_limit=2
         self.operation=tk.StringVar(value='compression'); self.destination=tk.StringVar()
         self.profile=tk.StringVar(value='smaller_only');self.first=tk.StringVar(value='1');self.last=tk.StringVar(value='1')
         self.chunk=tk.StringVar(value='1');self.order=tk.StringVar(value='1,2');self.language=tk.StringVar(value='fra+eng')
@@ -283,7 +283,7 @@ class OpenPDFStudio(tk.Tk):
         if self.busy or self.operation.get()!='extraction':return
         selected=self.files.curselection()
         source=self.sources[selected[0]] if len(selected)==1 else None
-        page=preview_page_for_source(source,self._preview_source,self.preview_page,self.preview_total)
+        page=preview_page_for_source(source,self._preview_loaded_source,self.preview_page,self.preview_total)
         if page is None:
             messagebox.showinfo('Extraction','Sélectionnez un PDF et attendez que son aperçu soit chargé.',parent=self)
             return
@@ -346,6 +346,8 @@ class OpenPDFStudio(tk.Tk):
     def _prev_page(self):
         if self.preview_total:self.preview_page=previous_page(self.preview_page,self.preview_total);self._preview()
     def _preview(self):
+        self._preview_loaded_source=None
+        self.preview_total=0
         self.preview.configure(image='',text='Chargement de l’aperçu…');self._photo=None
         idx=self.files.curselection()
         if not idx:
@@ -380,6 +382,7 @@ class OpenPDFStudio(tk.Tk):
             self.preview.configure(text='Aperçu indisponible : '+result['error']);return
         from PIL import Image,ImageTk
         self.preview_total=result['pages'];self.preview_page=result['page']
+        self._preview_loaded_source=result['source']
         image=Image.frombytes('RGB',result['size'],result['pixels'])
         self._photo=ImageTk.PhotoImage(image)
         self.preview.configure(image=self._photo,text='')

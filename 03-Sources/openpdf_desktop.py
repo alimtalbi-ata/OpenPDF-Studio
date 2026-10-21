@@ -92,6 +92,14 @@ def validate_page_options(operation, *, first='1', last='1', chunk='1', order='1
             raise ValueError('Réorganisation : les pages commencent à 1.')
     return True
 
+def preview_page_for_source(selected_source, preview_source, preview_page, preview_total):
+    """One-based page only when the preview belongs to the selected PDF."""
+    if not selected_source or selected_source != preview_source or not isinstance(preview_total,int) or preview_total < 1:
+        return None
+    if not isinstance(preview_page,int) or not 0 <= preview_page < preview_total:
+        return None
+    return preview_page+1
+
 class OpenPDFStudio(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -160,6 +168,12 @@ class OpenPDFStudio(tk.Tk):
             ttk.Label(frame,text=name,width=18).pack(side='left')
             if name=='Profil': ttk.Combobox(frame,textvariable=var,values=('smaller_only','standard','images_balanced'),state='readonly',width=25).pack(side='left')
             else: ttk.Entry(frame,textvariable=var,width=28).pack(side='left')
+        page_actions=ttk.Frame(self.options);page_actions.pack(fill='x',pady=(4,0))
+        self.page_start_button=ttk.Button(page_actions,text='Début = page affichée',command=lambda:self._use_preview_page('start'))
+        self.page_start_button.pack(side='left',padx=(0,5))
+        self.page_end_button=ttk.Button(page_actions,text='Fin = page affichée',command=lambda:self._use_preview_page('end'))
+        self.page_end_button.pack(side='left')
+        self.page_actions=page_actions
         ttk.Label(left,text='3. Destination',font=('Segoe UI',12,'bold')).pack(anchor='w',pady=(12,4))
         dest=ttk.Frame(left);dest.pack(fill='x')
         self.destination_entry=ttk.Entry(dest,textvariable=self.destination);self.destination_entry.pack(side='left',fill='x',expand=True)
@@ -198,7 +212,7 @@ class OpenPDFStudio(tk.Tk):
     def _set_busy(self, busy):
         self.busy=busy
         state='disabled' if busy else 'normal'
-        for widget in (self.go,self.add_button,self.remove_button,self.up_button,self.down_button,self.browse_button,self.recover_button,self.audit_button,self.destination_shortcut,*self.operation_buttons):
+        for widget in (self.go,self.add_button,self.remove_button,self.up_button,self.down_button,self.browse_button,self.recover_button,self.audit_button,self.destination_shortcut,self.page_start_button,self.page_end_button,*self.operation_buttons):
             widget.configure(state=state)
         self.files.configure(state=state)
 
@@ -265,6 +279,17 @@ class OpenPDFStudio(tk.Tk):
         except Exception as exc:
             messagebox.showerror("Récupération impossible",str(exc),parent=self)
 
+    def _use_preview_page(self,endpoint):
+        if self.busy or self.operation.get()!='extraction':return
+        selected=self.files.curselection()
+        source=self.sources[selected[0]] if len(selected)==1 else None
+        page=preview_page_for_source(source,self._preview_source,self.preview_page,self.preview_total)
+        if page is None:
+            messagebox.showinfo('Extraction','Sélectionnez un PDF et attendez que son aperçu soit chargé.',parent=self)
+            return
+        if endpoint=='start':self.first.set(str(page))
+        elif endpoint=='end':self.last.set(str(page))
+
     def _on_operation_changed(self):
         self._refresh()
         if self.destination.get().strip():
@@ -273,6 +298,8 @@ class OpenPDFStudio(tk.Tk):
     def _refresh(self):
         key=self.operation.get();show={'compression':('Profil',),'extraction':('Début','Fin'),'decoupage':('Pages par fichier',),'reorganisation':('Ordre des pages',),'ocr':('Langue OCR',)}.get(key,())
         for name,frame in self.opts.items():frame.pack(fill='x',pady=2) if name in show else frame.pack_forget()
+        if key=='extraction':self.page_actions.pack(fill='x',pady=(4,0))
+        else:self.page_actions.pack_forget()
     def _add(self):
         known={str(Path(p).resolve()).casefold() for p in self.sources}
         for path in filedialog.askopenfilenames(parent=self,filetypes=[('PDF','*.pdf')]):

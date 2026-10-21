@@ -78,4 +78,5 @@ def verify_editable_text(source, destination, fmt):
         return verify_xlsx_text(source, destination)
     if fmt != 'docx':
         raise ValueError('Format Office invalide')
-    return None
+    from openpdf_docx_roundtrip_v460 import verify_docx_text
+    return verify_docx_text(source, destination)

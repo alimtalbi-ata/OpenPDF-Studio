@@ -69,6 +69,10 @@ def compress_with_profile(source, destination, profile="smaller_only"):
             validate_lossless_images(source,tmp)
             from openpdf_render_quality_v425 import validate_rendered_pages
             validate_rendered_pages(source,tmp)
+        # Text/raster equivalence cannot prove that links, annotations,
+        # form fields, bookmarks and embedded files survived compression.
+        from openpdf_structure_guard_v439 import validate_structure_preserved
+        validate_structure_preserved(source, tmp)
         # Reject a result if the source was edited during a long-running operation.
         current_stat=Path(source).stat()
         if (current_stat.st_size,current_stat.st_mtime_ns,current_stat.st_ino)!=(source_stat.st_size,source_stat.st_mtime_ns,source_stat.st_ino):

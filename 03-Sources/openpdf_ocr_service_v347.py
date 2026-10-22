@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, asdict
 from pathlib import Path
 import hashlib, os, tempfile, re
+from openpdf_ocr_budget_v467 import plan_ocr_pages, DEFAULT_TOTAL_OCR_PIXELS, DEFAULT_OCR_PAGES
 
 @dataclass(frozen=True)
 class OCRReceipt:
@@ -23,7 +24,8 @@ def _digest(path):
     return h.hexdigest()
 
 
-def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=True, progress=None, tessdata=None):
+def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=True, progress=None, tessdata=None, *,
+                   max_ocr_pixels=DEFAULT_TOTAL_OCR_PIXELS, max_ocr_pages=DEFAULT_OCR_PAGES):
     """Generate searchable PDF without modifying input; commit only complete valid output.
 
     Existing text pages are copied if skip_text=True; scanned pages OCR'd.
@@ -46,8 +48,12 @@ def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=T
         with fitz.open(source) as original, fitz.open() as result:
             if original.needs_pass:raise ValueError('PDF chiffré non pris en charge')
             if not original.page_count:raise ValueError('PDF sans page')
+            # Preflight all selected pages before expensive OCR starts.
+            selected, budget = plan_ocr_pages(
+                original, dpi, lambda page: not (skip_text and page.get_text('text').strip()),
+                max_total_pixels=max_ocr_pixels, max_ocr_pages=max_ocr_pages)
             for i,page in enumerate(original):
-                if skip_text and page.get_text('text').strip():
+                if not selected[i]:
                     result.insert_pdf(original,from_page=i,to_page=i)
                     skipped+=1
                 else:

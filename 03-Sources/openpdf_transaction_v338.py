@@ -11,6 +11,7 @@ class CompressionReceipt:
     message: str
     size: int = 0
     sha256: str = ''
+    metrics: object = None  # V46.8: optional structured, auditable size/quality report
 
 def compress_with_receipt(source, destination, profile='smaller_only'):
     """Preserve legacy engine semantics, return authoritative publish status.

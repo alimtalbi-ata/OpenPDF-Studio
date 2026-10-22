@@ -22,13 +22,19 @@ class CompressionResourceLimits:
     max_image_pixels: int = 120_000_000
     max_total_unique_image_pixels: int = 1_000_000_000
     max_unique_images: int = 20_000
+    # V47.7: also bound *displayed* image occurrences. This includes inline BI
+    # images that are not listed by page.get_images(full=True), and repeated
+    # uses of the same XREF. This intentionally counts repetitions.
+    max_image_appearances: int = 50_000
+    max_total_appearance_pixels: int = 2_000_000_000
 
 
 def _validate_limits(limits):
     if type(limits) is not CompressionResourceLimits:
         raise ValueError('Politique de ressources de compression invalide')
     for name in ('max_source_bytes', 'max_pages', 'max_image_pixels',
-                 'max_total_unique_image_pixels', 'max_unique_images'):
+                 'max_total_unique_image_pixels', 'max_unique_images',
+                 'max_image_appearances', 'max_total_appearance_pixels'):
         value = getattr(limits, name)
         if type(value) is not int or value < 1:
             raise ValueError(f'Budget de compression invalide : {name}')
@@ -66,6 +72,8 @@ def preflight_compression_source(source, *, limits=CompressionResourceLimits()):
         raise RuntimeError('Budget de taille du PDF source dépassé')
     seen = set()
     total_pixels = 0
+    appearance_count = 0
+    appearance_pixels = 0
     with fitz.open(str(path)) as document:
         if document.needs_pass:
             raise RuntimeError('PDF chiffré : compression refusée')
@@ -98,8 +106,30 @@ def preflight_compression_source(source, *, limits=CompressionResourceLimits()):
                 total_pixels += pixels
                 if total_pixels > limits.max_total_unique_image_pixels:
                     raise RuntimeError('Budget cumulé de pixels image PDF dépassé')
+            # get_images() only enumerates XREF-backed image resources and
+            # misses inline BI images. get_image_info(xrefs=False) inspects
+            # displayed image metadata without requesting image binary extraction
+            # or rasterizing the page. Count all appearances conservatively:
+            # a repeated XREF can still increase processing cost.
+            for info in page.get_image_info(xrefs=False):
+                width = info.get('width')
+                height = info.get('height')
+                if (type(width) is not int or type(height) is not int
+                        or width < 1 or height < 1):
+                    raise RuntimeError('Dimensions d’image affichée invalides')
+                pixels = width * height
+                if pixels > limits.max_image_pixels:
+                    raise RuntimeError('Budget de pixels par image affichée dépassé')
+                appearance_count += 1
+                if appearance_count > limits.max_image_appearances:
+                    raise RuntimeError('Budget d’occurrences d’images dépassé')
+                appearance_pixels += pixels
+                if appearance_pixels > limits.max_total_appearance_pixels:
+                    raise RuntimeError('Budget de pixels des images affichées dépassé')
     return {
         'pages': pages, 'source_bytes': size,
         'unique_images': len(seen), 'unique_image_pixels': total_pixels,
+        'image_appearances': appearance_count,
+        'appearance_pixels': appearance_pixels,
         'evidence': 'metadata_preflight_not_runtime_isolation',
     }

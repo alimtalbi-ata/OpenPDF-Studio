@@ -1,0 +1,23 @@
+{
+  "author": "Abdelhalim Talbi",
+  "schema": "openpdf-runtime-interface-hashes-v1",
+  "sha256": {
+    "03-Sources/openpdf_binary_manifest.py": "2c58fe0e17e1d510188b788acdf3d069885f0614b6bcd510a87c0cea69dced69",
+    "03-Sources/openpdf_compression_service_v344.py": "c761b9467c79d9deb70a7ea7a756b12215c4c15222e1dcbcaa5475aa26ed911e",
+    "03-Sources/openpdf_compression_v327.py": "36424ef97956dc00d04f2336ccd39eba2cd8d55026979e0fd47700a4133686ab",
+    "03-Sources/openpdf_conversion_audit_v346.py": "05607146676e4ca70789137f02c339b8a15254c02fb3b9f0490d504a6b19ad68",
+    "03-Sources/openpdf_conversion_service_v351.py": "cbd94cbf877a7d0d960e1b2d8f3bdd426b0b94db73db786e25735decfb417571",
+    "03-Sources/openpdf_core_v260.py": "98fface06bd0d21ae0bbf9a96e5082e13bbbb243690af4fdf26c37c661b74e21",
+    "03-Sources/openpdf_desktop.py": "3f796bdd2b2c804c082c1716560c54ebb3557fde7e83c17378d204d1d1a6fec9",
+    "03-Sources/openpdf_fidelity_v352.py": "7cf9766bcd8c20427eb616d7f623281bafdd52a94a016bc6e0e7b59aa54ecb1d",
+    "03-Sources/openpdf_ocr_service_v347.py": "1f100a75f7014ea9965a3bb43cd470adbe0937d9c0fb8f41c714cdef655220a8",
+    "03-Sources/openpdf_operations.py": "188536b0230cabd484760555fb124b2da2f4ad39a98e6d97a6c953b49ca2555b",
+    "03-Sources/openpdf_page_service_v345.py": "2081cff2339e3fb7f7b36fa1272d39a660826314e2e440d86c2ce3c2ce3b8028",
+    "03-Sources/openpdf_publish_binary.py": "24af8e7243076d1d9b2b2f8f30f95606fe5d2bfa72c4dbfc3bd8256839eb41b7",
+    "03-Sources/openpdf_split_transaction.py": "58ebd3047de5c48c4cdc3739f767bb76413468fde669e4867689dcd6c2c02f7d",
+    "03-Sources/openpdf_transaction_v338.py": "8327d0515763b4d23eae62ea5e60190c356102c3a0bc92e793eb6db1fbe80d08",
+    "03-Sources/openpdf_ui_controller_v348.py": "62690e7b900e18ef05851e3d12c481b27fc125c748eff17b4601a397187af1ac",
+    "03-Sources/openpdf_workspace_v349.py": "ce018a5a02bab8d867a54f65cd88114d2fad5f7b600f3a1cf02b1c4297c9febb"
+  },
+  "version": "51.2"
+}

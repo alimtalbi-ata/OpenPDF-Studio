@@ -28,6 +28,10 @@ La métrique MAE est une erreur moyenne par canal RGB (0 à 255), la fraction de
 
 Les tests V50.4 utilisent un PDF réel avec texte et graphique vectoriel, des essais de réduction, un seuil de gain refusé avant publication, des fichiers corrompus, la non-substitution de destination et des budgets d'entrée. La CI dédiée lance les tests sur Ubuntu et Windows, mais ne constitue pas à elle seule une validation humaine de l'interface graphique.
 
+## Résultats complémentaires sur image synthétique
+
+Sur un PDF réel créé pour le test avec une image raster synthétique : **1 533 877 octets** à l’entrée ; profil `standard` : **1 454 692 octets (5,16 %)** ; `images_balanced` : **202 816 octets (86,78 %)** avec MAE **0,5338/255** ; `images_adaptive` : **136 938 octets (91,07 %)** avec MAE **0,7260/255**. Ces gains sont propres à ce document synthétique et ne prédisent pas ceux d’un corpus métier. Les reçus JSON et PDF réels sont inclus dans le ZIP.
+
 ## Architecture
 
 `PDF corpus` → `Input budgets / SHA-256` → `CompressionRequest` → `Private candidate` → `RGB quality gate + optional saving gate` → `Exclusive publication` → `JSON evidence + elapsed time`.

@@ -1,4 +1,4 @@
-name: V50.3 reconciled source and Windows portable qualification
+name: V50.4 reconciled source and Windows portable qualification
 on:
   pull_request:
   workflow_dispatch:
@@ -46,20 +46,20 @@ jobs:
           --entry openpdf_bind_smoke
           --entry openpdf_publish_binary
           --entry openpdf_binary_manifest
-          --required-manifest 07-Manifestes/V50.3-REQUIRED-RUNTIME-MODULES.json
+          --required-manifest 07-Manifestes/V50.4-REQUIRED-RUNTIME-MODULES.json
           --report source-closure.json
       - name: Preserve evidence even on failure
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v503-source-closure-evidence
+          name: v504-source-closure-evidence
           path: source-closure.json
           if-no-files-found: warn
       - name: Preserve validated source snapshot for cumulative packaging
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: v503-reconciled-source-snapshot
+          name: v504-reconciled-source-snapshot
           path: |
             VERSION.txt
             .gitattributes
@@ -105,7 +105,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v503-windows-portable-build-evidence
+          name: v504-windows-portable-build-evidence
           path: |
             01-Application/binary/*.log
             01-Application/binary/*.json
@@ -150,7 +150,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v503-windows-installer-build-evidence
+          name: v504-windows-installer-build-evidence
           path: |
             01-Application/binary/*.log
             01-Application/binary/*.json

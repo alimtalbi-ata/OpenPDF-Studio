@@ -144,7 +144,10 @@ class OfficeScanGateV510(unittest.TestCase):
                             str(self.source)], capture_output=True, text=True)
         self.assertEqual(p.returncode, 2, p.stderr)
         self.assertTrue(p.stdout.strip(), f'CLI produced no JSON: stderr={p.stderr!r}')
-        result = json.loads(p.stdout)
+        try:
+            result = json.loads(p.stdout)
+        except json.JSONDecodeError as exc:
+            self.fail(f'Invalid CLI JSON: stdout={p.stdout[:600]!r} stderr={p.stderr[:600]!r}: {exc}')
         self.assertEqual(result['editable_text_gate'], 'blocked_ocr_required')
         self.assertNotIn('RASTER ONLY SCANNED CONTENT', p.stdout)
         self.assertEqual(result['scanned_pages'], [1])

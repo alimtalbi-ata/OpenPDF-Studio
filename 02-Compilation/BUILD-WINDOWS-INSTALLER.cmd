@@ -38,7 +38,7 @@ if not defined PY_EXE goto missing_python
 "%PY_EXE%" %PY_ARGS% -m venv .venv >> "%LOG%" 2>&1 || goto fail
 set "VPY=%CD%\.venv\Scripts\python.exe"
 rem Source-closure gate is static and fails before downloading/building dependencies.
-"%VPY%" openpdf_source_closure_v502.py --root "%ROOT%" --entry openpdf_studio --entry openpdf_build_preflight --entry openpdf_release_gate --entry openpdf_bind_smoke --entry openpdf_publish_binary --entry openpdf_binary_manifest --report "%STAGE%\source-closure-v%VERSION%.json" >> "%LOG%" 2>&1 || goto fail
+"%VPY%" openpdf_source_closure_v502.py --root "%ROOT%" --entry openpdf_studio --entry openpdf_build_preflight --entry openpdf_release_gate --entry openpdf_bind_smoke --entry openpdf_publish_binary --entry openpdf_binary_manifest --required-manifest "%ROOT%\07-Manifestes\V50.2-REQUIRED-RUNTIME-MODULES.json" --report "%STAGE%\source-closure-v%VERSION%.json" >> "%LOG%" 2>&1 || goto fail
 "%VPY%" -m pip install --upgrade pip >> "%LOG%" 2>&1 || goto fail
 "%VPY%" -m pip install -r requirements-windows-v260.txt "pyinstaller>=6,<7" "Pillow>=10,<13" >> "%LOG%" 2>&1 || goto fail
 "%VPY%" openpdf_build_preflight.py >> "%LOG%" 2>&1 || goto fail

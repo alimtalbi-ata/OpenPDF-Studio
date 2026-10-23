@@ -24,6 +24,8 @@ jobs:
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_windows_single_command_v472.py -v
       - name: Test 15 runtime publication and integrity regressions
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_runtime_reconciliation_v503.py -v
+      - name: Test version-aware Windows tag-release workflow (static contract)
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_windows_release_dynamic_v508.py -v
       - name: Test V50.8 Windows uninstall cleanup contract
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_windows_installer_cleanup_v504.py -v
       - name: Test original V50.2 closure regression

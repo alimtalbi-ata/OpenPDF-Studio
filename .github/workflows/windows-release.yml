@@ -30,6 +30,43 @@ jobs:
             'C:\ProgramData\chocolatey\bin\ISCC.exe'
           )
           if (-not ($candidates | Where-Object { Test-Path $_ } | Select-Object -First 1)) { throw 'ISCC.exe not found' }
+      - name: Bind release to VERSION.txt and requested Git tag
+        shell: pwsh
+        run: |
+          $version = (Get-Content -LiteralPath VERSION.txt -Raw).Trim()
+          if ($version -notmatch '^\d{1,4}\.\d{1,4}        shell: cmd
+        run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd
+      - name: Verify release files
+        shell: pwsh
+        run: |
+          $dir = '01-Application/binary'
+          $v = $env:OPENPDF_VERSION
+          if (-not $v) { throw 'Release version missing from environment' }
+          @(("OpenPDF-Studio-V{0}-Setup.exe" -f $v),("OpenPDF-Studio-Portable-V{0}.exe" -f $v),("binary-manifest-v{0}.json" -f $v),("windows-installation-v{0}.json" -f $v),'windows-smoke-installer.json','windows-smoke-portable.json') | ForEach-Object {
+            $path = Join-Path $dir $_
+            if (!(Test-Path $path) -or (Get-Item $path).Length -eq 0) { throw "Missing/empty artifact: $path" }
+          }
+      - name: Upload build evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenPDF-Studio-V${{ env.OPENPDF_VERSION }}-build-evidence
+          path: |
+            01-Application/binary/*.log
+            01-Application/binary/*.json
+          if-no-files-found: warn
+      - name: Upload qualified binaries
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenPDF-Studio-V${{ env.OPENPDF_VERSION }}-Windows-binary
+          path: 01-Application/binary/*.exe
+          if-no-files-found: error
+) { throw 'Invalid VERSION.txt' }
+          if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -ne "v$version") {
+            throw "Tag $env:GITHUB_REF_NAME disagrees with VERSION.txt ($version)"
+          }
+          "OPENPDF_VERSION=$version" >> $env:GITHUB_ENV
       - name: Build and qualify installer and portable
         shell: cmd
         run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd

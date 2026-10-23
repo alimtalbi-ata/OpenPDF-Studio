@@ -12,7 +12,7 @@ def bind(stage,mode):
         if not verify(exe):raise RuntimeError('Invalid staged executable: '+name)
         data=json.loads(report.read_text(encoding='utf-8-sig'))
         if data.get('passed') is not True or data.get('mode')!=edition or str(data.get('version'))!=VERSION:raise RuntimeError('Invalid smoke report')
-        if len(data.get('checks',[]))!=2 or not all(x.get('passed') is True for x in data['checks']):raise RuntimeError('Incomplete checks')
+        if len(data.get('checks',[]))!=3 or not all(x.get('passed') is True for x in data['checks']):raise RuntimeError('Incomplete checks')
         data['artifact_name']=name
         data['artifact_sha256']=hashlib.sha256(exe.read_bytes()).hexdigest()
         report.write_text(json.dumps(data,indent=2),encoding='utf-8')

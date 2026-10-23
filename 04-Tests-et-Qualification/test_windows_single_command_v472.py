@@ -64,6 +64,15 @@ class WindowsSingleCommandV472(unittest.TestCase):
         for marker in ('windows-installation-v', 'windows-smoke-installer.json', 'artifact_sha256', 'Missing qualified Windows artifact'):
             self.assertIn(marker, package)
 
+    def test_smoke_output_is_bounded_plain_text(self):
+        script = (ROOT / '02-Compilation/TEST-WINDOWS-BINARIES.ps1').read_text(encoding='utf-8')
+        self.assertIn('function Read-SmokeText', script)
+        self.assertIn('[System.IO.File]::ReadAllText', script)
+        self.assertIn('65536', script)
+        self.assertIn('$result.stdout = if (Test-Path -LiteralPath $markerFile) { Read-SmokeText', script)
+        self.assertIn('$result.stderr = Read-SmokeText $err', script)
+        self.assertNotIn('$result.stdout = if (Test-Path -LiteralPath $markerFile) { Get-Content', script)
+
     def test_preflight_fails_closed_when_launcher_missing(self):
         with tempfile.TemporaryDirectory() as folder:
             tmp = Path(folder)

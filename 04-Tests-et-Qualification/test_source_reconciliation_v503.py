@@ -114,6 +114,8 @@ class SourceReconciliationV503Tests(unittest.TestCase):
         self.assertIn("BUILD-WINDOWS-INSTALLER.cmd --portable-only", workflow)
         self.assertIn("if: always()", workflow)
         self.assertIn(f"V{CURRENT_VERSION}-REQUIRED-RUNTIME-MODULES.json", workflow)
+        self.assertIn(f"windows-installation-v{CURRENT_VERSION}.json", workflow)
+        self.assertIn(f"$report.version -ne '{CURRENT_VERSION}'", workflow)
 
 
 if __name__ == "__main__":

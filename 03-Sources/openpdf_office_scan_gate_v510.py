@@ -13,7 +13,7 @@ import hashlib
 import json
 import math
 
-import fitz
+import pymupdf as fitz
 
 MAX_PAGES = 5000
 MAX_IMAGE_RECTS_PER_PAGE = 512

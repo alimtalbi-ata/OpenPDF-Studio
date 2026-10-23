@@ -17,8 +17,15 @@ class SourceSnapshot:
     digest: str
 
 
+# On Windows, st_ctime_ns represents creation time, not POSIX change time.
+# NTFS can expose inconsistent creation timestamps via fstat/stat immediately
+# after PDF creation; retain device/inode/size/mtime and SHA-256 checks.
+_CHANGE_TIME_RELIABLE = os.name != 'nt'
+
+
 def _identity(st):
-    return st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns
+    change_ns = st.st_ctime_ns if _CHANGE_TIME_RELIABLE else 0
+    return st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, change_ns
 
 
 def snapshot_source(path):

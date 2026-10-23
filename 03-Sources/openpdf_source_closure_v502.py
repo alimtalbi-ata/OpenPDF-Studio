@@ -53,7 +53,7 @@ def _imports(tree: ast.AST, available: set[str]) -> set[str]:
     return required
 
 
-def audit_sources(root: str | Path, entries=DEFAULT_ENTRIES) -> dict:
+def audit_sources(root: str | Path, entries=DEFAULT_ENTRIES, required_manifest=None) -> dict:
     """Return a stable report, never importing or executing untrusted sources."""
     root = Path(root)
     source = root / "03-Sources"
@@ -63,8 +63,25 @@ def audit_sources(root: str | Path, entries=DEFAULT_ENTRIES) -> dict:
     if not entry_names:
         raise ValueError("At least one entrypoint is required")
     available = {p.stem for p in source.glob("*.py") if p.is_file() and not p.is_symlink()}
+    version_file = root / "VERSION.txt"
+    version = version_file.read_text(encoding="utf-8-sig").strip() if version_file.is_file() else None
+    required = []
+    expected_version = None
+    if required_manifest is not None:
+        manifest = json.loads(Path(required_manifest).read_text(encoding="utf-8-sig"))
+        if not isinstance(manifest, dict) or manifest.get("schema") != "openpdf-runtime-module-set-v1":
+            raise ValueError("Invalid required runtime manifest schema")
+        modules = manifest.get("modules")
+        if not isinstance(modules, list) or not modules or any(not isinstance(x, str) for x in modules):
+            raise ValueError("Invalid required runtime modules")
+        required = [_module_name(x) for x in modules]
+        if len(required) != len(set(required)):
+            raise ValueError("Duplicate required runtime module")
+        expected_version = manifest.get("version")
+        if not isinstance(expected_version, str) or not re.fullmatch(r"[0-9]+\\.[0-9]+", expected_version):
+            raise ValueError("Invalid required runtime version")
     seen = set()
-    pending = deque(entry_names)
+    pending = deque(entry_names + sorted(required))
     missing = set()
     errors = {}
     edges = {}
@@ -85,17 +102,18 @@ def audit_sources(root: str | Path, entries=DEFAULT_ENTRIES) -> dict:
         dependencies = sorted(_imports(tree, available))
         edges[module] = dependencies
         pending.extend(dependencies)
-    version_file = root / "VERSION.txt"
-    version = version_file.read_text(encoding="utf-8-sig").strip() if version_file.is_file() else None
     return {
         "schema": "openpdf-source-closure-v1",
         "version": version,
+        "required_manifest_version": expected_version,
+        "version_matches_manifest": expected_version is None or version == expected_version,
+        "required_modules": sorted(required),
         "entrypoints": entry_names,
         "scanned_modules": sorted(edges),
         "missing_modules": sorted(missing),
         "syntax_errors": dict(sorted(errors.items())),
         "imports": dict(sorted(edges.items())),
-        "passed": not missing and not errors,
+        "passed": not missing and not errors and (expected_version is None or version == expected_version),
         "qualification": "static_source_only_not_windows_binary",
     }
 
@@ -106,10 +124,12 @@ def main(argv=None) -> int:
     parser.add_argument("--entry", action="append", dest="entries", default=None,
                         help="Root module without .py; may be specified repeatedly")
     parser.add_argument("--report", type=Path, help="Write JSON report to this path")
+    parser.add_argument("--required-manifest", type=Path,
+                        help="Pin the complete V50.2 runtime module set and version")
     args = parser.parse_args(argv)
     try:
-        report = audit_sources(args.root, args.entries or DEFAULT_ENTRIES)
-    except (ValueError, OSError, UnicodeError) as exc:
+        report = audit_sources(args.root, args.entries or DEFAULT_ENTRIES, args.required_manifest)
+    except (ValueError, OSError, UnicodeError, json.JSONDecodeError) as exc:
         report = {"schema": "openpdf-source-closure-v1", "passed": False,
                   "error": f"{type(exc).__name__}: {exc}",
                   "qualification": "static_source_only_not_windows_binary"}

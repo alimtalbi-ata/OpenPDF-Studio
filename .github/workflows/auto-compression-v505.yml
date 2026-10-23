@@ -1,4 +1,4 @@
-name: V51.1 PDF compression safety regression
+name: V51.2 PDF compression safety regression
 on:
   pull_request:
     paths:
@@ -15,7 +15,7 @@ on:
       - '04-Tests-et-Qualification/test_compression_alpha_v508.py'
       - '.github/workflows/auto-compression-v505.yml'
       - 'VERSION.txt'
-      - '07-Manifestes/V51.1-REQUIRED-RUNTIME-MODULES.json'
+      - '07-Manifestes/V51.2-REQUIRED-RUNTIME-MODULES.json'
   workflow_dispatch:
 permissions:
   contents: read
@@ -51,4 +51,4 @@ jobs:
       - name: GUI opt-in and overwrite regressions
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_auto_compression_v505.py -v
       - name: Static runtime dependency closure (not Windows binary qualification)
-        run: python 03-Sources/openpdf_source_closure_v502.py --root . --entry openpdf_studio --entry openpdf_auto_compression_v505 --required-manifest 07-Manifestes/V51.1-REQUIRED-RUNTIME-MODULES.json
+        run: python 03-Sources/openpdf_source_closure_v502.py --root . --entry openpdf_studio --entry openpdf_auto_compression_v505 --required-manifest 07-Manifestes/V51.2-REQUIRED-RUNTIME-MODULES.json

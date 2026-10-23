@@ -1,10 +1,12 @@
-name: DOCX release guard V49.5
+name: DOCX release guard V49.6
 on:
   pull_request:
     paths:
       - '02-Compilation/openpdf_release_guard_v494.py'
       - '02-Compilation/openpdf_docx_safety_v495.py'
+      - '02-Compilation/openpdf_ooxml_targets_v496.py'
       - '04-Tests-et-Qualification/test_docx_safety_v495.py'
+      - '04-Tests-et-Qualification/test_ooxml_targets_v496.py'
       - '.github/workflows/docx-release-guard-v495.yml'
   workflow_dispatch:
 permissions:
@@ -24,3 +26,5 @@ jobs:
           python-version: '3.12'
       - name: Validate OOXML security guard
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_docx_safety_v495.py -v
+      - name: Validate OOXML relationship targets
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ooxml_targets_v496.py -v

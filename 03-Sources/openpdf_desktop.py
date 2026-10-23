@@ -129,13 +129,14 @@ class OpenPDFStudio(tk.Tk):
         self.opts={}
         for name,var in [('Profil',self.profile),('Début',self.first),('Fin',self.last),('Pages par fichier',self.chunk),('Ordre des pages',self.order),('Pages à extraire',self.extraction_selection),('Langue OCR',self.language),('Mode OCR',self.ocr_mode),('OCR avant conversion',self.ocr_before_office),('Contrôle qualité',self.compression_quality),('Audit RGB intégral',self.full_rgb_audit)]:
             frame=ttk.Frame(self.options);self.opts[name]=frame
-            ttk.Label(frame,text=('Ordre (ex. toutes,!paires)' if name=='Ordre des pages' else 'Pages (optionnel, ex. !paires)' if name=='Pages à extraire' else name),width=22).pack(side='left')
+            if name != 'OCR avant conversion':
+                ttk.Label(frame,text=('Ordre (ex. toutes,!paires)' if name=='Ordre des pages' else 'Pages (optionnel, ex. !paires)' if name=='Pages à extraire' else name),width=22).pack(side='left')
             if name=='Profil': ttk.Combobox(frame,textvariable=var,values=('smaller_only','standard','images_balanced'),state='readonly',width=25).pack(side='left')
             elif name=='Contrôle qualité': ttk.Combobox(frame,textvariable=var,values=QUALITY_MODES,state='readonly',width=27).pack(side='left')
             elif name=='Audit RGB intégral': ttk.Checkbutton(frame,variable=var,text='Tous les pixels à 50 % (plus lent, seuil 2 %)').pack(side='left')
             elif name=='Mode OCR': ttk.Combobox(frame,textvariable=var,values=tuple(OCR_MODES),state='readonly',width=28).pack(side='left')
             elif name=='OCR avant conversion':
-                self.ocr_office_check=ttk.Checkbutton(frame,variable=var,text='OCR local si PDF numérisé (texte éditable, mise en page non garantie)')
+                self.ocr_office_check=ttk.Checkbutton(frame,variable=var,text='OCR si PDF numérisé (fidélité limitée)')
                 self.ocr_office_check.pack(side='left')
             else: ttk.Entry(frame,textvariable=var,width=28).pack(side='left')
         ttk.Label(left,text='3. Destination',font=('Segoe UI',12,'bold')).pack(anchor='w',pady=(12,4))

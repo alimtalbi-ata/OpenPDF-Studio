@@ -13,7 +13,10 @@ from reportlab.lib.pagesizes import A4
 
 ROOT=Path(__file__).resolve().parents[1]
 version=(ROOT/'VERSION.txt').read_text(encoding='utf-8').strip()
-if version == '50.7':
+if version == '50.8':
+    import generate_docs_v508
+    generate_docs_v508.generate()
+elif version == '50.7':
     import generate_docs_v507
     generate_docs_v507.generate()
     raise SystemExit(0)

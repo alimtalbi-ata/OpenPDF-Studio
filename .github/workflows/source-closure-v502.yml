@@ -22,7 +22,7 @@ jobs:
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_source_reconciliation_v503.py -v
       - name: Test versioned Windows packaging preflight contract
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_windows_single_command_v472.py -v
-      - name: Test 13 runtime publication and integrity regressions
+      - name: Test 14 runtime publication and integrity regressions
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_runtime_reconciliation_v503.py -v
       - name: Test original V50.2 closure regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_source_closure_v502.py -v
@@ -55,6 +55,27 @@ jobs:
           name: v503-source-closure-evidence
           path: source-closure.json
           if-no-files-found: warn
+      - name: Preserve validated source snapshot for cumulative packaging
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v503-reconciled-source-snapshot
+          path: |
+            VERSION.txt
+            .gitattributes
+            .github/workflows/*.yml
+            02-Compilation/**
+            03-Sources/**
+            04-Tests-et-Qualification/*.py
+            07-Manifestes/*.json
+            !**/__pycache__/**
+            !**/.venv/**
+            !**/dist/**
+            !**/build/**
+            !**/*.exe
+            !**/*.zip
+          include-hidden-files: true
+          if-no-files-found: error
   windows-portable-build:
     name: Native Windows portable build and smoke
     needs: [closure-unit-tests, source-readiness]

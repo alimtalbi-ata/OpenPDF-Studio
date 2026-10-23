@@ -55,7 +55,18 @@ def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=T
                     pix=page.get_pixmap(dpi=dpi,alpha=False)
                     kwargs={'language':language}
                     if tessdata is not None:kwargs['tessdata']=str(tessdata)
-                    pdf_bytes=pix.pdfocr_tobytes(**kwargs)
+                    try:
+                        pdf_bytes=pix.pdfocr_tobytes(**kwargs)
+                    except RuntimeError as exc:
+                        details=str(exc).lower()
+                        if any(word in details for word in ('tessdata','tesseract','language','traineddata')):
+                            raise RuntimeError(
+                                'OCR indisponible : moteur Tesseract ou langues '
+                                + language + ' manquants. Installez Tesseract OCR '
+                                'avec les données de langue requises (fra et eng), '
+                                'puis configurez TESSDATA_PREFIX vers le dossier tessdata.'
+                            ) from exc
+                        raise
                     with fitz.open(stream=pdf_bytes,filetype='pdf') as recognized:
                         result.insert_pdf(recognized)
                     processed+=1

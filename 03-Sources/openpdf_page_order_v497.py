@@ -1,7 +1,8 @@
 """Validated 1-based page order grammar for PDF reorganisation.
 
-Examples: 3-1,5,5,2-4. Reversed ranges and intentional duplicates are
-supported. Invalid or oversized requests fail before PDF publication.
+Examples: 3-1,5,5,2-4, impaires, paires, toutes, inverse. Reversed
+ranges, intentional duplicates and page-set shortcuts are supported. Invalid
+or oversized requests fail before PDF publication. V49.8 shortcuts.
 Author: Abdelhalim Talbi. OpenPDF Studio V49.7.
 """
 from __future__ import annotations
@@ -13,6 +14,14 @@ MAX_EXPRESSION_CHARS = 4096
 MAX_SEGMENTS = 2048
 MAX_OUTPUT_PAGES = 10000
 _SEGMENT = re.compile(r"([0-9]+)(?:\s*-\s*([0-9]+))?\Z", re.ASCII)
+_PAGE_SETS = {
+    "toutes": "all", "all": "all",
+    "impaires": "odd", "odd": "odd",
+    "paires": "even", "even": "even",
+    "inverse": "reverse", "reverse": "reverse",
+    "premiere": "first", "première": "first", "first": "first",
+    "derniere": "last", "dernière": "last", "last": "last",
+}
 
 
 @dataclass(frozen=True)
@@ -37,6 +46,22 @@ def plan_page_order(expression: str, page_count: int, *, max_output_pages: int =
     pages: list[int] = []
     for part in segments:
         token = part.strip()
+        keyword = _PAGE_SETS.get(token.casefold())
+        if keyword:
+            selected = {
+                "all": range(1, page_count + 1),
+                "odd": range(1, page_count + 1, 2),
+                "even": range(2, page_count + 1, 2),
+                "reverse": range(page_count, 0, -1),
+                "first": range(1, 2),
+                "last": range(page_count, page_count + 1),
+            }[keyword]
+            if not selected:
+                raise ValueError(f"Aucune page pour le sélecteur : {token!r}")
+            if len(pages) + len(selected) > max_output_pages:
+                raise ValueError(f"Ordre trop volumineux : maximum {max_output_pages} pages")
+            pages.extend(selected)
+            continue
         match = _SEGMENT.fullmatch(token)
         if not match:
             raise ValueError(f"Segment de pages invalide : {token[:80]!r}")

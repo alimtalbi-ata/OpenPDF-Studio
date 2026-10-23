@@ -16,6 +16,7 @@ import time
 
 from openpdf_atomic_output import publish_exclusive
 from openpdf_compression_evidence_v506 import verified_evidence
+from openpdf_compression_coverage_v507 import verify_render_coverage
 from openpdf_compression_acceptance_v489 import AcceptancePolicy
 from openpdf_compression_service_v344 import CompressionRequest, execute_compression
 from openpdf_source_integrity_v430 import fingerprint_source, verify_source_unchanged
@@ -85,6 +86,7 @@ def auto_compress(source, destination, policy=AutoCompressionPolicy()):
         source_bytes=original.size, source_sha256=original.sha256,
         destination=dst.name, policy=asdict(policy), cases=[],
         status='no_compliant_gain', selected_profile=None,
+        coverage_verification='v50.7-exact-pages-and-pixels',
         evidence_limit='full_rgb_at_bounded_scale_not_print_ocr_or_archival_certification')
     with tempfile.TemporaryDirectory(prefix='.openpdf-auto-', dir=dst.parent) as work:
         folder = Path(work)
@@ -105,6 +107,9 @@ def auto_compress(source, destination, policy=AutoCompressionPolicy()):
                     evidence = verified_evidence(receipt, source_sha256=original.sha256,
                         source_bytes=original.size, candidate_sha256=digest,
                         candidate_bytes=size, profile=profile, policy=quality)
+                    coverage = verify_render_coverage(src, candidate,
+                        receipt.metrics.visual_audit, quality)
+                    evidence['coverage'] = coverage
                     case.update(status='accepted', bytes=size, sha256=digest,
                         saving_percent=round(100 * (original.size - size) / original.size, 4),
                         quality=evidence)

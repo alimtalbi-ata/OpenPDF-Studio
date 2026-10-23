@@ -569,6 +569,10 @@ if (major, minor) >= (44, 6):
 doc.add_heading('Schéma d’architecture de livraison',level=1)
 doc.add_picture(str(diagram),width=Inches(6.2))
 doc.add_paragraph('Schéma technique explicatif, non capture de l’interface utilisateur.')
+if version == '51.1':
+ doc.add_heading('Pipeline OCR → Office V51.1',level=1)
+ doc.add_picture(str(docs/'Architecture-OCR-Office-V51.1.png'),width=Inches(6.2))
+ doc.add_paragraph('Schéma conceptuel, non capture Windows réelle.')
 doc.add_heading('Contrôles de qualification',level=1)
 table=doc.add_table(rows=1,cols=2);table.style='Light Shading Accent 1'
 for i,head in enumerate(('Contrôle','État constaté')):table.rows[0].cells[i].text=head
@@ -627,6 +631,10 @@ if (major, minor) >= (44, 6):
 story.append(Paragraph('Schéma d’architecture de livraison',styles['Heading2']))
 story.append(Image(str(diagram),width=480,height=185))
 story.append(Paragraph('Schéma technique, non capture UI.',styles['Normal']))
+if version == '51.1':
+ story.append(Paragraph('Pipeline OCR → Office V51.1',styles['Heading2']))
+ story.append(Image(str(docs/'Architecture-OCR-Office-V51.1.png'),width=480,height=144))
+ story.append(Paragraph('Schéma conceptuel, non capture Windows réelle.',styles['Normal']))
 story.append(Spacer(1,15))
 rows=[['Contrôle','État constaté'],['Tests packaging locaux','Voir CI (fixtures synthétiques)'],['Tests statiques','Voir CI'],['Tests sélectionnés','Voir logs GitHub Actions'],['Mesure historique V42.6','Prototype uniquement'],['Windows V'+version,'Automatisé : PASS' if qualified else 'Non exécuté'],['UI Windows V'+version,'Non exécutée']]
 t=Table(rows,colWidths=[190,285]);t.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0),colors.HexColor('#dceafa')),('GRID',(0,0),(-1,-1),.5,colors.HexColor('#a0b3c7')),('VALIGN',(0,0),(-1,-1),'TOP'),('LEFTPADDING',(0,0),(-1,-1),9),('BOTTOMPADDING',(0,0),(-1,-1),8)]));story.append(KeepTogether([Paragraph('Contrôles de qualification',styles['Heading2']),t]))

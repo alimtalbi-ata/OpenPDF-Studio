@@ -22,6 +22,14 @@ MAX_UNCOMPRESSED = 8 * 1024**3
 MAX_MEMBER = 4 * 1024**3
 
 
+def write_fixed_member(archive, name, content):
+    """Write generated metadata with deterministic ZIP timestamps and modes."""
+    info = zipfile.ZipInfo(name, date_time=(2020, 1, 1, 0, 0, 0))
+    info.compress_type = zipfile.ZIP_DEFLATED
+    info.external_attr = (stat.S_IFREG | 0o644) << 16
+    archive.writestr(info, content)
+
+
 def digest(path):
     with open(path, 'rb') as stream:
         return hashlib.file_digest(stream, 'sha256').hexdigest()
@@ -257,9 +265,9 @@ def package(root, commit=''):
             extra = '07-Manifestes/RELEASE-QUALIFICATION-LIMITS.txt'
             if extra in seen:
                 raise ValueError('Duplicate generated qualification file')
-            archive.writestr(extra, qualification)
+            write_fixed_member(archive, extra, qualification)
             rows.append({'path': extra, 'bytes': len(qualification), 'sha256': hashlib.sha256(qualification).hexdigest()})
-            archive.writestr(INVENTORY, json.dumps(sorted(rows, key=lambda x: x['path']), indent=2).encode())
+            write_fixed_member(archive, INVENTORY, json.dumps(sorted(rows, key=lambda x: x['path']), indent=2).encode())
         result = verify(partial)
         os.replace(partial, target)
         return {'path': str(target), 'version': version, **result}

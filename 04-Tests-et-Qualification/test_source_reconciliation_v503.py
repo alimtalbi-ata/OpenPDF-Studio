@@ -12,7 +12,8 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "03-Sources"
-MANIFEST = ROOT / "07-Manifestes/V50.3-REQUIRED-RUNTIME-MODULES.json"
+CURRENT_VERSION = (ROOT / "VERSION.txt").read_text(encoding="utf-8").strip()
+MANIFEST = ROOT / f"07-Manifestes/V{CURRENT_VERSION}-REQUIRED-RUNTIME-MODULES.json"
 HASHES = ROOT / "07-Manifestes/V50.3-RESTORED-SOURCE-HASHES.json"
 
 
@@ -23,8 +24,8 @@ class SourceReconciliationV503Tests(unittest.TestCase):
         cls.hashes = json.loads(HASHES.read_text(encoding="utf-8"))
 
     def test_version_and_schema(self):
-        self.assertEqual((ROOT / "VERSION.txt").read_text(encoding="utf-8").strip(), "50.3")
-        self.assertEqual(self.manifest["version"], "50.3")
+        self.assertIn(CURRENT_VERSION, ("50.3", "50.4"))
+        self.assertEqual(self.manifest["version"], CURRENT_VERSION)
         self.assertEqual(self.manifest["schema"], "openpdf-runtime-module-set-v1")
         self.assertEqual(self.hashes["schema"], "openpdf-restored-source-hashes-v1")
 
@@ -112,7 +113,9 @@ class SourceReconciliationV503Tests(unittest.TestCase):
         self.assertIn("windows-latest", workflow)
         self.assertIn("BUILD-WINDOWS-INSTALLER.cmd --portable-only", workflow)
         self.assertIn("if: always()", workflow)
-        self.assertIn("V50.3-REQUIRED-RUNTIME-MODULES.json", workflow)
+        self.assertIn(f"V{CURRENT_VERSION}-REQUIRED-RUNTIME-MODULES.json", workflow)
+        self.assertIn(f"windows-installation-v{CURRENT_VERSION}.json", workflow)
+        self.assertIn(f"$report.version -ne '{CURRENT_VERSION}'", workflow)
 
 
 if __name__ == "__main__":

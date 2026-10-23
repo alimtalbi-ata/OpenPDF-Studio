@@ -93,6 +93,18 @@ class RestoredRuntimeTests(unittest.TestCase):
         with patch('openpdf_page_source_integrity_v435._CHANGE_TIME_RELIABLE', True):
             self.assertNotEqual(_identity(first), _identity(second))
 
+    def test_windows_compression_creation_time_not_change_indicator(self):
+        from types import SimpleNamespace
+        from openpdf_source_integrity_v430 import _identity
+        first = SimpleNamespace(st_dev=1, st_ino=10, st_size=100,
+                                st_mtime_ns=123, st_ctime_ns=456)
+        second = SimpleNamespace(st_dev=1, st_ino=10, st_size=100,
+                                 st_mtime_ns=123, st_ctime_ns=999)
+        with patch('openpdf_source_integrity_v430._CHANGE_TIME_RELIABLE', False):
+            self.assertEqual(_identity(first), _identity(second))
+        with patch('openpdf_source_integrity_v430._CHANGE_TIME_RELIABLE', True):
+            self.assertNotEqual(_identity(first), _identity(second))
+
     def test_split_digest_mismatch_rejected(self):
         source = self.root/'part.pdf'
         source.write_bytes(b'one')

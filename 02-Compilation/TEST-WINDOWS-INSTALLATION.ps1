@@ -31,7 +31,8 @@ try {
 } catch { $report.error=$_.Exception.Message }
 finally {
  Remove-Item -LiteralPath $marker -Force -ErrorAction SilentlyContinue
- if (Test-Path -LiteralPath $folder) {
+ # Avoid launching the uninstaller a second time after a successful run.
+ if (-not $report.passed -and (Test-Path -LiteralPath $folder)) {
    $uninstaller=Join-Path $folder 'unins000.exe'
    if (Test-Path -LiteralPath $uninstaller) {
      try { Run-Checked $uninstaller @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') 120000 } catch { $report.cleanup_error=$_.Exception.Message }

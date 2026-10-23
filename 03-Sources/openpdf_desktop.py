@@ -72,6 +72,7 @@ class OpenPDFStudio(tk.Tk):
         self.profile=tk.StringVar(value='smaller_only');self.first=tk.StringVar(value='1');self.last=tk.StringVar(value='1')
         self.chunk=tk.StringVar(value='1');self.order=tk.StringVar(value='1,2');self.extraction_selection=tk.StringVar(value='');self.language=tk.StringVar(value='fra+eng')
         self.ocr_mode=tk.StringVar(value='Pages sans texte')
+        self.ocr_before_office=tk.BooleanVar(value=False)  # explicit consent; never OCR silently
         self.compression_quality=tk.StringVar(value=QUALITY_MODES[0])
         self.full_rgb_audit=tk.BooleanVar(value=False)  # V49.0 opt-in, not a default guarantee
         self._build();self.protocol("WM_DELETE_WINDOW",self._on_close);self.after(100,self._poll)
@@ -126,13 +127,16 @@ class OpenPDFStudio(tk.Tk):
                 self.operation_buttons.append(button)
         self.options=ttk.LabelFrame(left,text='Paramètres',padding=10);self.options.pack(fill='x',pady=10)
         self.opts={}
-        for name,var in [('Profil',self.profile),('Début',self.first),('Fin',self.last),('Pages par fichier',self.chunk),('Ordre des pages',self.order),('Pages à extraire',self.extraction_selection),('Langue OCR',self.language),('Mode OCR',self.ocr_mode),('Contrôle qualité',self.compression_quality),('Audit RGB intégral',self.full_rgb_audit)]:
+        for name,var in [('Profil',self.profile),('Début',self.first),('Fin',self.last),('Pages par fichier',self.chunk),('Ordre des pages',self.order),('Pages à extraire',self.extraction_selection),('Langue OCR',self.language),('Mode OCR',self.ocr_mode),('OCR avant conversion',self.ocr_before_office),('Contrôle qualité',self.compression_quality),('Audit RGB intégral',self.full_rgb_audit)]:
             frame=ttk.Frame(self.options);self.opts[name]=frame
             ttk.Label(frame,text=('Ordre (ex. toutes,!paires)' if name=='Ordre des pages' else 'Pages (optionnel, ex. !paires)' if name=='Pages à extraire' else name),width=22).pack(side='left')
             if name=='Profil': ttk.Combobox(frame,textvariable=var,values=('smaller_only','standard','images_balanced'),state='readonly',width=25).pack(side='left')
             elif name=='Contrôle qualité': ttk.Combobox(frame,textvariable=var,values=QUALITY_MODES,state='readonly',width=27).pack(side='left')
             elif name=='Audit RGB intégral': ttk.Checkbutton(frame,variable=var,text='Tous les pixels à 50 % (plus lent, seuil 2 %)').pack(side='left')
             elif name=='Mode OCR': ttk.Combobox(frame,textvariable=var,values=tuple(OCR_MODES),state='readonly',width=28).pack(side='left')
+            elif name=='OCR avant conversion':
+                self.ocr_office_check=ttk.Checkbutton(frame,variable=var,text='OCR local si PDF numérisé (texte éditable, mise en page non garantie)')
+                self.ocr_office_check.pack(side='left')
             else: ttk.Entry(frame,textvariable=var,width=28).pack(side='left')
         ttk.Label(left,text='3. Destination',font=('Segoe UI',12,'bold')).pack(anchor='w',pady=(12,4))
         dest=ttk.Frame(left);dest.pack(fill='x')
@@ -172,7 +176,7 @@ class OpenPDFStudio(tk.Tk):
     def _set_busy(self, busy):
         self.busy=busy
         state='disabled' if busy else 'normal'
-        for widget in (self.go,self.add_button,self.remove_button,self.browse_button,self.recover_button,self.audit_button,self.destination_shortcut,*self.operation_buttons):
+        for widget in (self.go,self.add_button,self.remove_button,self.browse_button,self.recover_button,self.audit_button,self.destination_shortcut,self.ocr_office_check,*self.operation_buttons):
             widget.configure(state=state)
         self.files.configure(state=state)
 
@@ -245,7 +249,7 @@ class OpenPDFStudio(tk.Tk):
             self.destination.set('')
             self.status.configure(text='Opération modifiée : choisissez une nouvelle destination')
     def _refresh(self):
-        key=self.operation.get();show={'compression':('Profil','Contrôle qualité','Audit RGB intégral'),'extraction':('Début','Fin','Pages à extraire'),'decoupage':('Pages par fichier',),'reorganisation':('Ordre des pages',),'ocr':('Langue OCR','Mode OCR')}.get(key,())
+        key=self.operation.get();show={'compression':('Profil','Contrôle qualité','Audit RGB intégral'),'extraction':('Début','Fin','Pages à extraire'),'decoupage':('Pages par fichier',),'reorganisation':('Ordre des pages',),'ocr':('Langue OCR','Mode OCR'),'docx':('Langue OCR','OCR avant conversion'),'xlsx':('Langue OCR','OCR avant conversion'),'pptx':('Langue OCR','OCR avant conversion')}.get(key,())
         for name,frame in self.opts.items():frame.pack(fill='x',pady=2) if name in show else frame.pack_forget()
     def _add(self):
         known={str(Path(p).resolve()).casefold() for p in self.sources}
@@ -326,8 +330,10 @@ class OpenPDFStudio(tk.Tk):
     def _run(self):
         if self.busy:return
         op=self.operation.get();sources=tuple(self.sources);dest=self.destination.get().strip()
-        kwargs=dict(profile=self.profile.get(),first=self.first.get(),last=self.last.get(),chunk=self.chunk.get(),order=self.order.get(),extraction_selection=self.extraction_selection.get(),language=self.language.get(),ocr_mode=self.ocr_mode.get(),compression_quality=self.compression_quality.get(),full_rgb_audit=self.full_rgb_audit.get())
+        kwargs=dict(profile=self.profile.get(),first=self.first.get(),last=self.last.get(),chunk=self.chunk.get(),order=self.order.get(),extraction_selection=self.extraction_selection.get(),language=self.language.get(),ocr_mode=self.ocr_mode.get(),compression_quality=self.compression_quality.get(),full_rgb_audit=self.full_rgb_audit.get(),ocr_before_office=self.ocr_before_office.get())
         try:
+            if op in ('docx','xlsx','pptx') and self.ocr_before_office.get() and any(Path(p).expanduser().is_symlink() for p in sources):
+                raise ValueError('Source OCR Office : lien symbolique interdit')
             sources,dest=validate_request(op,sources,dest)
         except (ValueError,OSError) as exc:
             messagebox.showerror('Paramètres invalides',str(exc),parent=self)

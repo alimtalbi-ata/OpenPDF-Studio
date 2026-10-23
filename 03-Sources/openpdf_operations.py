@@ -13,6 +13,11 @@ def run_operation(operation, sources, destination, **kwargs):
         raise ValueError("Opération inconnue")
     if not destination:
         raise ValueError("Destination obligatoire")
+    if Path(destination).expanduser().is_symlink():
+        raise FileExistsError("Destination lien symbolique interdite")
+    if operation in ("docx", "xlsx", "pptx") and kwargs.get("ocr_before_office", False):
+        if any(Path(p).expanduser().is_symlink() for p in sources):
+            raise ValueError("Source OCR Office : lien symbolique interdit")
     inputs = [Path(p).expanduser().resolve() for p in sources if str(p).strip()]
     if not inputs:
         raise ValueError("Au moins une source est obligatoire")
@@ -38,6 +43,13 @@ def run_operation(operation, sources, destination, **kwargs):
                 if len(inputs) != 1:
                     raise ValueError("Le découpage exige une seule source")
                 result=split_transaction(inputs[0], output, int(kwargs.get("chunk", 1)))
+            elif operation in ("docx", "xlsx", "pptx") and kwargs.get("ocr_before_office", False):
+                # Explicit opt-in: retain reservation and audit for GUI jobs.
+                if len(inputs) != 1:
+                    raise ValueError("La conversion Office exige un seul PDF source")
+                from openpdf_ocr_office_pipeline_v511 import convert_scanned_office
+                result=convert_scanned_office(inputs[0], output,
+                                              language=kwargs.get("language", "fra+eng"))
             else:
                 result=_legacy_run_operation(operation, sources, destination, **kwargs)
             # Compression 'smaller_only' can legitimately yield no new output.

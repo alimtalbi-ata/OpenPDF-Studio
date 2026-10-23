@@ -111,3 +111,48 @@ jobs:
             01-Application/binary/*.json
             01-Application/binary/*.exe
           if-no-files-found: warn
+
+  windows-installer-build:
+    name: Native Windows installer, install and uninstall
+    needs: [closure-unit-tests, source-readiness]
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Ensure Inno Setup compiler is available
+        shell: pwsh
+        run: |
+          $paths = @(
+            (Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6/ISCC.exe'),
+            (Join-Path $env:ProgramFiles 'Inno Setup 6/ISCC.exe'),
+            'C:/ProgramData/chocolatey/bin/ISCC.exe'
+          )
+          if (-not ($paths | Where-Object { Test-Path -LiteralPath $_ })) {
+            choco install innosetup --yes --no-progress
+          }
+      - name: Build installer and execute native install/uninstall smoke
+        shell: cmd
+        run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd --installer-only
+      - name: Verify native installation evidence
+        shell: pwsh
+        run: |
+          $path = '01-Application/binary/windows-installation-v50.3.json'
+          if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw 'Installation evidence missing' }
+          $report = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+          if (-not $report.passed -or $report.version -ne '50.3') { throw 'Installation failed' }
+          foreach ($step in @('silent_install_pass','installed_launch_pass','silent_uninstall_pass')) {
+            if ($report.steps -notcontains $step) { throw "Missing installation step: $step" }
+          }
+      - name: Preserve actual installer and qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v503-windows-installer-build-evidence
+          path: |
+            01-Application/binary/*.log
+            01-Application/binary/*.json
+            01-Application/binary/*Setup.exe
+          if-no-files-found: warn

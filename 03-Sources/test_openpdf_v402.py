@@ -17,8 +17,11 @@ class WindowsBuildContract(unittest.TestCase):
  def test_windows_runner_contract(self):
   flow=(ROOT/'.github/workflows/windows-release.yml').read_text(encoding='utf-8')
   self.assertIn('windows-2022',flow)
-  self.assertIn('OpenPDF-Studio-V40.2-Setup.exe',flow)
-  self.assertIn('OpenPDF-Studio-Portable-V40.2.exe',flow)
+  self.assertIn('Get-Content -LiteralPath VERSION.txt -Raw',flow)
+  self.assertIn('GITHUB_REF_NAME -ne "v$version"',flow)
+  self.assertIn('OpenPDF-Studio-V{0}-Setup.exe',flow)
+  self.assertIn('OpenPDF-Studio-Portable-V{0}.exe',flow)
+  self.assertNotIn('OpenPDF-Studio-V40.2-Setup.exe',flow)
  def test_install_test_no_stale_temp_prefix(self):
   script=(ROOT/'02-Compilation/TEST-WINDOWS-INSTALLATION.ps1').read_text(encoding='utf-8')
   self.assertNotIn('OpenPDF-V398-',script)

@@ -20,6 +20,8 @@ jobs:
           python-version: '3.12'
       - name: Test source closure and reconciled source hashes
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_source_reconciliation_v503.py -v
+      - name: Test versioned Windows packaging preflight contract
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_windows_single_command_v472.py -v
       - name: Test original V50.2 closure regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_source_closure_v502.py -v
   source-readiness:

@@ -5,7 +5,7 @@
 
 ## Objectif et modification produit
 
-V50.2 a identifié 43 modules Python requis absents de la branche GitHub de développement. V50.3 réintègre les 43 modules provenant de l'archive cumulative V50.2, avec empreintes SHA-256 individuelles conservées dans `07-Manifestes/V50.3-RESTORED-SOURCE-HASHES.json`. Les modules couvrent les gardes de structure PDF, les vérifications de compression/qualité, l'OCR, la fidélité des conversions et les contrôles de pages.
+V50.2 a identifié 43 modules Python requis absents de la branche GitHub de développement. V50.3 réintègre les 43 modules provenant de l'archive cumulative V50.2, avec empreintes SHA-256 individuelles conservées dans `07-Manifestes/V50.3-RESTORED-SOURCE-HASHES.json`. Six modules historiques supplémentaires (hors manifeste runtime) sont réconciliés afin d’obtenir la parité des 622 modules Python. Le préflight Windows existant est mis à jour pour reconnaître la recette Inno Setup à version dynamique. Les modules couvrent les gardes de structure PDF, les vérifications de compression/qualité, l'OCR, la fidélité des conversions et les contrôles de pages.
 
 La liste d'exécution de 86 modules est épinglée dans `07-Manifestes/V50.3-REQUIRED-RUNTIME-MODULES.json`, cohérente avec `VERSION.txt`. Le lanceur Windows unique `02-Compilation/BUILD-WINDOWS-INSTALLER.cmd` référence maintenant un manifeste indexé par la version courante et refuse les dépendances manquantes avant compilation.
 
@@ -17,7 +17,7 @@ Sources 03-Sources + manifeste SHA-256 + manifeste 86 modules + VERSION.txt → 
 
 ## Qualification locale vérifiable
 
-Tests ciblés : 8 nouveaux tests V50.3 et 22 tests de régression V50.2 réussis sur Linux. La suite complète sera documentée dans le rapport de qualification final. Aucun test Linux n'est une preuve d'installation Windows native.
+Tests ciblés : 11 nouveaux tests V50.3 et 22 tests de régression V50.2 réussis sur Linux. La suite complète sera documentée dans le rapport de qualification final. Aucun test Linux n'est une preuve d'installation Windows native.
 
 ## Risques et limites
 

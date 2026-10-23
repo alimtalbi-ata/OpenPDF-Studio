@@ -1,0 +1,13 @@
+{
+  "author": "Abdelhalim Talbi",
+  "schema": "openpdf-restored-optional-hashes-v1",
+  "sha256": {
+    "03-Sources/openpdf_preview_budget_v452.py": "59080d26a0bdd4e756a8c4a4cc2a72294ff03bdd450434bf5bd0758b0fea0c48",
+    "03-Sources/openpdf_preview_budget_v453.py": "772ccc3ca8b590459b54d4b61547f85d62bf176b8c90c45caf4e8ac385ba31d0",
+    "03-Sources/openpdf_safe_html_v451.py": "f08d874613782ccb6515acc71c28a3a389e8fb8c4bc4c1b07367a91e6278647c",
+    "03-Sources/openpdf_source_integrity_v429.py": "94041dfadf046f8e78e8edc76f4bf4f99eda4a47b345910890cf9a885f71bb0c",
+    "03-Sources/openpdf_static_comparison_v454.py": "566dfdb310b82e898fadcac9144f8babe12d87766f582255442c364aa8ded30c",
+    "03-Sources/openpdf_static_dashboard_v450.py": "77da4cc1a8ee5b4733f9e35f5d7ceed4dc41b05d35907ca10b4d06c269b9b867"
+  },
+  "version": "50.3"
+}

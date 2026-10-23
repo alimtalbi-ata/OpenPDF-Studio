@@ -34,6 +34,9 @@ def convert_office(source, destination, *, output_format=None):
     validate_output([source.resolve()], destination.resolve())
     if destination.exists():
         raise FileExistsError(f'Destination existante : {destination}')
+    # Source identity is captured before conversion and checked immediately
+    # before publication to avoid releasing a result from a changed PDF.
+    source_identity = (source.stat().st_size, source.stat().st_mtime_ns, source.stat().st_ino)
     fd, tmp_name = tempfile.mkstemp(prefix='.openpdf-office-', suffix='.' + fmt, dir=destination.parent)
     os.close(fd)
     temporary = Path(tmp_name)
@@ -49,6 +52,9 @@ def convert_office(source, destination, *, output_format=None):
             actual_sha256 = hashlib.file_digest(digest_stream, 'sha256').hexdigest()
         if audit.sha256.lower() != actual_sha256:
             raise RuntimeError('Empreinte de conversion incoherente : sortie non publiee')
+        current_identity = (source.stat().st_size, source.stat().st_mtime_ns, source.stat().st_ino)
+        if current_identity != source_identity:
+            raise RuntimeError('Source PDF modifiee pendant la conversion : sortie non publiee')
         publish_exclusive(temporary, destination)
         return ConversionOutcome(str(destination), fmt, size, actual_sha256, audit.warnings)
     finally:

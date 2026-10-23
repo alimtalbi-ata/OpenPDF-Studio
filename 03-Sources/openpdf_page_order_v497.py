@@ -1,8 +1,9 @@
-"""Validated 1-based page order grammar for PDF reorganisation.
+"""Validated page-order grammar for PDF reorganisation.
 
-Examples: 3-1,5,5,2-4, impaires, paires, toutes, inverse. Reversed
-ranges, intentional duplicates and page-set shortcuts are supported. Invalid
-or oversized requests fail before PDF publication. V49.8 shortcuts.
+Input uses 1-based pages: ``3-1, 5, 5, 2-4``. Reversed ranges and
+intentional duplicates are supported; invalid or oversized requests fail
+before the page service writes any output.
+
 Author: Abdelhalim Talbi. OpenPDF Studio V49.7.
 """
 from __future__ import annotations
@@ -34,6 +35,11 @@ class PageOrderPlan:
 
 
 def plan_page_order(expression: str, page_count: int, *, max_output_pages: int = MAX_OUTPUT_PAGES) -> PageOrderPlan:
+    """Parse page numbers and inclusive ascending/descending ranges.
+
+    Explicitly bounds expansion to prevent a huge allocation from user input.
+    Repeats are permitted, because duplicating pages is a useful operation.
+    """
     if type(page_count) is not int or page_count < 1:
         raise ValueError("Nombre de pages source invalide")
     if type(max_output_pages) is not int or max_output_pages < 1:
@@ -79,4 +85,5 @@ def plan_page_order(expression: str, page_count: int, *, max_output_pages: int =
 
 
 def parse_page_order(expression: str, page_count: int, *, max_output_pages: int = MAX_OUTPUT_PAGES) -> list[int]:
+    """Compatibility adapter for the page service's 1-based indices."""
     return list(plan_page_order(expression, page_count, max_output_pages=max_output_pages).pages)

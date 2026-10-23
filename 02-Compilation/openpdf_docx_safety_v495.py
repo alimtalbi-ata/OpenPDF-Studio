@@ -11,6 +11,7 @@ import xml.etree.ElementTree as ET
 import zipfile
 
 from openpdf_release_guard_v494 import validate_docx_bytes
+from openpdf_ooxml_targets_v496 import validate_internal_target
 
 MAX_RELATIONSHIP_XML = 1024 * 1024
 MAX_TOTAL_RELATIONSHIP_XML = 4 * 1024 * 1024
@@ -31,6 +32,7 @@ def validate_release_docx(data: bytes) -> dict:
     total_xml = 0
     with zipfile.ZipFile(BytesIO(data)) as archive:
         names = archive.namelist()
+        members = set(names)
         for name in names:
             lower = name.casefold()
             if any(part in lower for part in ACTIVE_PART_NAMES):
@@ -71,5 +73,6 @@ def validate_release_docx(data: bytes) -> dict:
                         re.match(r'^[a-z][a-z0-9+.-]*:', target, re.IGNORECASE) or
                         target.startswith(('/', '\\')) or '\\' in target):
                     raise ValueError('External or unsafe OOXML relationship')
+                validate_internal_target(name, target, members)
     return {**summary, 'relationships_checked': relationships,
             'active_content_rejected': True, 'external_links_rejected': True}

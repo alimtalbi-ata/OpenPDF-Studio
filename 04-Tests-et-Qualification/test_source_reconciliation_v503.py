@@ -39,6 +39,10 @@ class SourceReconciliationV503Tests(unittest.TestCase):
                 self.assertTrue(path.is_file() and not path.is_symlink())
                 self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), expected)
 
+    def test_git_checkout_preserves_pinned_source_bytes(self):
+        attrs = (ROOT / ".gitattributes").read_text(encoding="utf-8")
+        self.assertIn("03-Sources/*.py -text", attrs)
+
     def test_required_runtime_set_complete(self):
         modules = self.manifest["modules"]
         self.assertEqual(len(modules), 86)

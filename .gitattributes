@@ -1,0 +1,3 @@
+# Preserve exact Python source bytes across Windows and Linux checkouts.
+# V50.3 pins the SHA-256 of restored modules, including original LF/CRLF.
+03-Sources/*.py -text

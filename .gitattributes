@@ -1,0 +1,5 @@
+# Preserve exact Python source bytes across Windows and Linux checkouts.
+# V50.3 pins the SHA-256 of restored modules, including original LF/CRLF.
+03-Sources/*.py -text
+# The Inno recipe generator validates exact bytes; do not convert line endings.
+03-Sources/*.iss -text

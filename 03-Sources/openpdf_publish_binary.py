@@ -29,7 +29,9 @@ def publish(stage,binary,mode='all',validator=None):
             temp=binary/(name+'.incoming-'+txn)
             try:
                 shutil.copy2(stage/name,temp)
-                with temp.open('rb') as f:os.fsync(f.fileno())
+                with temp.open('r+b') as f:
+                    f.flush()
+                    os.fsync(f.fileno())
                 os.replace(temp,target)
             finally:
                 temp.unlink(missing_ok=True)

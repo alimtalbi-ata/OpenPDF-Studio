@@ -5,12 +5,15 @@ ROOT=Path(__file__).resolve().parent.parent
 class WindowsBuildContract(unittest.TestCase):
  def test_inno_config_exists(self):
   script=(ROOT/'02-Compilation/BUILD-WINDOWS-INSTALLER.cmd').read_text(encoding='utf-8')
-  self.assertIn('OpenPDF-Studio-V40.2.iss',script)
-  self.assertTrue((ROOT/'03-Sources/OpenPDF-Studio-V40.2.iss').exists())
+  version=(ROOT/'VERSION.txt').read_text(encoding='utf-8').strip()
+  self.assertIn('openpdf_inno_recipe_v491.py --root "%ROOT%" --version "%VERSION%"',script)
+  self.assertIn('OpenPDF-Studio-V%VERSION%.iss',script)
+  self.assertTrue((ROOT/'03-Sources'/('OpenPDF-Studio-V'+version+'.iss')).exists())
  def test_installer_stage_path(self):
-  config=(ROOT/'03-Sources/OpenPDF-Studio-V40.2.iss').read_text(encoding='utf-8')
-  self.assertIn('binary\\.staging-v40.2',config)
-  self.assertIn('OpenPDF-Studio-V40.2-Setup',config)
+  version=(ROOT/'VERSION.txt').read_text(encoding='utf-8').strip()
+  config=(ROOT/'03-Sources'/('OpenPDF-Studio-V'+version+'.iss')).read_text(encoding='utf-8')
+  self.assertIn('binary\\.staging-v'+version,config)
+  self.assertIn('OpenPDF-Studio-V'+version+'-Setup',config)
  def test_windows_runner_contract(self):
   flow=(ROOT/'.github/workflows/windows-release.yml').read_text(encoding='utf-8')
   self.assertIn('windows-2022',flow)
@@ -19,7 +22,8 @@ class WindowsBuildContract(unittest.TestCase):
  def test_install_test_no_stale_temp_prefix(self):
   script=(ROOT/'02-Compilation/TEST-WINDOWS-INSTALLATION.ps1').read_text(encoding='utf-8')
   self.assertNotIn('OpenPDF-V398-',script)
-  self.assertIn('OpenPDF-V402-',script)
+  self.assertIn('OpenPDF-Install-',script)
+  self.assertNotIn('OpenPDF-V402-',script)
  def test_build_validates_before_publish(self):
   s=(ROOT/'02-Compilation/BUILD-WINDOWS-INSTALLER.cmd').read_text(encoding='utf-8')
   self.assertLess(s.index('openpdf_release_gate.py "%STAGE%"'),s.index('openpdf_publish_binary.py'))

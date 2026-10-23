@@ -4,6 +4,7 @@ import hashlib
 from dataclasses import dataclass
 from openpdf_conversion_controller_v309 import ConversionController
 from openpdf_conversion_audit_v346 import audit_conversion
+from openpdf_atomic_output import publish_exclusive
 
 SUPPORTED_FORMATS = ('docx', 'xlsx', 'pptx')
 
@@ -28,6 +29,17 @@ def convert_office(source, destination, *, output_format=None):
     if not destination.parent.is_dir():
         raise ValueError('Dossier de destination absent')
     import os, tempfile
+    from openpdf_source_integrity_v430 import fingerprint_source, verify_source_unchanged
+    try:
+        source_fingerprint = fingerprint_source(source)
+    except (OSError, RuntimeError) as exc:
+        raise RuntimeError("Source PDF instable avant conversion : sortie rejetée") from exc
+
+    def check_source():
+        try:
+            verify_source_unchanged(source, source_fingerprint)
+        except (OSError, RuntimeError) as exc:
+            raise RuntimeError("Source PDF modifiée pendant la conversion : sortie rejetée") from exc
     from openpdf_conversion_controller_v301 import CONVERTERS
     from openpdf_output_policy_v300 import validate_output
     validate_output([source.resolve()], destination.resolve())
@@ -38,29 +50,23 @@ def convert_office(source, destination, *, output_format=None):
     temporary = Path(tmp_name)
     try:
         CONVERTERS[fmt](source, temporary)
+        check_source()  # The converter may have modified or replaced the PDF.
         if not temporary.is_file() or temporary.stat().st_size == 0:
             raise RuntimeError('Conversion vide')
         # Audit BEFORE publication: preserve an existing destination on failure.
         audit = audit_conversion(source, temporary)
+        check_source()  # The audit re-opens the source: reject concurrent edits.
+        from openpdf_office_roundtrip_v459 import verify_editable_text
+        verify_editable_text(source, temporary, fmt)
+        check_source()  # The strict text audit also reads the PDF.
         size = temporary.stat().st_size
         # Verify the actual bytes rather than trusting a converter/audit report.
         with temporary.open('rb') as digest_stream:
             actual_sha256 = hashlib.file_digest(digest_stream, 'sha256').hexdigest()
         if audit.sha256.lower() != actual_sha256:
             raise RuntimeError('Empreinte de conversion incoherente : sortie non publiee')
-        # Flush converted bytes before exposing the result to another process.
-        with temporary.open('rb') as stream:
-            import os
-            os.fsync(stream.fileno())
-        # Atomic exclusive publication on local filesystems supporting hard links.
-        # Unlike os.replace, this never silently overwrites an existing document.
-        # The temporary file lives beside the destination (same filesystem).
-        try:
-            os.link(temporary, destination)
-        except FileExistsError:
-            raise FileExistsError(f'Destination apparue pendant la conversion : {destination}')
-        except OSError as exc:
-            raise OSError('Publication exclusive indisponible sur ce volume ; aucune sortie publiee') from exc
+        check_source()  # Final integrity gate immediately before publication.
+        publish_exclusive(temporary, destination)
         return ConversionOutcome(str(destination), fmt, size, actual_sha256, audit.warnings)
     finally:
         temporary.unlink(missing_ok=True)

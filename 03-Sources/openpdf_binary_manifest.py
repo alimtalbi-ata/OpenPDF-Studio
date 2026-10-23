@@ -15,6 +15,6 @@ def inspect(binary):
 if __name__=='__main__':
     d=Path(sys.argv[1])
     r=inspect(d)
-    (d/'binary-manifest-v40.0.json').write_text(json.dumps(r,indent=2),encoding='utf-8')
+    (d/f'binary-manifest-v{VERSION}.json').write_text(json.dumps(r,indent=2),encoding='utf-8')
     print(json.dumps(r,indent=2))
     if any(x['present'] and not x['pe_mz_header'] for x in r['binaries']):sys.exit(1)

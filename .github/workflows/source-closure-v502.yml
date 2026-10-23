@@ -1,4 +1,4 @@
-name: V50.2 source closure and Windows release readiness
+name: V50.3 reconciled source and Windows portable qualification
 on:
   pull_request:
   workflow_dispatch:
@@ -6,7 +6,7 @@ permissions:
   contents: read
 jobs:
   closure-unit-tests:
-    name: Static closure tests (${{ matrix.os }})
+    name: Source reconciliation and regression (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -18,33 +18,141 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Test static source closure and fail-closed Windows wiring
+      - name: Test source closure and reconciled source hashes
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_source_reconciliation_v503.py -v
+      - name: Test versioned Windows packaging preflight contract
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_windows_single_command_v472.py -v
+      - name: Test 15 runtime publication and integrity regressions
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_runtime_reconciliation_v503.py -v
+      - name: Test original V50.2 closure regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_source_closure_v502.py -v
   source-readiness:
     name: Full application source closure (release-blocking)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Check actual checked-out source tree
+      - name: Check checked-out source tree and version
         run: >
           python 03-Sources/openpdf_source_closure_v502.py
           --root .
           --entry openpdf_studio
           --entry openpdf_build_preflight
+          --entry openpdf_inno_recipe_v491
           --entry openpdf_release_gate
           --entry openpdf_bind_smoke
           --entry openpdf_publish_binary
           --entry openpdf_binary_manifest
-          --required-manifest 07-Manifestes/V50.2-REQUIRED-RUNTIME-MODULES.json
+          --required-manifest 07-Manifestes/V50.3-REQUIRED-RUNTIME-MODULES.json
           --report source-closure.json
-      - name: Preserve evidence even when closure fails
+      - name: Preserve evidence even on failure
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v502-source-closure-evidence
+          name: v503-source-closure-evidence
           path: source-closure.json
+          if-no-files-found: warn
+      - name: Preserve validated source snapshot for cumulative packaging
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v503-reconciled-source-snapshot
+          path: |
+            VERSION.txt
+            .gitattributes
+            .github/workflows/*.yml
+            02-Compilation/**
+            03-Sources/**
+            04-Tests-et-Qualification/*.py
+            07-Manifestes/*.json
+            !**/__pycache__/**
+            !**/.venv/**
+            !**/dist/**
+            !**/build/**
+            !**/*.exe
+            !**/*.zip
+          include-hidden-files: true
+          if-no-files-found: error
+  windows-portable-build:
+    name: Native Windows portable build and smoke
+    needs: [closure-unit-tests, source-readiness]
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build portable using the supported single CMD entrypoint
+        shell: cmd
+        run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd --portable-only
+      - name: Validate bounded Windows smoke report
+        shell: pwsh
+        run: |
+          $path = '01-Application/binary/windows-smoke-portable.json'
+          if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw 'Smoke evidence missing' }
+          if ((Get-Item -LiteralPath $path).Length -gt 65536) { throw 'Smoke evidence exceeds 64 KiB' }
+          $report = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+          if (-not $report.passed -or $report.checks.Count -ne 2) { throw 'Smoke evidence incomplete' }
+          foreach ($check in $report.checks) {
+            if ($check.stdout -isnot [string] -or $check.stderr -isnot [string]) { throw 'Non-text smoke evidence' }
+            if (-not $check.passed) { throw 'Failed smoke check' }
+          }
+      - name: Publish actual Windows build evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v503-windows-portable-build-evidence
+          path: |
+            01-Application/binary/*.log
+            01-Application/binary/*.json
+            01-Application/binary/*.exe
+          if-no-files-found: warn
+
+  windows-installer-build:
+    name: Native Windows installer, install and uninstall
+    needs: [closure-unit-tests, source-readiness]
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Ensure Inno Setup compiler is available
+        shell: pwsh
+        run: |
+          $paths = @(
+            (Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6/ISCC.exe'),
+            (Join-Path $env:ProgramFiles 'Inno Setup 6/ISCC.exe'),
+            'C:/ProgramData/chocolatey/bin/ISCC.exe'
+          )
+          if (-not ($paths | Where-Object { Test-Path -LiteralPath $_ })) {
+            choco install innosetup --yes --no-progress
+          }
+      - name: Build installer and execute native install/uninstall smoke
+        shell: cmd
+        run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd --installer-only
+      - name: Verify native installation evidence
+        shell: pwsh
+        run: |
+          $path = '01-Application/binary/windows-installation-v50.3.json'
+          if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw 'Installation evidence missing' }
+          $report = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+          if (-not $report.passed -or $report.version -ne '50.3') { throw 'Installation failed' }
+          foreach ($step in @('silent_install_pass','installed_launch_pass','silent_uninstall_pass')) {
+            if ($report.steps -notcontains $step) { throw "Missing installation step: $step" }
+          }
+      - name: Preserve actual installer and qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v503-windows-installer-build-evidence
+          path: |
+            01-Application/binary/*.log
+            01-Application/binary/*.json
+            01-Application/binary/*Setup.exe
           if-no-files-found: warn

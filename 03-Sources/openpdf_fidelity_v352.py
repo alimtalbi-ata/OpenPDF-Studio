@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 import re
 from pathlib import Path
+import unicodedata
 import fitz
 
 @dataclass(frozen=True)
@@ -12,7 +13,8 @@ class TextCoverage:
     note: str
 
 def _words(text):
-    return re.findall(r"[^\W_]+(?:['’-][^\W_]+)*", text.casefold(), flags=re.UNICODE)
+    normalized = unicodedata.normalize('NFKC', text).casefold()
+    return re.findall(r"[^\W_]+(?:['’-][^\W_]+)*", normalized, flags=re.UNICODE)
 
 def office_text(path):
     ext=Path(path).suffix.lower()

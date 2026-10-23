@@ -160,6 +160,8 @@ def choose_profile_dialog(app):
     ttk.Label(frame,text='Réencode certaines images (150 dpi, qualité JPEG 75). Peut altérer les détails. Gardez votre original.',wraplength=440).pack(anchor='w',padx=24,pady=(0,12))
     ttk.Radiobutton(frame,text='Images — adaptatif : comparer trois qualités JPEG et retenir la plus petite sortie validée',variable=selected,value='images_adaptive').pack(anchor='w')
     ttk.Label(frame,text='Trois essais au maximum ; plus lent mais refuse les dégradations détectées et les sorties plus volumineuses.',wraplength=440).pack(anchor='w',padx=24,pady=(0,12))
+    ttk.Radiobutton(frame,text='Automatique contrôlé — comparer les profils et retenir le plus petit PDF conforme (avec perte possible)',variable=selected,value='auto_quality').pack(anchor='w')
+    ttk.Label(frame,text='Compare sans perte, JPEG équilibré et adaptatif ; contrôle RGB complet à échelle bornée avant publication. Plus lent.',wraplength=440).pack(anchor='w',padx=24,pady=(0,12))
     ttk.Label(frame,text='Les deux premiers profils sont sans perte ; les profils Images peuvent dégrader les images. Le texte vectoriel reste éditable.' ,wraplength=440).pack(anchor='w',pady=(12,12))
     buttons=ttk.Frame(frame);buttons.pack(fill='x')
     def finish(value):
@@ -196,10 +198,10 @@ def guided_compress(app, *, ask_source=None, ask_destination=None, choose_profil
             'Profils sans perte disponibles ; le profil Images est avec perte et peut réduire la netteté.',parent=app)
     profile=choose_profile()
     if profile is None:return False
-    if profile not in PROFILES:warn('Profil inconnu');return False
-    if profile in ('images_balanced', 'images_adaptive') and not messagebox.askyesno('Attention : compression avec perte',
+    if profile not in PROFILES and profile != 'auto_quality':warn('Profil inconnu');return False
+    if profile in ('images_balanced', 'images_adaptive', 'auto_quality') and not messagebox.askyesno('Attention : compression avec perte',
         'Certaines images seront réencodées et peuvent perdre en netteté. Conserver l’original et poursuivre ?',parent=app):return False
-    if profile in ('images_balanced', 'images_adaptive'):
+    if profile in ('images_balanced', 'images_adaptive', 'auto_quality'):
         from openpdf_preview_v326 import preview_dialog
         if not preview_dialog(app,source):return False
     # The publication primitive is intentionally exclusive. Never offer a
@@ -219,7 +221,11 @@ def guided_compress(app, *, ask_source=None, ask_destination=None, choose_profil
         except ValueError as exc:
             warn(str(exc))
             return False
-    app._run_pdf(compress_with_profile,source,destination,profile)
+    if profile == 'auto_quality':
+        from openpdf_auto_compression_v505 import auto_compress_gui
+        app._run_pdf(auto_compress_gui, source, destination)
+    else:
+        app._run_pdf(compress_with_profile,source,destination,profile)
     return True
 
 def connect(app):

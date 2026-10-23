@@ -284,6 +284,9 @@ docs=ROOT/'05-Documentation';docs.mkdir(exist_ok=True)
 release=docs/f'RELEASE-V{version}-QUALITE-ET-ROADMAP.md'
 if not release.is_file():raise FileNotFoundError(f'Missing release notes: {release}')
 notes=release.read_text(encoding='utf-8')
+if version == '51.1':
+ from render_ocr_diagram_v511 import create_diagram as create_ocr_diagram
+ create_ocr_diagram(docs/'Architecture-OCR-Office-V51.1.png')
 diagram=docs/f'Architecture-Packaging-V{version}.png'
 from render_release_diagram import create_diagram
 create_diagram(diagram, version)

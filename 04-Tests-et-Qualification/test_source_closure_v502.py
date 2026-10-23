@@ -89,6 +89,39 @@ class SourceClosureTests(unittest.TestCase):
         self.put("openpdf_b", "")
         self.assertEqual(json.dumps(self.check(), sort_keys=True), json.dumps(self.check(), sort_keys=True))
 
+    def manifest(self, modules, version="50.2"):
+        path = self.root / "required.json"
+        path.write_text(json.dumps({"schema": "openpdf-runtime-module-set-v1",
+                                    "version": version, "modules": modules}), encoding="utf-8")
+        return path
+
+    def test_required_manifest_catches_unreachable_missing_modules(self):
+        self.put("openpdf_studio", "")
+        path = self.manifest(["openpdf_studio", "openpdf_new_feature"])
+        result = closure.audit_sources(self.root, ["openpdf_studio"], path)
+        self.assertFalse(result["passed"])
+        self.assertEqual(result["missing_modules"], ["openpdf_new_feature"])
+
+    def test_required_manifest_rejects_version_mismatch(self):
+        self.put("openpdf_studio", "")
+        path = self.manifest(["openpdf_studio"], version="50.1")
+        result = closure.audit_sources(self.root, ["openpdf_studio"], path)
+        self.assertFalse(result["passed"])
+        self.assertFalse(result["version_matches_manifest"])
+
+    def test_required_manifest_rejects_duplicate_module(self):
+        self.put("openpdf_studio", "")
+        path = self.manifest(["openpdf_studio", "openpdf_studio"])
+        with self.assertRaises(ValueError):
+            closure.audit_sources(self.root, ["openpdf_studio"], path)
+
+    def test_required_manifest_follows_transitive_imports(self):
+        self.put("openpdf_studio", "")
+        self.put("openpdf_feature", "import openpdf_hidden_missing\n")
+        path = self.manifest(["openpdf_studio", "openpdf_feature"])
+        self.assertEqual(closure.audit_sources(self.root, ["openpdf_studio"], path)["missing_modules"],
+                         ["openpdf_hidden_missing"])
+
     def test_sources_are_not_executed(self):
         marker = self.root / "must-not-run"
         self.put("openpdf_studio", f"from pathlib import Path\nPath({str(marker)!r}).write_text('executed')\n")
@@ -101,6 +134,7 @@ class SourceClosureTests(unittest.TestCase):
         self.assertIn('|| goto fail', script.split('openpdf_source_closure_v502.py', 1)[1].splitlines()[0])
         self.assertIn('failed-source-closure-v%VERSION%.json', script)
         self.assertIn('source-closure-v%VERSION%.json', script)
+        self.assertIn('--required-manifest', script)
 
     def test_cli_failure_writes_report(self):
         self.put("openpdf_studio", "import openpdf_missing\n")

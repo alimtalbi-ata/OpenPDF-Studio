@@ -35,7 +35,7 @@ class OpenPDFStudio(tk.Tk):
         self._job_started=None; self.job_state=JobState();self.sources=[]; self.events=queue.Queue(); self.busy=False; self.preview_page=0; self.preview_total=0; self._preview_source=None; self._preview_generation=0; self._preview_cache={}; self._preview_pending=set(); self._preview_lock=threading.Lock(); self._preview_inflight=0; self._preview_limit=2
         self.operation=tk.StringVar(value='compression'); self.destination=tk.StringVar()
         self.profile=tk.StringVar(value='smaller_only');self.first=tk.StringVar(value='1');self.last=tk.StringVar(value='1')
-        self.chunk=tk.StringVar(value='1');self.order=tk.StringVar(value='1,2');self.language=tk.StringVar(value='fra+eng')
+        self.chunk=tk.StringVar(value='1');self.order=tk.StringVar(value='1,2');self.extraction_selection=tk.StringVar(value='');self.language=tk.StringVar(value='fra+eng')
         self._build();self.protocol("WM_DELETE_WINDOW",self._on_close);self.after(100,self._poll)
     def _build(self):
         header=ttk.Frame(self,padding=16);header.pack(fill='x')
@@ -55,9 +55,9 @@ class OpenPDFStudio(tk.Tk):
             button=ttk.Radiobutton(choices,text=label,variable=self.operation,value=key,command=self._refresh);button.grid(row=i//3,column=i%3,sticky='w',padx=8,pady=5);self.operation_buttons.append(button)
         self.options=ttk.LabelFrame(left,text='Paramètres',padding=10);self.options.pack(fill='x',pady=10)
         self.opts={}
-        for name,var in [('Profil',self.profile),('Début',self.first),('Fin',self.last),('Pages par fichier',self.chunk),('Ordre des pages',self.order),('Langue OCR',self.language)]:
+        for name,var in [('Profil',self.profile),('Début',self.first),('Fin',self.last),('Pages par fichier',self.chunk),('Ordre des pages',self.order),('Pages à extraire',self.extraction_selection),('Langue OCR',self.language)]:
             frame=ttk.Frame(self.options);self.opts[name]=frame
-            ttk.Label(frame,text='Ordre (ex. toutes,!paires)' if name=='Ordre des pages' else name,width=22).pack(side='left')
+            ttk.Label(frame,text=('Ordre (ex. toutes,!paires)' if name=='Ordre des pages' else 'Pages (optionnel, ex. !paires)' if name=='Pages à extraire' else name),width=22).pack(side='left')
             if name=='Profil': ttk.Combobox(frame,textvariable=var,values=('smaller_only','standard','images_balanced'),state='readonly',width=25).pack(side='left')
             else: ttk.Entry(frame,textvariable=var,width=28).pack(side='left')
         ttk.Label(left,text='3. Destination',font=('Segoe UI',12,'bold')).pack(anchor='w',pady=(12,4))
@@ -112,7 +112,7 @@ class OpenPDFStudio(tk.Tk):
             self.destination.set('')
             self.status.configure(text='Opération modifiée : choisissez une nouvelle destination')
     def _refresh(self):
-        key=self.operation.get();show={'compression':('Profil',),'extraction':('Début','Fin'),'decoupage':('Pages par fichier',),'reorganisation':('Ordre des pages',),'ocr':('Langue OCR',)}.get(key,())
+        key=self.operation.get();show={'compression':('Profil',),'extraction':('Début','Fin','Pages à extraire'),'decoupage':('Pages par fichier',),'reorganisation':('Ordre des pages',),'ocr':('Langue OCR',)}.get(key,())
         for name,frame in self.opts.items():frame.pack(fill='x',pady=2) if name in show else frame.pack_forget()
     def _add(self):
         for path in filedialog.askopenfilenames(parent=self,filetypes=[('PDF','*.pdf')]):
@@ -186,7 +186,7 @@ class OpenPDFStudio(tk.Tk):
     def _run(self):
         if self.busy:return
         op=self.operation.get();sources=tuple(self.sources);dest=self.destination.get().strip()
-        kwargs=dict(profile=self.profile.get(),first=self.first.get(),last=self.last.get(),chunk=self.chunk.get(),order=self.order.get(),language=self.language.get())
+        kwargs=dict(profile=self.profile.get(),first=self.first.get(),last=self.last.get(),chunk=self.chunk.get(),order=self.order.get(),extraction_selection=self.extraction_selection.get(),language=self.language.get())
         try:
             sources,dest=validate_request(op,sources,dest)
         except (ValueError,OSError) as exc:

@@ -62,6 +62,7 @@ class WindowsSingleCommandV472(unittest.TestCase):
         package = (ROOT / '02-Compilation' / 'package_cumulative_v434.py').read_text()
         self.assertIn("'BUILD-OPENPDF-WINDOWS.cmd'", package)
         self.assertIn("'.gitattributes'", package)
+        self.assertIn("OPTIONAL_FOLDERS = ('.github',)", package)
         for marker in ('windows-installation-v', 'windows-smoke-installer.json', 'artifact_sha256', 'Missing qualified Windows artifact'):
             self.assertIn(marker, package)
 

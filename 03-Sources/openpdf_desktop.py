@@ -377,6 +377,7 @@ class OpenPDFStudio(tk.Tk):
         key=(source,page)
         # A previous worker for this key may belong to an obsolete generation.
         # Do not suppress the current request: stale results are ignored later.
+        if (key,generation) in self._preview_pending:return
         self._preview_pending.add((key,generation))
         def worker():
             from openpdf_preview import render_preview

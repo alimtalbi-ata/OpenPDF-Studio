@@ -24,7 +24,7 @@ class SourceReconciliationV503Tests(unittest.TestCase):
         cls.hashes = json.loads(HASHES.read_text(encoding="utf-8"))
 
     def test_version_and_schema(self):
-        self.assertIn(CURRENT_VERSION, ("50.3", "50.4", "50.5", "50.6", "50.7", "50.8", "50.9", "51.0", "51.1", "51.2"))
+        self.assertIn(CURRENT_VERSION, ("50.3", "50.4", "50.5", "50.6", "50.7", "50.8", "50.9", "51.0", "51.1", "51.2", "51.3"))
         self.assertEqual(self.manifest["version"], CURRENT_VERSION)
         self.assertEqual(self.manifest["schema"], "openpdf-runtime-module-set-v1")
         self.assertEqual(self.hashes["schema"], "openpdf-restored-source-hashes-v1")
@@ -47,7 +47,7 @@ class SourceReconciliationV503Tests(unittest.TestCase):
 
     def test_required_runtime_set_complete(self):
         modules = self.manifest["modules"]
-        self.assertEqual(len(modules), 92 if CURRENT_VERSION in ("51.1", "51.2") else 91 if CURRENT_VERSION == "51.0" else 90 if CURRENT_VERSION in ("50.8", "50.9") else 89 if CURRENT_VERSION == "50.7" else 88 if CURRENT_VERSION == "50.6" else 87 if CURRENT_VERSION == "50.5" else 86)
+        self.assertEqual(len(modules), 93 if CURRENT_VERSION == "51.3" else 92 if CURRENT_VERSION in ("51.1", "51.2") else 91 if CURRENT_VERSION == "51.0" else 90 if CURRENT_VERSION in ("50.8", "50.9") else 89 if CURRENT_VERSION == "50.7" else 88 if CURRENT_VERSION == "50.6" else 87 if CURRENT_VERSION == "50.5" else 86)
         self.assertEqual(len(modules), len(set(modules)))
         for module in modules:
             with self.subTest(module=module):
@@ -90,7 +90,7 @@ class SourceReconciliationV503Tests(unittest.TestCase):
                 ast.parse(path.read_text(encoding="utf-8-sig"))
 
     def test_sixteen_runtime_interfaces_match_candidate(self):
-        runtime = json.loads((ROOT / ("07-Manifestes/V51.2-RUNTIME-INTERFACE-HASHES.json" if CURRENT_VERSION == "51.2" else "07-Manifestes/V51.0-RUNTIME-INTERFACE-HASHES.json" if CURRENT_VERSION in ("51.0", "51.1") else "07-Manifestes/V50.5-RUNTIME-INTERFACE-HASHES.json" if CURRENT_VERSION in ("50.5", "50.6", "50.7", "50.8", "50.9") else "07-Manifestes/V50.3-RUNTIME-INTERFACE-HASHES.json")).read_text(encoding="utf-8"))
+        runtime = json.loads((ROOT / ("07-Manifestes/V51.3-RUNTIME-INTERFACE-HASHES.json" if CURRENT_VERSION == "51.3" else "07-Manifestes/V51.2-RUNTIME-INTERFACE-HASHES.json" if CURRENT_VERSION == "51.2" else "07-Manifestes/V51.0-RUNTIME-INTERFACE-HASHES.json" if CURRENT_VERSION in ("51.0", "51.1") else "07-Manifestes/V50.5-RUNTIME-INTERFACE-HASHES.json" if CURRENT_VERSION in ("50.5", "50.6", "50.7", "50.8", "50.9") else "07-Manifestes/V50.3-RUNTIME-INTERFACE-HASHES.json")).read_text(encoding="utf-8"))
         self.assertEqual(len(runtime["sha256"]), 16)
         for rel, expected in runtime["sha256"].items():
             with self.subTest(path=rel):

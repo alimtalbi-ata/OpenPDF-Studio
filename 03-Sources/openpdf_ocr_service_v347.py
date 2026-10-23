@@ -94,8 +94,8 @@ def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=T
             # V48.6: fail before rendering any page if required offline OCR
             # language packs are absent. Copy-only jobs need no Tesseract.
             if any(selected):
-                from openpdf_ocr_language_preflight_v486 import preflight_ocr_languages
-                preflight_ocr_languages(language, tessdata=tessdata)
+                from openpdf_ocr_runtime_v513 import resolve_ocr_models
+                tessdata = resolve_ocr_models(language, tessdata=tessdata)
             for i,page in enumerate(original):
                 if not selected[i]:
                     result.insert_pdf(original,from_page=i,to_page=i)

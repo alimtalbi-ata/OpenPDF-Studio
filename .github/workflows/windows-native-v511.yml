@@ -1,14 +1,17 @@
-name: V51.2 native Windows portable and installer qualification
+name: V51.3 native Windows portable and installer qualification
 on:
   pull_request:
     paths:
       - '03-Sources/openpdf_ocr_office_pipeline_v511.py'
       - '03-Sources/openpdf_studio.py'
+      - '03-Sources/openpdf_ocr_runtime_v513.py'
+      - '02-Compilation/PREPARE-OCR-MODELS.ps1'
+      - '02-Compilation/TEST-WINDOWS-BINARIES.ps1'
       - '03-Sources/openpdf_operations.py'
       - '03-Sources/openpdf_desktop.py'
       - '04-Tests-et-Qualification/test_ocr_office_gui_v512.py'
-      - '03-Sources/OpenPDF-Studio-V51.2.iss'
-      - '07-Manifestes/V51.2-REQUIRED-RUNTIME-MODULES.json'
+      - '03-Sources/OpenPDF-Studio-V51.3.iss'
+      - '07-Manifestes/V51.3-REQUIRED-RUNTIME-MODULES.json'
       - '.github/workflows/windows-native-v511.yml'
       - 'VERSION.txt'
   workflow_dispatch:
@@ -30,14 +33,14 @@ jobs:
         shell: pwsh
         run: |
           $dir = '01-Application/binary'
-          if (-not (Test-Path "$dir/OpenPDF-Studio-Portable-V51.2.exe")) { throw 'Portable missing' }
+          if (-not (Test-Path "$dir/OpenPDF-Studio-Portable-V51.3.exe")) { throw 'Portable missing' }
           $receipt = Get-Content "$dir/windows-smoke-portable.json" -Raw | ConvertFrom-Json
           if (-not $receipt.passed) { throw 'Portable smoke failed' }
       - name: Preserve portable evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: OpenPDF-V51.2-portable-native-evidence
+          name: OpenPDF-V51.3-portable-native-evidence
           path: |
             01-Application/binary/*.exe
             01-Application/binary/*.json
@@ -70,17 +73,17 @@ jobs:
         shell: pwsh
         run: |
           $dir = '01-Application/binary'
-          if (-not (Test-Path "$dir/OpenPDF-Studio-V51.2-Setup.exe")) { throw 'Installer missing' }
-          $receipt = Get-Content "$dir/windows-installation-v51.2.json" -Raw | ConvertFrom-Json
-          if (-not $receipt.passed -or $receipt.version -ne '51.2') { throw 'Windows install qualification failed' }
-          foreach ($step in @('silent_install_pass','installed_launch_pass','silent_uninstall_pass')) {
+          if (-not (Test-Path "$dir/OpenPDF-Studio-V51.3-Setup.exe")) { throw 'Installer missing' }
+          $receipt = Get-Content "$dir/windows-installation-v51.3.json" -Raw | ConvertFrom-Json
+          if (-not $receipt.passed -or $receipt.version -ne '51.3') { throw 'Windows install qualification failed' }
+          foreach ($step in @('silent_install_pass','installed_launch_pass','installed_ocr_pass','silent_uninstall_pass')) {
             if ($receipt.steps -notcontains $step) { throw "Missing $step" }
           }
       - name: Preserve installer evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: OpenPDF-V51.2-installer-native-evidence
+          name: OpenPDF-V51.3-installer-native-evidence
           path: |
             01-Application/binary/*.exe
             01-Application/binary/*.json

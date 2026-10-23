@@ -44,13 +44,15 @@ rem This is a static source gate, NOT evidence of a Windows executable.
 "%VPY%" openpdf_source_closure_v502.py --root "%ROOT%" --entry openpdf_studio --entry openpdf_build_preflight --entry openpdf_inno_recipe_v491 --entry openpdf_release_gate --entry openpdf_bind_smoke --entry openpdf_publish_binary --entry openpdf_binary_manifest --required-manifest "%ROOT%\07-Manifestes\V%VERSION%-REQUIRED-RUNTIME-MODULES.json" --report "%STAGE%\source-closure-v%VERSION%.json" >> "%LOG%" 2>&1 || goto fail
 "%VPY%" -m pip install --upgrade pip >> "%LOG%" 2>&1 || goto fail
 "%VPY%" -m pip install -r requirements-windows-v260.txt "pyinstaller>=6,<7" "Pillow>=10,<13" >> "%LOG%" 2>&1 || goto fail
+rem V51.3: build-time verified eng/fra OCR models, no runtime network access.
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0PREPARE-OCR-MODELS.ps1" >> "%LOG%" 2>&1 || goto fail
 rem Generate the current version's Inno recipe before preflight.
 rem Fail closed on an existing conflicting recipe; never overwrite hand edits.
 "%VPY%" openpdf_inno_recipe_v491.py --root "%ROOT%" --version "%VERSION%" >> "%LOG%" 2>&1 || goto fail
 "%VPY%" openpdf_build_preflight.py >> "%LOG%" 2>&1 || goto fail
 "%VPY%" -m unittest test_openpdf_v402 test_openpdf_v385 test_openpdf_v384 >> "%LOG%" 2>&1 || goto fail
 if /I "%MODE%"=="portable" goto portable
-"%VPY%" -m PyInstaller --noconfirm --clean --windowed --onedir --name OpenPDF-Studio --collect-all fitz --collect-all pymupdf --hidden-import tkinter --add-data "..\VERSION.txt;." openpdf_studio.py >> "%LOG%" 2>&1 || goto fail
+"%VPY%" -m PyInstaller --noconfirm --clean --windowed --onedir --name OpenPDF-Studio --collect-all fitz --collect-all pymupdf --hidden-import tkinter --add-data "..\VERSION.txt;." --add-data "build-ocr-models\tessdata;tessdata" openpdf_studio.py >> "%LOG%" 2>&1 || goto fail
 if not exist "dist\OpenPDF-Studio\OpenPDF-Studio.exe" goto fail
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0TEST-WINDOWS-BINARIES.ps1" -Mode installer -SourceDir "%CD%" -ReportPath "%STAGE%\windows-smoke-installer.json" >> "%LOG%" 2>&1 || goto fail
 set "ISCC=%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe"
@@ -71,7 +73,7 @@ for %%F in ("%STAGE%\OpenPDF-Studio-V%VERSION%-Setup.exe") do if %%~zF LEQ 0 got
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0TEST-WINDOWS-INSTALLATION.ps1" -SetupExe "%STAGE%\OpenPDF-Studio-V%VERSION%-Setup.exe" -ReportPath "%STAGE%\windows-installation-v%VERSION%.json" >> "%LOG%" 2>&1 || goto fail
 if /I "%MODE%"=="installer" goto publish
 :portable
-"%VPY%" -m PyInstaller --noconfirm --clean --windowed --onefile --name OpenPDF-Studio-Portable-V%VERSION% --collect-all fitz --collect-all pymupdf --hidden-import tkinter --add-data "..\VERSION.txt;." --distpath "%STAGE%" openpdf_studio.py >> "%LOG%" 2>&1 || goto fail
+"%VPY%" -m PyInstaller --noconfirm --clean --windowed --onefile --name OpenPDF-Studio-Portable-V%VERSION% --collect-all fitz --collect-all pymupdf --hidden-import tkinter --add-data "..\VERSION.txt;." --add-data "build-ocr-models\tessdata;tessdata" --distpath "%STAGE%" openpdf_studio.py >> "%LOG%" 2>&1 || goto fail
 if not exist "%STAGE%\OpenPDF-Studio-Portable-V%VERSION%.exe" goto fail
 for %%F in ("%STAGE%\OpenPDF-Studio-Portable-V%VERSION%.exe") do if %%~zF LEQ 0 goto fail
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0TEST-WINDOWS-BINARIES.ps1" -Mode portable -SourceDir "%CD%" -ReportPath "%STAGE%\windows-smoke-portable.json" >> "%LOG%" 2>&1 || goto fail

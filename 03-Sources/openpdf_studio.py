@@ -21,6 +21,9 @@ def main():
             return 2
         print('OPENPDF_SELF_TEST_OK')
         return 0
+    if '--ocr-office' in sys.argv:
+        from openpdf_ocr_office_pipeline_v511 import main as ocr_office_main
+        return ocr_office_main(sys.argv[sys.argv.index('--ocr-office') + 1:])
     from openpdf_desktop import OpenPDFStudio
     OpenPDFStudio().mainloop()
     return 0

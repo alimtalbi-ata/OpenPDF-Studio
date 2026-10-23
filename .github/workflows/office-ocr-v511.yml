@@ -1,0 +1,33 @@
+name: V51.1 OCR to editable Office functional qualification
+on:
+  pull_request:
+    paths:
+      - '03-Sources/openpdf_ocr_office_pipeline_v511.py'
+      - '03-Sources/openpdf_studio.py'
+      - '04-Tests-et-Qualification/test_ocr_office_pipeline_v511.py'
+      - '.github/workflows/office-ocr-v511.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ocr-office:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install conversion and fixture dependencies
+        run: python -m pip install "PyMuPDF>=1.24,<2" "python-docx>=1.1,<2" "python-pptx>=1.0,<2" "openpyxl>=3.1,<4" "Pillow>=10,<13"
+      - name: Install offline English OCR model on Linux
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -qq && sudo apt-get install -y tesseract-ocr-eng
+      - name: V51.1 OCR to Office tests (OCR real when eng model is present)
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_office_pipeline_v511.py -v
+      - name: V51.0 scan gate regression
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_office_scan_gate_v510.py -v

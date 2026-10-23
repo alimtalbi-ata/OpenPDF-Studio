@@ -1,0 +1,85 @@
+name: V51.1 native Windows portable and installer qualification
+on:
+  pull_request:
+    paths:
+      - '03-Sources/openpdf_ocr_office_pipeline_v511.py'
+      - '03-Sources/openpdf_studio.py'
+      - '03-Sources/OpenPDF-Studio-V51.1.iss'
+      - '07-Manifestes/V51.1-REQUIRED-RUNTIME-MODULES.json'
+      - '.github/workflows/windows-native-v511.yml'
+      - 'VERSION.txt'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  portable:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build portable via supported single CMD
+        shell: cmd
+        run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd --portable-only
+      - name: Verify real portable and smoke
+        shell: pwsh
+        run: |
+          $dir = '01-Application/binary'
+          if (-not (Test-Path "$dir/OpenPDF-Studio-Portable-V51.1.exe")) { throw 'Portable missing' }
+          $receipt = Get-Content "$dir/windows-smoke-portable.json" -Raw | ConvertFrom-Json
+          if (-not $receipt.passed) { throw 'Portable smoke failed' }
+      - name: Preserve portable evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenPDF-V51.1-portable-native-evidence
+          path: |
+            01-Application/binary/*.exe
+            01-Application/binary/*.json
+            01-Application/binary/*.log
+          if-no-files-found: warn
+  installer:
+    runs-on: windows-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Inno Setup if missing
+        shell: pwsh
+        run: |
+          $paths = @(
+            (Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6/ISCC.exe'),
+            (Join-Path $env:ProgramFiles 'Inno Setup 6/ISCC.exe'),
+            'C:/ProgramData/chocolatey/bin/ISCC.exe'
+          )
+          if (-not ($paths | Where-Object { Test-Path -LiteralPath $_ })) {
+            choco install innosetup --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw 'Inno Setup unavailable' }
+          }
+      - name: Build installer, install and uninstall
+        shell: cmd
+        run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd --installer-only
+      - name: Verify actual Windows install receipt
+        shell: pwsh
+        run: |
+          $dir = '01-Application/binary'
+          if (-not (Test-Path "$dir/OpenPDF-Studio-V51.1-Setup.exe")) { throw 'Installer missing' }
+          $receipt = Get-Content "$dir/windows-installation-v51.1.json" -Raw | ConvertFrom-Json
+          if (-not $receipt.passed -or $receipt.version -ne '51.1') { throw 'Windows install qualification failed' }
+          foreach ($step in @('silent_install_pass','installed_launch_pass','silent_uninstall_pass')) {
+            if ($receipt.steps -notcontains $step) { throw "Missing $step" }
+          }
+      - name: Preserve installer evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenPDF-V51.1-installer-native-evidence
+          path: |
+            01-Application/binary/*.exe
+            01-Application/binary/*.json
+            01-Application/binary/*.log
+          if-no-files-found: warn

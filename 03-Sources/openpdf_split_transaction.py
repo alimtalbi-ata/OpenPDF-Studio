@@ -54,6 +54,11 @@ def recover_transactions(folder):
         except (ValueError,KeyError,TypeError,OSError):
             report.append({"stage":stage.name,"status":"manual_review_invalid_journal"})
             continue
+        # A valid journal is not sufficient: every declared staged file must
+        # still exist as a regular file before any published output is removed.
+        if any(not (stage/name).is_file() or (stage/name).is_symlink() for name in names):
+            report.append({"stage":stage.name,"status":"manual_review_missing_staged_output"})
+            continue
         conflict=False
         for name in names:
             target=dest/name

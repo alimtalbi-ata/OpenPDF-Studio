@@ -78,6 +78,7 @@ jobs:
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_preview_cache_freshness_v439.py' -v
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_preview_dedup_v440.py' -v
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_split_journal_state_v441.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_split_stage_completeness_v442.py' -v
       - name: Build and qualify installer and portable
         shell: cmd
         run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd

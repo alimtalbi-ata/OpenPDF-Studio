@@ -1,9 +1,10 @@
-name: V50.4 measured PDF compression acceptance
+name: V50.9 measured PDF compression corpus RGB/RGBA acceptance
 on:
   pull_request:
     paths:
       - '03-Sources/openpdf_compression_benchmark_v504.py'
       - '04-Tests-et-Qualification/test_compression_benchmark_v504.py'
+      - '04-Tests-et-Qualification/test_compression_corpus_fidelity_v509.py'
       - '.github/workflows/compression-benchmark-v504.yml'
   workflow_dispatch:
 permissions:
@@ -28,5 +29,7 @@ jobs:
         run: python -m compileall -q 03-Sources/openpdf_compression_benchmark_v504.py 03-Sources/openpdf_compression_service_v344.py
       - name: Run real-PDF compression and fail-closed regression tests
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_compression_benchmark_v504.py -v
+      - name: V50.9 real corpus RGB/alpha coverage and weighted gains
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_compression_corpus_fidelity_v509.py -v
       - name: Recheck full-pixel acceptance regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_compression_acceptance_v489.py -v

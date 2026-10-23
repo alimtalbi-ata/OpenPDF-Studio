@@ -45,6 +45,10 @@ def convert_office(source, destination, *, output_format=None):
     validate_output([source.resolve()], destination.resolve())
     if destination.exists():
         raise FileExistsError(f'Destination existante : {destination}')
+    # V51.0: a scanned page has no editable text; fail before any output is made.
+    from openpdf_office_scan_gate_v510 import assess_office_source, require_editable_source
+    preflight = require_editable_source(assess_office_source(source))
+    check_source()  # The scan gate reopens the PDF: protect against concurrent edits.
     fd, tmp_name = tempfile.mkstemp(prefix='.openpdf-office-', suffix='.' + fmt, dir=destination.parent)
     os.close(fd)
     temporary = Path(tmp_name)
@@ -67,6 +71,11 @@ def convert_office(source, destination, *, output_format=None):
             raise RuntimeError('Empreinte de conversion incoherente : sortie non publiee')
         check_source()  # Final integrity gate immediately before publication.
         publish_exclusive(temporary, destination)
-        return ConversionOutcome(str(destination), fmt, size, actual_sha256, audit.warnings)
+        limitations = tuple(
+            f'Page {number} : éléments graphiques non convertis en objets Office éditables'
+            for number in preflight.non_text_graphics_pages
+        )
+        return ConversionOutcome(str(destination), fmt, size, actual_sha256,
+                                 audit.warnings + limitations)
     finally:
         temporary.unlink(missing_ok=True)

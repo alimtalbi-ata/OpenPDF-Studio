@@ -11,7 +11,7 @@ import zipfile
 from pathlib import Path
 
 FOLDERS = ('01-Application', '02-Compilation', '03-Sources', '04-Tests-et-Qualification', '05-Documentation', '06-Historique', '07-Manifestes')
-ROOT_FILES = {'README.md', 'LISEZ-MOI.md', 'VERSION.txt', 'BUILD-OPENPDF-WINDOWS.cmd'}
+ROOT_FILES = {'README.md', 'LISEZ-MOI.md', 'VERSION.txt', 'BUILD-OPENPDF-WINDOWS.cmd', '.gitattributes'}
 SKIP_DIRS = {'.git', '.venv', 'venv', '__pycache__', 'build', 'dist', 'node_modules', 'site-packages', '.pytest_cache', '.mypy_cache', '.tox', '.idea', '.vscode'}
 SKIP_FILES = {'.env', 'token.json', 'credentials.json', 'secrets.json', '.netrc', 'id_rsa', 'id_ed25519'}
 SKIP_EXT = {'.pyc', '.pyo', '.log', '.tmp', '.bak', '.pem', '.p12', '.pfx', '.key', '.sqlite', '.db'}

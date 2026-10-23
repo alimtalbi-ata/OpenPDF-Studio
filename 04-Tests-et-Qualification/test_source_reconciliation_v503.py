@@ -88,6 +88,16 @@ class SourceReconciliationV503Tests(unittest.TestCase):
                 self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), expected)
                 ast.parse(path.read_text(encoding="utf-8-sig"))
 
+    def test_sixteen_runtime_interfaces_match_candidate(self):
+        runtime = json.loads((ROOT / "07-Manifestes/V50.3-RUNTIME-INTERFACE-HASHES.json").read_text(encoding="utf-8"))
+        self.assertEqual(len(runtime["sha256"]), 16)
+        for rel, expected in runtime["sha256"].items():
+            with self.subTest(path=rel):
+                path = ROOT / rel
+                self.assertTrue(path.is_file() and not path.is_symlink())
+                self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), expected)
+                ast.parse(path.read_text(encoding="utf-8-sig"))
+
     def test_build_preflight_accepts_dynamic_version_recipe(self):
         spec = importlib.util.spec_from_file_location("preflight_v503", SRC / "openpdf_build_preflight.py")
         module = importlib.util.module_from_spec(spec)

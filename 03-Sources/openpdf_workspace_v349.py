@@ -22,6 +22,9 @@ def validate_request(operation, sources, destination):
     for path in resolved:
         if not path.is_file() or path.stat().st_size == 0: raise ValueError(f'PDF source absent ou vide : {path}')
     dest = Path(destination).expanduser().resolve()
+    if operation != 'decoupage' and dest.exists(): raise FileExistsError(f'Destination existante : {dest}')
+    if operation not in ('docx','xlsx','pptx','decoupage') and dest.suffix.lower() != '.pdf':
+        raise ValueError('La destination doit être un fichier PDF (.pdf)')
     if operation in ('docx','xlsx','pptx') and dest.suffix.lower() != '.' + operation:
         raise ValueError('Extension de destination incorrecte pour la conversion Office')
     if operation != 'decoupage' and dest in resolved: raise ValueError('Destination identique à une source')

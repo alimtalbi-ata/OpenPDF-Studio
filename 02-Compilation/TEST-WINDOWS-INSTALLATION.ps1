@@ -3,9 +3,9 @@ param(
  [Parameter(Mandatory=$true)][string]$ReportPath
 )
 $ErrorActionPreference='Stop'
-$report=[ordered]@{version='40.2';kind='real-installer-install-uninstall';passed=$false;steps=@();utc=(Get-Date).ToUniversalTime().ToString('o')}
-$folder=Join-Path $env:TEMP ('OpenPDF-V402-'+[guid]::NewGuid().ToString('N'))
-$marker=Join-Path $env:TEMP ('OpenPDF-V402-'+[guid]::NewGuid().ToString('N')+'.marker')
+$report=[ordered]@{version=((Get-Content (Join-Path (Split-Path -Parent $PSScriptRoot) 'VERSION.txt') -Raw).Trim());kind='real-installer-install-uninstall';passed=$false;steps=@();utc=(Get-Date).ToUniversalTime().ToString('o')}
+$folder=Join-Path $env:TEMP ('OpenPDF-Install-'+[guid]::NewGuid().ToString('N'))
+$marker=Join-Path $env:TEMP ('OpenPDF-Install-'+[guid]::NewGuid().ToString('N')+'.marker')
 function Run-Checked([string]$file,[string[]]$arguments,[int]$timeout=120000) {
  $p=Start-Process -FilePath $file -ArgumentList $arguments -Wait:$false -PassThru
  if (-not $p.WaitForExit($timeout)) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue;throw "Timed out: $file" }
@@ -13,7 +13,8 @@ function Run-Checked([string]$file,[string[]]$arguments,[int]$timeout=120000) {
 }
 try {
  if (-not (Test-Path -LiteralPath $SetupExe -PathType Leaf)) {throw 'Installer missing'}
- Run-Checked $SetupExe @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',"/DIR=$folder")
+ $report.setup_sha256=(Get-FileHash -LiteralPath $SetupExe -Algorithm SHA256).Hash.ToLowerInvariant()
+ Run-Checked $SetupExe @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',('/DIR="'+$folder+'"'))
  $report.steps+= 'silent_install_pass'
  $exe=Join-Path $folder 'OpenPDF-Studio.exe'
  if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) {throw 'Installed executable missing'}

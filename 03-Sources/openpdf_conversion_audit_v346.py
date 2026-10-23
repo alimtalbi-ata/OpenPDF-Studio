@@ -38,6 +38,12 @@ def audit_conversion(source,destination):
         raise ValueError('Fichier Office non valide (conteneur ZIP absent)')
     marker={'.docx':'word/document.xml','.xlsx':'xl/workbook.xml','.pptx':'ppt/presentation.xml'}[ext]
     with zipfile.ZipFile(destination) as z:
+        members=z.infolist()
+        # Refuse pathological Office archives before decompressing any entry.
+        if len(members)>10000 or sum(m.file_size for m in members)>512*1024*1024:
+            raise ValueError('Archive Office anormalement volumineuse')
+        if any(m.file_size>128*1024*1024 for m in members):
+            raise ValueError('Entrée Office anormalement volumineuse')
         if z.testzip() is not None or marker not in z.namelist():
             raise ValueError('Structure Office corrompue ou incomplète')
     warnings=['Structure valide, mais fidélité de mise en page non mesurée']
@@ -58,12 +64,31 @@ def audit_conversion(source,destination):
     elif ext=='.xlsx':
         from openpyxl import load_workbook
         wb=load_workbook(destination,read_only=True,data_only=False)
-        try: units=len(wb.worksheets)
+        try:
+            units=len(wb.worksheets)
+            continued=0
+            for sheet in wb.worksheets:
+                for row in sheet.iter_rows():
+                    for cell in row:
+                        # An exported PDF is untrusted text, not executable
+                        # spreadsheet code. Never publish formulas injected by
+                        # a converter or by a modified temporary XLSX.
+                        if cell.data_type == 'f':
+                            raise ValueError('Formule Excel dans une conversion PDF : sortie rejetée')
+                    if len(row) >= 4 and isinstance(row[3].value, int) and row[3].value > 1:
+                        continued += 1
+            if continued:
+                warnings.append(f'{continued} fragment(s) de lignes longues dans Excel : '
+                                'regrouper Page/Ligne et concaténer Texte par Segment')
         finally: wb.close()
     else:
         from pptx import Presentation
         units=len(Presentation(destination).slides)
-        if units!=pages: warnings.append('Nombre de diapositives différent du nombre de pages PDF (indicatif seulement)')
+        if units > pages:
+            warnings.append(f'{units} diapositives pour {pages} pages PDF : '
+                            'pagination du texte long sans troncature')
+        elif units < pages:
+            warnings.append('Moins de diapositives que de pages PDF : contrôler les pages absentes')
     with destination.open('rb') as stream:
         digest=hashlib.file_digest(stream,'sha256').hexdigest()
     return ConversionAudit(str(source),str(destination),ext[1:],pages,units,destination.stat().st_size,digest,True,tuple(warnings))

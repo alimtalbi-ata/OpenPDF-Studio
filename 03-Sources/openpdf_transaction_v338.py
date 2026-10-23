@@ -11,13 +11,21 @@ class CompressionReceipt:
     message: str
     size: int = 0
     sha256: str = ''
+    metrics: object = None  # V46.8 optional structured compression report
+    visual_audit: object = None  # V46.9 measured before publication
 
-def compress_with_receipt(source, destination, profile='smaller_only'):
+def compress_with_receipt(source, destination, profile='smaller_only', *, audit_collector=None):
     """Preserve legacy engine semantics, return authoritative publish status.
 
     A no-gain result is *never* published, even if an older destination exists.
     """
-    message = str(compress_with_profile(source, destination, profile))
+    audit_results = []
+    def capture(src, tmp):
+        audit_results.append(audit_collector(src, tmp))
+    if audit_collector is None:
+        message = str(compress_with_profile(source, destination, profile))
+    else:
+        message = str(compress_with_profile(source, destination, profile, audit_collector=capture))
     if message.startswith('Aucun gain') or 'Aucun fichier de sortie modifié' in message:
         return CompressionReceipt(False, str(destination), message)
     path = Path(destination)
@@ -27,7 +35,8 @@ def compress_with_receipt(source, destination, profile='smaller_only'):
     with path.open('rb') as stream:
         for block in iter(lambda: stream.read(1024*1024), b''):
             digest.update(block)
-    return CompressionReceipt(True, str(path.resolve()), message, path.stat().st_size, digest.hexdigest())
+    return CompressionReceipt(True, str(path.resolve()), message, path.stat().st_size, digest.hexdigest(),
+                              visual_audit=audit_results[0] if audit_results else None)
 
 def verify_receipt(receipt, destination):
     if not isinstance(receipt, CompressionReceipt):

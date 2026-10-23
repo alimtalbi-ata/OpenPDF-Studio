@@ -79,31 +79,102 @@ def pdf_to_docx(source,output):
     document.save(output)
     return [output]
 
+# Excel cells are limited to 32,767 UTF-16 code units. Do not truncate PDF
+# text silently, and never let an untrusted PDF line become an Excel formula.
+_XLSX_CELL_LIMIT = 32767
+_XLSX_ROW_LIMIT = 1048576
+
+
+def _excel_text_fragments(value):
+    """Yield exact consecutive UTF-16-bounded fragments (no lost characters).
+
+    Split at a space when possible to preserve whole lexical tokens; retain
+    the space in the following fragment so joining all parts reproduces the
+    original input exactly. Astral Unicode characters count as two units.
+    """
+    if not value:
+        yield ''
+        return
+    cursor = 0
+    while cursor < len(value):
+        units = 0
+        end = cursor
+        while end < len(value):
+            char_units = 2 if ord(value[end]) > 0xFFFF else 1
+            if units + char_units > _XLSX_CELL_LIMIT:
+                break
+            units += char_units
+            end += 1
+        if end < len(value):
+            # Prefer a word boundary in the last quarter of this fragment.
+            boundary = value.rfind(' ', cursor + (end - cursor) * 3 // 4, end)
+            if boundary > cursor:
+                end = boundary
+        if end <= cursor:
+            raise PDFOperationError('Fragment Excel invalide')
+        yield value[cursor:end]
+        cursor = end
+
+
 def pdf_to_xlsx(source,output):
     from openpyxl import Workbook
     source=_inputs([source])[0]; output=Path(output)
     if output.suffix.lower()!='.xlsx': raise PDFOperationError('La sortie doit être un XLSX.')
-    wb=Workbook(); ws=wb.active; ws.title='Texte PDF'; ws.append(['Page','Ligne','Texte'])
+    wb=Workbook(); ws=wb.active; ws.title='Texte PDF'
+    ws.append(['Page','Ligne','Texte','Segment'])
+    rows = 1
     with fitz.open(source) as doc:
         if doc.needs_pass: raise PDFOperationError('PDF protégé.')
         for page_num,page in enumerate(doc,1):
             for line_num,line in enumerate(page.get_text(sort=True).splitlines(),1):
-                # Prevent spreadsheet formula execution when opening untrusted PDF text.
-                if line.startswith(('=','+','-','@')): line="'"+line
-                ws.append([page_num,line_num,line[:32767]])
+                for segment,part in enumerate(_excel_text_fragments(line),1):
+                    if rows >= _XLSX_ROW_LIMIT:
+                        raise PDFOperationError('Nombre maximal de lignes Excel dépassé')
+                    rows += 1
+                    ws.append([page_num,line_num,part,segment])
+                    # openpyxl normally interprets values starting with '=' as
+                    # formulas. Force a literal cell WITHOUT adding an apostrophe
+                    # that would change the extracted document text.
+                    ws.cell(row=rows,column=3).data_type='s'
     output.parent.mkdir(parents=True,exist_ok=True); wb.save(output)
     return [output]
 
-def pdf_to_pptx(source,output):
+def pdf_to_pptx(source, output):
+    """Export all extractable PDF text as editable, paginated PPTX slides.
+
+    A PDF page may require multiple slides. Original PDF geometry and images
+    are not reconstructed. Oversized inputs fail without silent truncation.
+    """
     from pptx import Presentation
-    from pptx.util import Inches
-    source=_inputs([source])[0]; output=Path(output)
-    if output.suffix.lower()!='.pptx': raise PDFOperationError('La sortie doit être un PPTX.')
-    prs=Presentation()
+    from pptx.util import Inches, Pt
+    from pptx.enum.text import MSO_AUTO_SIZE
+    from openpdf_pptx_pagination_v458 import chunks_for_page
+
+    source = _inputs([source])[0]
+    output = Path(output)
+    if output.suffix.lower() != '.pptx':
+        raise PDFOperationError('La sortie doit être un PPTX.')
+    prs = Presentation()
     with fitz.open(source) as doc:
-        if doc.needs_pass: raise PDFOperationError('PDF protégé.')
-        for index,page in enumerate(doc,1):
-            slide=prs.slides.add_slide(prs.slide_layouts[6]); slide.shapes.add_textbox(Inches(.5), Inches(.3), Inches(9), Inches(.5)).text=f'Page {index}'
-            slide.shapes.add_textbox(Inches(.5), Inches(1), Inches(9), Inches(6)).text=page.get_text(sort=True)[:15000]
-    output.parent.mkdir(parents=True,exist_ok=True); prs.save(output)
+        if doc.needs_pass:
+            raise PDFOperationError('PDF protégé.')
+        for page_number, page in enumerate(doc, 1):
+            # Extractable text only: scanned pages require OCR beforehand.
+            chunks = chunks_for_page(page.get_text(sort=True))
+            for chunk_number, chunk in enumerate(chunks, 1):
+                slide = prs.slides.add_slide(prs.slide_layouts[6])
+                heading = slide.shapes.add_textbox(Inches(.5), Inches(.3),
+                                                   Inches(9), Inches(.5))
+                heading.text = (f'Page {page_number} — partie {chunk_number}/{len(chunks)}'
+                                if len(chunks) > 1 else f'Page {page_number}')
+                body = slide.shapes.add_textbox(Inches(.5), Inches(1),
+                                                Inches(9), Inches(6))
+                body.text = chunk
+                body.text_frame.word_wrap = True
+                body.text_frame.auto_size = MSO_AUTO_SIZE.TEXT_TO_FIT_SHAPE
+                for paragraph in body.text_frame.paragraphs:
+                    for run in paragraph.runs:
+                        run.font.size = Pt(14)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    prs.save(output)
     return [output]

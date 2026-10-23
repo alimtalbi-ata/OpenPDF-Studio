@@ -5,6 +5,7 @@ on:
       - '03-Sources/openpdf_page_order_v497.py'
       - '03-Sources/openpdf_page_service_v345.py'
       - '03-Sources/openpdf_ui_controller_v348.py'
+      - '03-Sources/openpdf_desktop.py'
       - '04-Tests-et-Qualification/test_page_order_v497.py'
       - '.github/workflows/page-order-v497.yml'
   workflow_dispatch:

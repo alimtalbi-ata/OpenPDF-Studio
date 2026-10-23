@@ -89,6 +89,18 @@ jobs:
       - name: Build portable using the supported single CMD entrypoint
         shell: cmd
         run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd --portable-only
+      - name: Validate bounded Windows smoke report
+        shell: pwsh
+        run: |
+          $path = '01-Application/binary/windows-smoke-portable.json'
+          if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw 'Smoke evidence missing' }
+          if ((Get-Item -LiteralPath $path).Length -gt 65536) { throw 'Smoke evidence exceeds 64 KiB' }
+          $report = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+          if (-not $report.passed -or $report.checks.Count -ne 2) { throw 'Smoke evidence incomplete' }
+          foreach ($check in $report.checks) {
+            if ($check.stdout -isnot [string] -or $check.stderr -isnot [string]) { throw 'Non-text smoke evidence' }
+            if (-not $check.passed) { throw 'Failed smoke check' }
+          }
       - name: Publish actual Windows build evidence only
         if: always()
         uses: actions/upload-artifact@v4

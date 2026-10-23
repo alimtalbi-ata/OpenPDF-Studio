@@ -20,5 +20,12 @@ def run_operation(operation, sources, destination, *, profile='smaller_only', fi
     if operation == 'compression': return compress_with_receipt(src, destination, profile)
     if operation == 'extraction': return extract(src, destination, int(first), int(last))
     if operation == 'decoupage': return split(src, destination, int(chunk))
-    if operation == 'reorganisation': return reorder(src, destination, [int(x.strip()) for x in order.split(',') if x.strip()])
+    if operation == 'reorganisation':
+        import fitz
+        from openpdf_page_order_v497 import parse_page_order
+        with fitz.open(src) as doc:
+            if doc.needs_pass or doc.page_count < 1:
+                raise ValueError('PDF source vide ou protégé')
+            indices = parse_page_order(order, doc.page_count)
+        return reorder(src, destination, indices)
     return searchable_pdf(src, destination, language=language)

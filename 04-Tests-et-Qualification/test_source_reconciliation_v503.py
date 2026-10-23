@@ -42,6 +42,7 @@ class SourceReconciliationV503Tests(unittest.TestCase):
     def test_git_checkout_preserves_pinned_source_bytes(self):
         attrs = (ROOT / ".gitattributes").read_text(encoding="utf-8")
         self.assertIn("03-Sources/*.py -text", attrs)
+        self.assertIn("03-Sources/*.iss -text", attrs)
 
     def test_required_runtime_set_complete(self):
         modules = self.manifest["modules"]

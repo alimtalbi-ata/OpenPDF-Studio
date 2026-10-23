@@ -29,7 +29,7 @@ def _journal(stage, names):
     _sync_dir(stage)
 
 def _safe_names(names):
-    return isinstance(names,list) and len(names)==len(set(names)) and all(
+    return isinstance(names,list) and bool(names) and len(names)==len(set(names)) and all(
         isinstance(n,str) and n not in ("", ".", "..") and Path(n).name == n
         and not n.startswith(".") for n in names)
 
@@ -44,6 +44,9 @@ def recover_transactions(folder):
     for stage in sorted(dest.glob(PREFIX+"*")):
         if not stage.is_dir() or stage.is_symlink(): continue
         journal=stage/JOURNAL
+        if journal.is_symlink():
+            report.append({"stage":stage.name,"status":"manual_review_invalid_journal"})
+            continue
         if not journal.is_file():
             report.append({"stage":stage.name,"status":"manual_review_missing_journal"})
             continue

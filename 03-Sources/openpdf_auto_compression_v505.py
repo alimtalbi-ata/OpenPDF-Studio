@@ -1,5 +1,5 @@
 """V50.5: choose the smallest verified PDF from explicit compression profiles.
-All profiles run on private candidates; full RGB quality is checked before publication.
+All profiles run on private candidates; RGB and alpha are checked before publication.
 Lossy profiles require explicit opt-in. Author: Abdelhalim Talbi.
 """
 from __future__ import annotations
@@ -17,6 +17,7 @@ import time
 from openpdf_atomic_output import publish_exclusive
 from openpdf_compression_evidence_v506 import verified_evidence
 from openpdf_compression_coverage_v507 import verify_render_coverage
+from openpdf_compression_alpha_v508 import verify_alpha_fidelity
 from openpdf_compression_acceptance_v489 import AcceptancePolicy
 from openpdf_compression_service_v344 import CompressionRequest, execute_compression
 from openpdf_source_integrity_v430 import fingerprint_source, verify_source_unchanged
@@ -87,6 +88,7 @@ def auto_compress(source, destination, policy=AutoCompressionPolicy()):
         destination=dst.name, policy=asdict(policy), cases=[],
         status='no_compliant_gain', selected_profile=None,
         coverage_verification='v50.7-exact-pages-and-pixels',
+        alpha_verification='v50.8-exact-alpha-at-bounded-scale',
         evidence_limit='full_rgb_at_bounded_scale_not_print_ocr_or_archival_certification')
     with tempfile.TemporaryDirectory(prefix='.openpdf-auto-', dir=dst.parent) as work:
         folder = Path(work)
@@ -110,6 +112,8 @@ def auto_compress(source, destination, policy=AutoCompressionPolicy()):
                     coverage = verify_render_coverage(src, candidate,
                         receipt.metrics.visual_audit, quality)
                     evidence['coverage'] = coverage
+                    evidence['alpha'] = verify_alpha_fidelity(src, candidate, quality,
+                        source_sha256=original.sha256, candidate_sha256=digest)
                     case.update(status='accepted', bytes=size, sha256=digest,
                         saving_percent=round(100 * (original.size - size) / original.size, 4),
                         quality=evidence)
@@ -155,7 +159,7 @@ def auto_compress_gui(source, destination):
     return (f"PDF optimisé : {destination}\n"
             f"Profil retenu : {report['selected_profile']} ; "
             f"gain : {report['saving_percent']:.2f} %. "
-            'Comparaison RGB à échelle bornée ; pas une certification de fidélité.')
+            'Contrôles RGB et transparence à échelle bornée ; pas une certification de fidélité.')
 
 
 def main(argv=None):

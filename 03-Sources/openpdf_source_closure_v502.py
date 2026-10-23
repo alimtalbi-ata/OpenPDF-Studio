@@ -78,7 +78,7 @@ def audit_sources(root: str | Path, entries=DEFAULT_ENTRIES, required_manifest=N
         if len(required) != len(set(required)):
             raise ValueError("Duplicate required runtime module")
         expected_version = manifest.get("version")
-        if not isinstance(expected_version, str) or not re.fullmatch(r"[0-9]+\\.[0-9]+", expected_version):
+        if not isinstance(expected_version, str) or not re.fullmatch(r"[0-9]+\.[0-9]+", expected_version):
             raise ValueError("Invalid required runtime version")
     seen = set()
     pending = deque(entry_names + sorted(required))

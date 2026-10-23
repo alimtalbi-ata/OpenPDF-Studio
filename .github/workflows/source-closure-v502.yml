@@ -1,4 +1,4 @@
-name: V50.5 reconciled source and Windows portable qualification
+name: V50.6 reconciled source and Windows portable qualification
 on:
   pull_request:
   workflow_dispatch:
@@ -24,7 +24,7 @@ jobs:
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_windows_single_command_v472.py -v
       - name: Test 15 runtime publication and integrity regressions
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_runtime_reconciliation_v503.py -v
-      - name: Test V50.5 Windows uninstall cleanup contract
+      - name: Test V50.6 Windows uninstall cleanup contract
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_windows_installer_cleanup_v504.py -v
       - name: Test original V50.2 closure regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_source_closure_v502.py -v
@@ -48,20 +48,20 @@ jobs:
           --entry openpdf_bind_smoke
           --entry openpdf_publish_binary
           --entry openpdf_binary_manifest
-          --required-manifest 07-Manifestes/V50.5-REQUIRED-RUNTIME-MODULES.json
+          --required-manifest 07-Manifestes/V50.6-REQUIRED-RUNTIME-MODULES.json
           --report source-closure.json
       - name: Preserve evidence even on failure
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v505-source-closure-evidence
+          name: v506-source-closure-evidence
           path: source-closure.json
           if-no-files-found: warn
       - name: Preserve validated source snapshot for cumulative packaging
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: v505-reconciled-source-snapshot
+          name: v506-reconciled-source-snapshot
           path: |
             VERSION.txt
             .gitattributes
@@ -107,7 +107,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v505-windows-portable-build-evidence
+          name: v506-windows-portable-build-evidence
           path: |
             01-Application/binary/*.log
             01-Application/binary/*.json
@@ -141,10 +141,10 @@ jobs:
       - name: Verify native installation evidence
         shell: pwsh
         run: |
-          $path = '01-Application/binary/windows-installation-v50.5.json'
+          $path = '01-Application/binary/windows-installation-v50.6.json'
           if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw 'Installation evidence missing' }
           $report = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
-          if (-not $report.passed -or $report.version -ne '50.5') { throw 'Installation failed' }
+          if (-not $report.passed -or $report.version -ne '50.6') { throw 'Installation failed' }
           if ($report.cleanup_error) { throw 'Unexpected installer cleanup error' }
           foreach ($step in @('silent_install_pass','installed_launch_pass','silent_uninstall_pass')) {
             if ($report.steps -notcontains $step) { throw "Missing installation step: $step" }
@@ -153,7 +153,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v505-windows-installer-build-evidence
+          name: v506-windows-installer-build-evidence
           path: |
             01-Application/binary/*.log
             01-Application/binary/*.json

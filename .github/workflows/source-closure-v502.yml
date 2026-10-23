@@ -1,4 +1,4 @@
-name: V51.0 reconciled source and Windows portable qualification
+name: V51.1 reconciled source and Windows portable qualification
 on:
   pull_request:
   workflow_dispatch:
@@ -28,11 +28,11 @@ jobs:
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_runtime_reconciliation_v503.py -v
       - name: Test version-aware Windows tag-release workflow (static contract)
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_windows_release_dynamic_v508.py -v
-      - name: Test V51.0 Windows uninstall cleanup contract
+      - name: Test V51.1 Windows uninstall cleanup contract
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_windows_installer_cleanup_v504.py -v
-      - name: Test V51.0 scanned-page Office conversion gate (real synthetic PDFs)
+      - name: Test V51.1 scanned-page Office conversion gate (real synthetic PDFs)
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_office_scan_gate_v510.py -v
-      - name: Test original V50.2 closure regression
+      - name: Test V51.1 OCR-to-Office pipeline (offline, functional)\n        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_office_pipeline_v511.py -v\n      - name: Test original V50.2 closure regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_source_closure_v502.py -v
   source-readiness:
     name: Full application source closure (release-blocking)
@@ -54,20 +54,20 @@ jobs:
           --entry openpdf_bind_smoke
           --entry openpdf_publish_binary
           --entry openpdf_binary_manifest
-          --required-manifest 07-Manifestes/V51.0-REQUIRED-RUNTIME-MODULES.json
+          --required-manifest 07-Manifestes/V51.1-REQUIRED-RUNTIME-MODULES.json
           --report source-closure.json
       - name: Preserve evidence even on failure
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v510-source-closure-evidence
+          name: v511-source-closure-evidence
           path: source-closure.json
           if-no-files-found: warn
       - name: Preserve validated source snapshot for cumulative packaging
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: v510-reconciled-source-snapshot
+          name: v511-reconciled-source-snapshot
           path: |
             VERSION.txt
             .gitattributes
@@ -113,7 +113,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v510-windows-portable-build-evidence
+          name: v511-windows-portable-build-evidence
           path: |
             01-Application/binary/*.log
             01-Application/binary/*.json
@@ -147,10 +147,10 @@ jobs:
       - name: Verify native installation evidence
         shell: pwsh
         run: |
-          $path = '01-Application/binary/windows-installation-v51.0.json'
+          $path = '01-Application/binary/windows-installation-v51.1.json'
           if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw 'Installation evidence missing' }
           $report = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
-          if (-not $report.passed -or $report.version -ne '51.0') { throw 'Installation failed' }
+          if (-not $report.passed -or $report.version -ne '51.1') { throw 'Installation failed' }
           if ($report.cleanup_error) { throw 'Unexpected installer cleanup error' }
           foreach ($step in @('silent_install_pass','installed_launch_pass','silent_uninstall_pass')) {
             if ($report.steps -notcontains $step) { throw "Missing installation step: $step" }
@@ -159,7 +159,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v510-windows-installer-build-evidence
+          name: v511-windows-installer-build-evidence
           path: |
             01-Application/binary/*.log
             01-Application/binary/*.json

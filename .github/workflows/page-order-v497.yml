@@ -7,6 +7,7 @@ on:
       - '03-Sources/openpdf_ui_controller_v348.py'
       - '03-Sources/openpdf_desktop.py'
       - '04-Tests-et-Qualification/test_page_order_v497.py'
+      - '04-Tests-et-Qualification/test_page_keywords_v498.py'
       - '.github/workflows/page-order-v497.yml'
   workflow_dispatch:
 jobs:
@@ -26,4 +27,6 @@ jobs:
       - name: Compile page modules
         run: python -m compileall -q 03-Sources/openpdf_page_order_v497.py 03-Sources/openpdf_page_service_v345.py 03-Sources/openpdf_ui_controller_v348.py
       - name: Run parser and real-PDF regression suite
-        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_page_order_v497.py -v
+        run: |
+          python -m unittest discover -s 04-Tests-et-Qualification -p test_page_order_v497.py -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p test_page_keywords_v498.py -v

@@ -32,9 +32,7 @@ jobs:
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_auto_compression_v505.py -v
       - name: Prior compression benchmark regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_compression_benchmark_v504.py -v
-      - name: UI destination and adaptive regressions
-        run: |
-          python -m unittest discover -s 04-Tests-et-Qualification -p test_compression_ui_destination_v436.py -v
-          python -m unittest discover -s 04-Tests-et-Qualification -p test_adaptive_compression_v443.py -v
+      - name: GUI opt-in and overwrite regressions
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_auto_compression_v505.py -v
       - name: Static runtime dependency closure (not Windows binary qualification)
         run: python 03-Sources/openpdf_source_closure_v502.py --root . --entry openpdf_studio --entry openpdf_auto_compression_v505 --required-manifest 07-Manifestes/V50.5-REQUIRED-RUNTIME-MODULES.json

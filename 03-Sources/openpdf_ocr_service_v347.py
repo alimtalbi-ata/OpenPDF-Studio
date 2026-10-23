@@ -24,6 +24,35 @@ def _digest(path):
     return h.hexdigest()
 
 
+def locate_tessdata(language, explicit=None):
+    """Find a local language-data folder; never download models implicitly.
+
+    Return None for an unknown location so the underlying OCR engine can
+    report the failure; return a folder only when all requested models exist.
+    """
+    import sys
+    names=[part+'.traineddata' for part in language.split('+')]
+    candidates=[]
+    if explicit is not None:
+        candidates.append(Path(explicit))
+    else:
+        prefix=os.environ.get('TESSDATA_PREFIX')
+        if prefix:
+            candidates.extend((Path(prefix),Path(prefix)/'tessdata'))
+        root=Path(getattr(sys,'_MEIPASS',Path(__file__).resolve().parent))
+        candidates.extend((root/'tessdata',root/'Tesseract-OCR'/'tessdata'))
+        if os.name=='nt':
+            for env in ('ProgramFiles','ProgramFiles(x86)','LOCALAPPDATA'):
+                value=os.environ.get(env)
+                if value:
+                    candidates.append(Path(value)/'Tesseract-OCR'/'tessdata')
+    for folder in candidates:
+        if folder.is_dir() and all((folder/name).is_file() for name in names):
+            return str(folder)
+    if explicit is not None:
+        raise ValueError('Données OCR manquantes : '+', '.join(names))
+    return None
+
 def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=True, progress=None, tessdata=None):
     """Generate searchable PDF without modifying input; commit only complete valid output.
 
@@ -40,6 +69,7 @@ def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=T
     if not re.fullmatch(r'[A-Za-z]{3}(?:\+[A-Za-z]{3})*',language):raise ValueError('Langue OCR invalide')
     if not isinstance(dpi,int) or not 100<=dpi<=400:raise ValueError('DPI hors limites [100,400]')
     if tessdata is not None and not Path(tessdata).is_dir():raise ValueError('Dossier tessdata absent')
+    resolved_tessdata=locate_tessdata(language,tessdata)
     fd,tmp=tempfile.mkstemp(prefix='.openpdf-ocr-',suffix='.pdf',dir=destination.parent)
     os.close(fd)
     processed=0; skipped=0
@@ -54,7 +84,7 @@ def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=T
                 else:
                     pix=page.get_pixmap(dpi=dpi,alpha=False)
                     kwargs={'language':language}
-                    if tessdata is not None:kwargs['tessdata']=str(tessdata)
+                    if resolved_tessdata is not None:kwargs['tessdata']=resolved_tessdata
                     try:
                         pdf_bytes=pix.pdfocr_tobytes(**kwargs)
                     except RuntimeError as exc:

@@ -61,6 +61,7 @@ class WindowsSingleCommandV472(unittest.TestCase):
         self.assertLess(pipeline.index('VERIFY-WINDOWS-RELEASE.ps1'), pipeline.index('package_cumulative_v434.py'))
         package = (ROOT / '02-Compilation' / 'package_cumulative_v434.py').read_text()
         self.assertIn("'BUILD-OPENPDF-WINDOWS.cmd'", package)
+        self.assertIn("'.gitattributes'", package)
         for marker in ('windows-installation-v', 'windows-smoke-installer.json', 'artifact_sha256', 'Missing qualified Windows artifact'):
             self.assertIn(marker, package)
 

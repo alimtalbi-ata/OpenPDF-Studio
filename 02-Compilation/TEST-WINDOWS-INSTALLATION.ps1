@@ -22,6 +22,11 @@ try {
  try {Run-Checked $exe @('--self-test')} finally {Remove-Item Env:OPENPDF_SMOKE_OUTPUT -ErrorAction SilentlyContinue}
  if (-not (Test-Path -LiteralPath $marker) -or (Get-Content -Raw $marker) -notmatch 'OPENPDF_SELF_TEST_OK') {throw 'Installed application self-test failed'}
  $report.steps+='installed_launch_pass'
+ Remove-Item -LiteralPath $marker -Force -ErrorAction SilentlyContinue
+ $env:OPENPDF_SMOKE_OUTPUT=$marker
+ try {Run-Checked $exe @('--ocr-runtime-self-test') 120000} finally {Remove-Item Env:OPENPDF_SMOKE_OUTPUT -ErrorAction SilentlyContinue}
+ if (-not (Test-Path -LiteralPath $marker) -or (Get-Content -Raw $marker) -notmatch 'OPENPDF_OCR_RUNTIME_OK') {throw 'Installed real OCR test failed'}
+ $report.steps+='installed_ocr_pass'
  $unins=Join-Path $folder 'unins000.exe'
  if (-not (Test-Path -LiteralPath $unins -PathType Leaf)) {throw 'Uninstaller missing'}
  Run-Checked $unins @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART')

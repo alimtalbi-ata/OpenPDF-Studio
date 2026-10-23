@@ -1,9 +1,11 @@
-name: V51.2 OCR to editable Office functional qualification
+name: V51.3 OCR to editable Office functional qualification
 on:
   pull_request:
     paths:
       - '03-Sources/openpdf_ocr_office_pipeline_v511.py'
       - '03-Sources/openpdf_studio.py'
+      - '03-Sources/openpdf_ocr_runtime_v513.py'
+      - '03-Sources/openpdf_ocr_service_v347.py'
       - '03-Sources/openpdf_operations.py'
       - '03-Sources/openpdf_desktop.py'
       - '03-Sources/openpdf_workspace_v349.py'
@@ -31,9 +33,11 @@ jobs:
       - name: Install offline English OCR model on Linux
         if: runner.os == 'Linux'
         run: sudo apt-get update -qq && sudo apt-get install -y tesseract-ocr-eng
+      - name: V51.3 OCR model resolver and real engine
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_runtime_v513.py -v
       - name: V51.1 OCR to Office tests (OCR real when eng model is present)
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_office_pipeline_v511.py -v
       - name: V51.0 scan gate regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_office_scan_gate_v510.py -v
-      - name: V51.2 GUI OCR Office opt-in and safety regression
+      - name: V51.3 GUI OCR Office opt-in and safety regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_office_gui_v512.py -v

@@ -143,6 +143,7 @@ class OfficeScanGateV510(unittest.TestCase):
         p = subprocess.run([sys.executable, str(ROOT/'03-Sources'/'openpdf_office_scan_gate_v510.py'),
                             str(self.source)], capture_output=True, text=True)
         self.assertEqual(p.returncode, 2, p.stderr)
+        self.assertTrue(p.stdout.strip(), f'CLI produced no JSON: stderr={p.stderr!r}')
         result = json.loads(p.stdout)
         self.assertEqual(result['editable_text_gate'], 'blocked_ocr_required')
         self.assertNotIn('RASTER ONLY SCANNED CONTENT', p.stdout)

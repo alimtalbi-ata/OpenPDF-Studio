@@ -62,24 +62,36 @@ def merge(sources,destination):
 def extract(source,destination,first,last):
     src=_source(source);dest=_target(destination,{src})
     if not isinstance(first,int) or isinstance(first,bool) or not isinstance(last,int) or isinstance(last,bool) or first<1 or last<first:raise ValueError('Plage invalide')
+    from openpdf_metadata_fidelity_v501 import prepare_metadata, apply_metadata, verify_metadata
+    with fitz.open(src) as metadata_source:
+        metadata_plan = prepare_metadata(metadata_source)
     def writer(tmp):
         with fitz.open(src) as doc:
             if doc.needs_pass or last>doc.page_count:raise ValueError('Plage hors limites ou PDF protégé')
             with fitz.open() as out:
                 out.insert_pdf(doc,from_page=first-1,to_page=last-1)
+                apply_metadata(out, metadata_plan)
                 out.save(tmp,garbage=3,deflate=True)
+        with fitz.open(tmp) as check:
+            verify_metadata(check, metadata_plan)
     p,n,h=_publish(dest,writer)
     return PageReceipt('extract',(p,),(n,),(h,))
 
 def reorder(source,destination,indices):
     src=_source(source);dest=_target(destination,{src})
     if not isinstance(indices,(list,tuple)) or not indices or any(not isinstance(i,int) or isinstance(i,bool) for i in indices):raise ValueError('Ordre invalide')
+    from openpdf_metadata_fidelity_v501 import prepare_metadata, apply_metadata, verify_metadata
+    with fitz.open(src) as metadata_source:
+        metadata_plan = prepare_metadata(metadata_source)
     def writer(tmp):
         with fitz.open(src) as doc:
             if doc.needs_pass or any(i<1 or i>doc.page_count for i in indices):raise ValueError('Page inexistante ou PDF protégé')
             with fitz.open() as out:
                 for i in indices:out.insert_pdf(doc,from_page=i-1,to_page=i-1)
+                apply_metadata(out, metadata_plan)
                 out.save(tmp,garbage=3,deflate=True)
+        with fitz.open(tmp) as check:
+            verify_metadata(check, metadata_plan)
     p,n,h=_publish(dest,writer)
     return PageReceipt('reorder',(p,),(n,),(h,))
 

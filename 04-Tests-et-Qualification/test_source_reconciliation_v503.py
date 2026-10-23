@@ -47,7 +47,7 @@ class SourceReconciliationV503Tests(unittest.TestCase):
 
     def test_required_runtime_set_complete(self):
         modules = self.manifest["modules"]
-        self.assertEqual(len(modules), 88 if CURRENT_VERSION == "50.6" else 87 if CURRENT_VERSION in ("50.5", "50.6") else 86)
+        self.assertEqual(len(modules), 88 if CURRENT_VERSION == "50.6" else 87 if CURRENT_VERSION == "50.5" else 86)
         self.assertEqual(len(modules), len(set(modules)))
         for module in modules:
             with self.subTest(module=module):
@@ -90,7 +90,7 @@ class SourceReconciliationV503Tests(unittest.TestCase):
                 ast.parse(path.read_text(encoding="utf-8-sig"))
 
     def test_sixteen_runtime_interfaces_match_candidate(self):
-        runtime = json.loads((ROOT / ("07-Manifestes/V50.5-RUNTIME-INTERFACE-HASHES.json" if CURRENT_VERSION == "50.5" else "07-Manifestes/V50.3-RUNTIME-INTERFACE-HASHES.json")).read_text(encoding="utf-8"))
+        runtime = json.loads((ROOT / ("07-Manifestes/V50.5-RUNTIME-INTERFACE-HASHES.json" if CURRENT_VERSION in ("50.5", "50.6") else "07-Manifestes/V50.3-RUNTIME-INTERFACE-HASHES.json")).read_text(encoding="utf-8"))
         self.assertEqual(len(runtime["sha256"]), 16)
         for rel, expected in runtime["sha256"].items():
             with self.subTest(path=rel):

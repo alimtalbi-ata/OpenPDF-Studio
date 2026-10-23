@@ -11,6 +11,7 @@ import zipfile
 from pathlib import Path
 
 FOLDERS = ('01-Application', '02-Compilation', '03-Sources', '04-Tests-et-Qualification', '05-Documentation', '06-Historique', '07-Manifestes')
+OPTIONAL_FOLDERS = ('.github',)
 ROOT_FILES = {'README.md', 'LISEZ-MOI.md', 'VERSION.txt', 'BUILD-OPENPDF-WINDOWS.cmd', '.gitattributes'}
 SKIP_DIRS = {'.git', '.venv', 'venv', '__pycache__', 'build', 'dist', 'node_modules', 'site-packages', '.pytest_cache', '.mypy_cache', '.tox', '.idea', '.vscode'}
 SKIP_FILES = {'.env', 'token.json', 'credentials.json', 'secrets.json', '.netrc', 'id_rsa', 'id_ed25519'}
@@ -35,7 +36,7 @@ def safe_name(name):
     reserved = {'con', 'prn', 'aux', 'nul'} | {f'com{i}' for i in range(1, 10)} | {f'lpt{i}' for i in range(1, 10)}
     if not name or name.startswith('/') or '\\' in name or ':' in name or any(c in '<>"?*|' for c in name) or any(ord(c) < 32 for c in name) or any(not p or p in ('.', '..') or p.rstrip(' .') != p or p.split('.')[0].casefold() in reserved for p in parts):
         raise ValueError('Unsafe ZIP member: ' + name)
-    if parts[0] not in FOLDERS and (len(parts) != 1 or name not in ROOT_FILES):
+    if parts[0] not in FOLDERS + OPTIONAL_FOLDERS and (len(parts) != 1 or name not in ROOT_FILES):
         raise ValueError('Unexpected ZIP member root: ' + name)
 
 
@@ -96,8 +97,10 @@ def evidence(version, read, size):
 
 
 def payload(root, version):
-    for folder in FOLDERS:
+    for folder in FOLDERS + OPTIONAL_FOLDERS:
         base = root / folder
+        if folder in OPTIONAL_FOLDERS and not base.exists() and not base.is_symlink():
+            continue
         if not base.is_dir() or base.is_symlink():
             raise ValueError('Missing or linked mandatory folder: ' + folder)
         for current, dirs, files in os.walk(base, followlinks=False):

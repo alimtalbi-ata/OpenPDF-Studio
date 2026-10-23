@@ -37,7 +37,11 @@ class OCRGUIRouteV512(unittest.TestCase):
              patch.object(operations, '_legacy_run_operation', side_effect=AssertionError('legacy path')), \
              patch.object(operations, 'write_event') as audit:
             self.assertIs(self.run_office(ocr_before_office=True, language='eng'), receipt)
-        self.assertEqual(seen, [(self.source, self.destination, {'language': 'eng'})])
+        self.assertEqual(len(seen), 1)
+        self.assertTrue(seen[0][0].samefile(self.source))
+        self.assertEqual(seen[0][1].name, self.destination.name)
+        self.assertTrue(seen[0][1].parent.samefile(self.destination.parent))
+        self.assertEqual(seen[0][2], {'language': 'eng'})
         self.assertEqual(audit.call_args.args[:2], ('docx', 'success'))
 
     def test_explicitly_disabled_stays_legacy(self):

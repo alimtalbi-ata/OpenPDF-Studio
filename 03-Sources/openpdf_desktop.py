@@ -57,7 +57,7 @@ class OpenPDFStudio(tk.Tk):
         self.opts={}
         for name,var in [('Profil',self.profile),('Début',self.first),('Fin',self.last),('Pages par fichier',self.chunk),('Ordre des pages',self.order),('Langue OCR',self.language)]:
             frame=ttk.Frame(self.options);self.opts[name]=frame
-            ttk.Label(frame,text=name,width=18).pack(side='left')
+            ttk.Label(frame,text='Ordre (ex. 3-1,paires)' if name=='Ordre des pages' else name,width=22).pack(side='left')
             if name=='Profil': ttk.Combobox(frame,textvariable=var,values=('smaller_only','standard','images_balanced'),state='readonly',width=25).pack(side='left')
             else: ttk.Entry(frame,textvariable=var,width=28).pack(side='left')
         ttk.Label(left,text='3. Destination',font=('Segoe UI',12,'bold')).pack(anchor='w',pady=(12,4))

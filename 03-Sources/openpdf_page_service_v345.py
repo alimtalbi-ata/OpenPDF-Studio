@@ -28,6 +28,7 @@ def _target(path,sources):
     p=Path(path).resolve()
     if p.suffix.lower()!='.pdf' or p in sources:raise ValueError('Destination PDF invalide ou source écrasée')
     if not p.parent.is_dir():raise ValueError('Dossier de destination inexistant')
+    if p.exists() or p.is_symlink():raise FileExistsError(f'Destination existante : {p}')
     return p
 
 def _publish(destination,writer):
@@ -38,7 +39,8 @@ def _publish(destination,writer):
         with fitz.open(tmp) as check:
             if check.page_count<1 or check.needs_pass:raise ValueError('PDF produit invalide')
             pages=check.page_count
-        os.replace(tmp,destination)
+        # Exclusive hard-link commit: a racing writer cannot be overwritten.
+        os.link(tmp,destination)
         return str(destination),pages,_digest(destination)
     finally:
         if os.path.exists(tmp):os.unlink(tmp)

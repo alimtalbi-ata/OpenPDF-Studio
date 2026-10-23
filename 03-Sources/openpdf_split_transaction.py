@@ -50,7 +50,7 @@ def recover_transactions(folder):
         try:
             data=json.loads(journal.read_text(encoding="utf-8"))
             names=data["names"]
-            if data.get("schema") != 1 or not _safe_names(names): raise ValueError("invalid journal")
+            if data.get("schema") != 1 or data.get("state") != "prepared" or not _safe_names(names): raise ValueError("invalid journal")
         except (ValueError,KeyError,TypeError,OSError):
             report.append({"stage":stage.name,"status":"manual_review_invalid_journal"})
             continue

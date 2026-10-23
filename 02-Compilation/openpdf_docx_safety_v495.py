@@ -58,6 +58,11 @@ def validate_release_docx(data: bytes) -> dict:
                            for term in ACTIVE_CONTENT_TYPES):
                         raise ValueError('Macro-enabled or active OOXML content type')
                 continue
+            if root.tag != RELATIONSHIP_TAG.rsplit('}', 1)[0] + '}Relationships':
+                raise ValueError('Invalid OOXML relationship root namespace')
+            for child in root:
+                if child.tag != RELATIONSHIP_TAG:
+                    raise ValueError('Unexpected OOXML relationship element')
             for item in root.iter(RELATIONSHIP_TAG):
                 relationships += 1
                 target = item.attrib.get('Target', '')

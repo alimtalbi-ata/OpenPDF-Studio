@@ -61,6 +61,17 @@ class ReleaseDocxSafetyTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'DTD'):
             validate_release_docx(docx({'_rels/.rels': xml}))
 
+    def test_spoofed_relationship_namespace_rejected(self):
+        xml = b'<Relationships><Relationship TargetMode="External" Target="https://example.invalid"/></Relationships>'
+        with self.assertRaisesRegex(ValueError, 'namespace'):
+            validate_release_docx(docx({'_rels/.rels': xml}))
+
+    def test_spoofed_relationship_child_rejected(self):
+        xml = (f'<Relationships xmlns="{REL}"><Unexpected Target="https://example.invalid"/>'
+               '</Relationships>').encode()
+        with self.assertRaisesRegex(ValueError, 'Unexpected'):
+            validate_release_docx(docx({'_rels/.rels': xml}))
+
     def test_bad_xml_rejected(self):
         with self.assertRaisesRegex(ValueError, 'Malformed'):
             validate_release_docx(docx({'_rels/.rels': b'<Relationships'}))

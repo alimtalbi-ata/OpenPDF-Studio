@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 
 def main():
-    if ('--functional-self-test' in sys.argv or '--self-test' in sys.argv) and os.environ.get('OPENPDF_SMOKE_OUTPUT'):
+    if ('--functional-self-test' in sys.argv or '--self-test' in sys.argv or '--ocr-runtime-self-test' in sys.argv) and os.environ.get('OPENPDF_SMOKE_OUTPUT'):
         output = Path(os.environ['OPENPDF_SMOKE_OUTPUT'])
         output.parent.mkdir(parents=True, exist_ok=True)
         stream = output.open('w', encoding='utf-8')
@@ -20,6 +20,13 @@ def main():
         if not OPERATIONS or not callable(validate_request) or JobState is None:
             return 2
         print('OPENPDF_SELF_TEST_OK')
+        return 0
+    if '--ocr-runtime-self-test' in sys.argv:
+        import json
+        from openpdf_ocr_runtime_v513 import functional_ocr_self_test
+        result = functional_ocr_self_test()
+        print('OPENPDF_OCR_RUNTIME_OK')
+        print(json.dumps(result, sort_keys=True))
         return 0
     if '--ocr-office' in sys.argv:
         from openpdf_ocr_office_pipeline_v511 import main as ocr_office_main

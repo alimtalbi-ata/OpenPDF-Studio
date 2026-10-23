@@ -29,7 +29,7 @@ Les reçus contiennent empreintes, compteurs et avertissements ; ils ne recopien
 - **12 tests V51.0 de régression réussis** sur PDF synthétiques.
 - **92 modules dans la fermeture statique**, zéro module manquant.
 - Les tests d'OCR réel sont **explicitement ignorés** si le modèle `eng` est absent ; leur succès sous Windows CI ne doit pas être affirmé sans preuve d'exécution.
-- La CI GitHub V51.1, le build portable Windows V51.1, l'installation/désinstallation native et la recette graphique humaine doivent être qualifiés séparément.
+- CI GitHub V51.1 : tests OCR Office Ubuntu/Windows **PASS** (#40029299618), compression Ubuntu/Windows **PASS** (#40029299518), métadonnées **PASS** (#40029299409). Build Windows natif **2/2 jobs PASS** (#40029299487) : portable, installateur, auto-tests, installation, lancement et désinstallation silencieux. Les reçus et exécutables réels sont intégrés au ZIP cumulatif. La recette graphique humaine reste non réalisée.
 - OCR non certifié en précision, conversion texte éditable non fidèle visuellement, aucune signature Authenticode, aucune preuve de conformité PDF/A, d'accessibilité ou d'impression.
 
 ## Roadmap V51.2

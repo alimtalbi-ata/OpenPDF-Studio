@@ -19,13 +19,19 @@ class SourceFingerprint:
     sha256: str
 
 
+# Windows st_ctime_ns is creation time rather than POSIX metadata-change
+# time. Keep device/inode, size, mtime and SHA-256; do not reject stable
+# Windows files because handle/path creation timestamps differ.
+_CHANGE_TIME_RELIABLE = os.name != 'nt'
+
+
 def _identity(stat_result):
     return (
         stat_result.st_dev,
         stat_result.st_ino,
         stat_result.st_size,
         stat_result.st_mtime_ns,
-        stat_result.st_ctime_ns,
+        stat_result.st_ctime_ns if _CHANGE_TIME_RELIABLE else 0,
     )
 
 

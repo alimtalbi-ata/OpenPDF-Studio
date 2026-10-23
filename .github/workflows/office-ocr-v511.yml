@@ -1,9 +1,13 @@
-name: V51.1 OCR to editable Office functional qualification
+name: V51.2 OCR to editable Office functional qualification
 on:
   pull_request:
     paths:
       - '03-Sources/openpdf_ocr_office_pipeline_v511.py'
       - '03-Sources/openpdf_studio.py'
+      - '03-Sources/openpdf_operations.py'
+      - '03-Sources/openpdf_desktop.py'
+      - '03-Sources/openpdf_workspace_v349.py'
+      - '04-Tests-et-Qualification/test_ocr_office_gui_v512.py'
       - '04-Tests-et-Qualification/test_ocr_office_pipeline_v511.py'
       - '.github/workflows/office-ocr-v511.yml'
   workflow_dispatch:
@@ -31,3 +35,5 @@ jobs:
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_office_pipeline_v511.py -v
       - name: V51.0 scan gate regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_office_scan_gate_v510.py -v
+      - name: V51.2 GUI OCR Office opt-in and safety regression
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_office_gui_v512.py -v

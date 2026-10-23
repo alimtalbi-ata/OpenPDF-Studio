@@ -21,6 +21,8 @@ def validate_request(operation, sources, destination):
     if len(set(resolved)) != len(resolved): raise ValueError('PDF source en doublon')
     for path in resolved:
         if not path.is_file() or path.stat().st_size == 0: raise ValueError(f'PDF source absent ou vide : {path}')
+    if Path(destination).expanduser().is_symlink():
+        raise FileExistsError('Destination lien symbolique interdite')
     dest = Path(destination).expanduser().resolve()
     if operation != 'decoupage' and dest.exists(): raise FileExistsError(f'Destination existante : {dest}')
     if operation not in ('docx','xlsx','pptx','decoupage') and dest.suffix.lower() != '.pdf':

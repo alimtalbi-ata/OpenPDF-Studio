@@ -144,7 +144,7 @@ jobs:
           $path = '01-Application/binary/windows-installation-v50.5.json'
           if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw 'Installation evidence missing' }
           $report = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
-          if (-not $report.passed -or $report.version -ne '50.4') { throw 'Installation failed' }
+          if (-not $report.passed -or $report.version -ne '50.5') { throw 'Installation failed' }
           if ($report.cleanup_error) { throw 'Unexpected installer cleanup error' }
           foreach ($step in @('silent_install_pass','installed_launch_pass','silent_uninstall_pass')) {
             if ($report.steps -notcontains $step) { throw "Missing installation step: $step" }

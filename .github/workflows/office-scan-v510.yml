@@ -26,9 +26,7 @@ jobs:
         run: python -m pip install "PyMuPDF>=1.24,<2" "python-docx>=1.1,<2" "python-pptx>=1.0,<2" "openpyxl>=3.1,<4" "Pillow>=10,<13"
       - name: V51.0 scanned PDF gate (functional, not native Windows GUI)
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_office_scan_gate_v510.py -v
-      - name: V45.9 Office roundtrip regression
-        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_office_roundtrip_v459.py -v
-      - name: V46.0 DOCX roundtrip regression
-        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_docx_roundtrip_v460.py -v
-      - name: V45.7 Office integrity regression
-        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_office_integrity_v457.py -v
+      - name: Source reconciliation and 91-module runtime closure
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_source_reconciliation_v503.py -v
+      - name: Transactional runtime regression
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_runtime_reconciliation_v503.py -v

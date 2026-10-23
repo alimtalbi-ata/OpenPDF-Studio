@@ -1,4 +1,4 @@
-name: V50.2 source closure and Windows release readiness
+name: V50.3 reconciled source and Windows portable qualification
 on:
   pull_request:
   workflow_dispatch:
@@ -6,7 +6,7 @@ permissions:
   contents: read
 jobs:
   closure-unit-tests:
-    name: Static closure tests (${{ matrix.os }})
+    name: Source reconciliation and regression (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -18,33 +18,59 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Test static source closure and fail-closed Windows wiring
+      - name: Test source closure and reconciled source hashes
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_source_reconciliation_v503.py -v
+      - name: Test original V50.2 closure regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_source_closure_v502.py -v
   source-readiness:
     name: Full application source closure (release-blocking)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Check actual checked-out source tree
+      - name: Check checked-out source tree and version
         run: >
           python 03-Sources/openpdf_source_closure_v502.py
           --root .
           --entry openpdf_studio
           --entry openpdf_build_preflight
+          --entry openpdf_inno_recipe_v491
           --entry openpdf_release_gate
           --entry openpdf_bind_smoke
           --entry openpdf_publish_binary
           --entry openpdf_binary_manifest
-          --required-manifest 07-Manifestes/V50.2-REQUIRED-RUNTIME-MODULES.json
+          --required-manifest 07-Manifestes/V50.3-REQUIRED-RUNTIME-MODULES.json
           --report source-closure.json
-      - name: Preserve evidence even when closure fails
+      - name: Preserve evidence even on failure
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v502-source-closure-evidence
+          name: v503-source-closure-evidence
           path: source-closure.json
+          if-no-files-found: warn
+  windows-portable-build:
+    name: Native Windows portable build and smoke
+    needs: [closure-unit-tests, source-readiness]
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build portable using the supported single CMD entrypoint
+        shell: cmd
+        run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd --portable-only
+      - name: Publish actual Windows build evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v503-windows-portable-build-evidence
+          path: |
+            01-Application/binary/*.log
+            01-Application/binary/*.json
+            01-Application/binary/*.exe
           if-no-files-found: warn

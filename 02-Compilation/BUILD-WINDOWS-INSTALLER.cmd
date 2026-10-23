@@ -10,6 +10,7 @@ mkdir "%STAGE%" || exit /b 1
 if not exist "%BINARY%" mkdir "%BINARY%"
 cd /d "%ROOT%\03-Sources" || exit /b 1
 set "LOG=%BINARY%\build-v%VERSION%.log"
+rem Keep the executable and its arguments separate: Python paths may contain spaces.
 set "PY_EXE="
 set "PY_ARGS="
 set "MODE=all"
@@ -33,14 +34,19 @@ if not defined PY_EXE (
   where winget >nul 2>&1 || goto missing_python
   winget install --id Python.Python.3.12 --exact --source winget --accept-package-agreements --accept-source-agreements >> "%LOG%" 2>&1 || goto fail
   if exist "%LocalAppData%\Programs\Python\Python312\python.exe" set "PY_EXE=%LocalAppData%\Programs\Python\Python312\python.exe"
+  if not defined PY_EXE if exist "%ProgramFiles%\Python312\python.exe" set "PY_EXE=%ProgramFiles%\Python312\python.exe"
 )
 if not defined PY_EXE goto missing_python
 "%PY_EXE%" %PY_ARGS% -m venv .venv >> "%LOG%" 2>&1 || goto fail
 set "VPY=%CD%\.venv\Scripts\python.exe"
-rem Source-closure gate is static and fails before downloading/building dependencies.
-"%VPY%" openpdf_source_closure_v502.py --root "%ROOT%" --entry openpdf_studio --entry openpdf_build_preflight --entry openpdf_release_gate --entry openpdf_bind_smoke --entry openpdf_publish_binary --entry openpdf_binary_manifest --required-manifest "%ROOT%\07-Manifestes\V50.2-REQUIRED-RUNTIME-MODULES.json" --report "%STAGE%\source-closure-v%VERSION%.json" >> "%LOG%" 2>&1 || goto fail
+rem Fail fast if the cumulative source tree has unresolved internal imports.
+rem This is a static source gate, NOT evidence of a Windows executable.
+"%VPY%" openpdf_source_closure_v502.py --root "%ROOT%" --entry openpdf_studio --entry openpdf_build_preflight --entry openpdf_inno_recipe_v491 --entry openpdf_release_gate --entry openpdf_bind_smoke --entry openpdf_publish_binary --entry openpdf_binary_manifest --required-manifest "%ROOT%\07-Manifestes\V%VERSION%-REQUIRED-RUNTIME-MODULES.json" --report "%STAGE%\source-closure-v%VERSION%.json" >> "%LOG%" 2>&1 || goto fail
 "%VPY%" -m pip install --upgrade pip >> "%LOG%" 2>&1 || goto fail
 "%VPY%" -m pip install -r requirements-windows-v260.txt "pyinstaller>=6,<7" "Pillow>=10,<13" >> "%LOG%" 2>&1 || goto fail
+rem Generate the current version's Inno recipe before preflight.
+rem Fail closed on an existing conflicting recipe; never overwrite hand edits.
+"%VPY%" openpdf_inno_recipe_v491.py --root "%ROOT%" --version "%VERSION%" >> "%LOG%" 2>&1 || goto fail
 "%VPY%" openpdf_build_preflight.py >> "%LOG%" 2>&1 || goto fail
 "%VPY%" -m unittest test_openpdf_v402 test_openpdf_v385 test_openpdf_v384 >> "%LOG%" 2>&1 || goto fail
 if /I "%MODE%"=="portable" goto portable
@@ -91,6 +97,8 @@ echo Inno Setup 6 unavailable. See "%LOG%".
 exit /b 1
 :fail
 if exist "%STAGE%\source-closure-v%VERSION%.json" copy /y "%STAGE%\source-closure-v%VERSION%.json" "%BINARY%\failed-source-closure-v%VERSION%.json" >nul
+if exist "%STAGE%\windows-smoke-installer.json" copy /y "%STAGE%\windows-smoke-installer.json" "%BINARY%\failed-windows-smoke-installer.json" >nul
+if exist "%STAGE%\windows-smoke-portable.json" copy /y "%STAGE%\windows-smoke-portable.json" "%BINARY%\failed-windows-smoke-portable.json" >nul
 if exist "%STAGE%" rmdir /s /q "%STAGE%"
 echo BUILD FAILED. See "%LOG%". No validated binary is claimed.
 exit /b 1

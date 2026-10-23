@@ -39,6 +39,7 @@ jobs:
           --entry openpdf_bind_smoke
           --entry openpdf_publish_binary
           --entry openpdf_binary_manifest
+          --required-manifest 07-Manifestes/V50.2-REQUIRED-RUNTIME-MODULES.json
           --report source-closure.json
       - name: Preserve evidence even when closure fails
         if: always()

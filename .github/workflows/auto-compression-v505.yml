@@ -5,6 +5,8 @@ on:
       - '03-Sources/openpdf_auto_compression_v505.py'
       - '03-Sources/openpdf_compression_evidence_v506.py'
       - '03-Sources/openpdf_compression_coverage_v507.py'
+      - '02-Compilation/package_cumulative_v434.py'
+      - '04-Tests-et-Qualification/test_zip_determinism_v507.py'
       - '03-Sources/openpdf_compression_v327.py'
       - '04-Tests-et-Qualification/test_auto_compression_v505.py'
       - '04-Tests-et-Qualification/test_compression_evidence_v506.py'
@@ -38,6 +40,8 @@ jobs:
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_compression_evidence_v506.py -v
       - name: Independent complete-page and pixel coverage regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_compression_coverage_v507.py -v
+      - name: Deterministic ZIP release metadata regression
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_zip_determinism_v507.py -v
       - name: Prior compression benchmark regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_compression_benchmark_v504.py -v
       - name: GUI opt-in and overwrite regressions

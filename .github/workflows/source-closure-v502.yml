@@ -24,6 +24,8 @@ jobs:
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_windows_single_command_v472.py -v
       - name: Test 15 runtime publication and integrity regressions
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_runtime_reconciliation_v503.py -v
+      - name: Test V50.4 Windows uninstall cleanup contract
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_windows_installer_cleanup_v504.py -v
       - name: Test original V50.2 closure regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_source_closure_v502.py -v
   source-readiness:
@@ -143,6 +145,7 @@ jobs:
           if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw 'Installation evidence missing' }
           $report = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
           if (-not $report.passed -or $report.version -ne '50.4') { throw 'Installation failed' }
+          if ($report.cleanup_error) { throw 'Unexpected installer cleanup error' }
           foreach ($step in @('silent_install_pass','installed_launch_pass','silent_uninstall_pass')) {
             if ($report.steps -notcontains $step) { throw "Missing installation step: $step" }
           }

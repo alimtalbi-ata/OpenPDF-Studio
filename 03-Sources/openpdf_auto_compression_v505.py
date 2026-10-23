@@ -15,6 +15,7 @@ import tempfile
 import time
 
 from openpdf_atomic_output import publish_exclusive
+from openpdf_compression_evidence_v506 import verified_evidence
 from openpdf_compression_acceptance_v489 import AcceptancePolicy
 from openpdf_compression_service_v344 import CompressionRequest, execute_compression
 from openpdf_source_integrity_v430 import fingerprint_source, verify_source_unchanged
@@ -80,7 +81,7 @@ def auto_compress(source, destination, policy=AutoCompressionPolicy()):
         max_page_mae=policy.max_page_mae,
         max_page_changed_fraction=policy.max_page_changed_fraction,
         render_scale=policy.render_scale, pixel_delta=policy.pixel_delta)
-    report = dict(schema='openpdf.auto-compression.v50.5',
+    report = dict(schema='openpdf.auto-compression.v50.6',
         source_bytes=original.size, source_sha256=original.sha256,
         destination=dst.name, policy=asdict(policy), cases=[],
         status='no_compliant_gain', selected_profile=None,
@@ -101,8 +102,12 @@ def auto_compress(source, destination, policy=AutoCompressionPolicy()):
                     size, digest = candidate.stat().st_size, _hash(candidate)
                     if size != receipt.size or digest != receipt.sha256 or size >= original.size:
                         raise RuntimeError('Candidate receipt or saving inconsistent')
+                    evidence = verified_evidence(receipt, source_sha256=original.sha256,
+                        source_bytes=original.size, candidate_sha256=digest,
+                        candidate_bytes=size, profile=profile, policy=quality)
                     case.update(status='accepted', bytes=size, sha256=digest,
-                        saving_percent=round(100 * (original.size - size) / original.size, 4))
+                        saving_percent=round(100 * (original.size - size) / original.size, 4),
+                        quality=evidence)
                     winners.append((size, index, candidate, digest, profile))
             except Exception as exc:
                 case.update(status='rejected', error_type=type(exc).__name__,
@@ -113,7 +118,7 @@ def auto_compress(source, destination, policy=AutoCompressionPolicy()):
             report['cases'].append(case)
         if not winners:
             return report
-        size, _, winner, digest, profile = min(winners)
+        size, index, winner, digest, profile = min(winners)
         fd, temp_name = tempfile.mkstemp(prefix='.openpdf-auto-publish-', suffix='.pdf', dir=dst.parent)
         try:
             with os.fdopen(fd, 'wb') as target, winner.open('rb') as candidate:
@@ -127,6 +132,7 @@ def auto_compress(source, destination, policy=AutoCompressionPolicy()):
             if dst.stat().st_size != size or _hash(dst) != digest:
                 raise RuntimeError('Published candidate differs from verified receipt')
             report.update(status='published', selected_profile=profile,
+                selected_quality=report['cases'][index]['quality'],
                 output_bytes=size, output_sha256=digest,
                 saving_percent=round(100 * (original.size - size) / original.size, 4))
             return report

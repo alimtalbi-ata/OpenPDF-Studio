@@ -24,7 +24,7 @@ class SourceReconciliationV503Tests(unittest.TestCase):
         cls.hashes = json.loads(HASHES.read_text(encoding="utf-8"))
 
     def test_version_and_schema(self):
-        self.assertIn(CURRENT_VERSION, ("50.3", "50.4", "50.5"))
+        self.assertIn(CURRENT_VERSION, ("50.3", "50.4", "50.5", "50.6"))
         self.assertEqual(self.manifest["version"], CURRENT_VERSION)
         self.assertEqual(self.manifest["schema"], "openpdf-runtime-module-set-v1")
         self.assertEqual(self.hashes["schema"], "openpdf-restored-source-hashes-v1")
@@ -47,7 +47,7 @@ class SourceReconciliationV503Tests(unittest.TestCase):
 
     def test_required_runtime_set_complete(self):
         modules = self.manifest["modules"]
-        self.assertEqual(len(modules), 87 if CURRENT_VERSION == "50.5" else 86)
+        self.assertEqual(len(modules), 88 if CURRENT_VERSION == "50.6" else 87 if CURRENT_VERSION in ("50.5", "50.6") else 86)
         self.assertEqual(len(modules), len(set(modules)))
         for module in modules:
             with self.subTest(module=module):

@@ -34,7 +34,13 @@ jobs:
         shell: pwsh
         run: |
           $version = (Get-Content -LiteralPath VERSION.txt -Raw).Trim()
-          if ($version -notmatch '^\d{1,4}\.\d{1,4}        shell: cmd
+          if ($version -notmatch '^\d{1,4}\.\d{1,4}$') { throw 'Invalid VERSION.txt' }
+          if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -ne "v$version") {
+            throw "Tag $env:GITHUB_REF_NAME disagrees with VERSION.txt ($version)"
+          }
+          "OPENPDF_VERSION=$version" >> $env:GITHUB_ENV
+      - name: Build and qualify installer and portable
+        shell: cmd
         run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd
       - name: Verify release files
         shell: pwsh
@@ -60,37 +66,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: OpenPDF-Studio-V${{ env.OPENPDF_VERSION }}-Windows-binary
-          path: 01-Application/binary/*.exe
-          if-no-files-found: error
-) { throw 'Invalid VERSION.txt' }
-          if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -ne "v$version") {
-            throw "Tag $env:GITHUB_REF_NAME disagrees with VERSION.txt ($version)"
-          }
-          "OPENPDF_VERSION=$version" >> $env:GITHUB_ENV
-      - name: Build and qualify installer and portable
-        shell: cmd
-        run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd
-      - name: Verify release files
-        shell: pwsh
-        run: |
-          $dir = '01-Application/binary'
-          @('OpenPDF-Studio-V40.2-Setup.exe','OpenPDF-Studio-Portable-V40.2.exe','binary-manifest-v40.2.json','windows-installation-v40.2.json','windows-smoke-installer.json','windows-smoke-portable.json') | ForEach-Object {
-            $path = Join-Path $dir $_
-            if (!(Test-Path $path) -or (Get-Item $path).Length -eq 0) { throw "Missing/empty artifact: $path" }
-          }
-      - name: Upload build evidence even on failure
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: OpenPDF-Studio-V40.2-build-evidence
-          path: |
-            01-Application/binary/*.log
-            01-Application/binary/*.json
-          if-no-files-found: warn
-      - name: Upload qualified binaries
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: OpenPDF-Studio-V40.2-Windows-binary
           path: 01-Application/binary/*.exe
           if-no-files-found: error

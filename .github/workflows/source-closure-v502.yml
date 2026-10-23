@@ -1,0 +1,50 @@
+name: V50.2 source closure and Windows release readiness
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  closure-unit-tests:
+    name: Static closure tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test static source closure and fail-closed Windows wiring
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_source_closure_v502.py -v
+  source-readiness:
+    name: Full application source closure (release-blocking)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check actual checked-out source tree
+        run: >
+          python 03-Sources/openpdf_source_closure_v502.py
+          --root .
+          --entry openpdf_studio
+          --entry openpdf_build_preflight
+          --entry openpdf_release_gate
+          --entry openpdf_bind_smoke
+          --entry openpdf_publish_binary
+          --entry openpdf_binary_manifest
+          --required-manifest 07-Manifestes/V50.2-REQUIRED-RUNTIME-MODULES.json
+          --report source-closure.json
+      - name: Preserve evidence even when closure fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v502-source-closure-evidence
+          path: source-closure.json
+          if-no-files-found: warn

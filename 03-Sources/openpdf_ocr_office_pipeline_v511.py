@@ -39,11 +39,15 @@ class OCROfficeOutcome:
     warnings: tuple[str, ...]
     table_mode: bool = False
     table_worksheets: int = 0
+    table_pages: tuple[int, ...] = ()
+    scanned_pages_without_tables: tuple[int, ...] = ()
     fidelity: str = 'editable_text_only_no_layout_or_recognition_accuracy_guarantee'
 
     def to_dict(self):
         data = asdict(self)
         data['scanned_pages'] = list(self.scanned_pages)
+        data['table_pages'] = list(self.table_pages)
+        data['scanned_pages_without_tables'] = list(self.scanned_pages_without_tables)
         data['warnings'] = list(self.warnings)
         return data
 
@@ -55,11 +59,13 @@ def _sha256(path):
 
 def convert_scanned_office(source, destination, *, language='fra+eng', dpi=200,
                            min_characters_per_scanned_page=1, tessdata=None,
-                           table_mode=False):
+                           table_mode=False, require_table_per_scanned_page=False):
     """Convert scanned/mixed PDF into DOCX/XLSX/PPTX via offline Tesseract.
 
     The opt-in table_mode attempts editable table worksheets in XLSX only.
     It refuses output when no sufficiently reliable table is detected.
+    Optional strict table coverage refuses an OCR result when any scanned
+    page has no extractable table; the default preserves legacy behavior.
     Scanned pages must have at least min_characters_per_scanned_page
     extractable characters after OCR. This does not measure correctness.
     The staged Office file is audited by convert_office before exclusive commit.
@@ -70,6 +76,8 @@ def convert_scanned_office(source, destination, *, language='fra+eng', dpi=200,
         raise ValueError('Format Office invalide : docx, xlsx ou pptx')
     if type(table_mode) is not bool or (table_mode and fmt != 'xlsx'):
         raise ValueError('Mode tableaux OCR reserve au format XLSX')
+    if type(require_table_per_scanned_page) is not bool or (require_table_per_scanned_page and not table_mode):
+        raise ValueError('Couverture stricte des pages scannees reservee au mode tableaux XLSX')
     if source.is_symlink() or not source.is_file() or source.suffix.lower() != '.pdf':
         raise ValueError('Source PDF invalide ou lien symbolique interdit')
     if destination.is_symlink() or destination.exists():
@@ -126,15 +134,27 @@ def convert_scanned_office(source, destination, *, language='fra+eng', dpi=200,
             if converted.sha256 != _sha256(office_stage):
                 raise RuntimeError('Empreinte du document Office incoherente')
             table_worksheets = 0
+            table_pages = ()
+            scanned_pages_without_tables = ()
             if table_mode:
                 # The production converter already verifies every extracted cell.
                 # Report table coverage, not a semantic OCR accuracy score.
+                from openpdf_xlsx_tables_v514 import _expected
+                # Reuse the audited table extractor; never infer coverage from
+                # OCR character counts or workbook sheet names alone.
+                _tables, evidence = _expected(pdf_for_office)
+                table_pages = evidence.pages_with_tables
+                scanned_pages_without_tables = tuple(
+                    number for number in scanned if number not in table_pages)
+                if require_table_per_scanned_page and scanned_pages_without_tables:
+                    raise ValueError('Tableau OCR absent sur page scannee : ' +
+                                     ', '.join(map(str, scanned_pages_without_tables)))
                 from openpyxl import load_workbook
                 workbook = load_workbook(office_stage, read_only=True, data_only=False)
                 try:
                     table_worksheets = len(workbook.sheetnames) - 1
-                    if table_worksheets < 1:
-                        raise RuntimeError('Aucune feuille de tableau OCR editable')
+                    if table_worksheets != len(_tables):
+                        raise RuntimeError('Nombre de feuilles de tableaux OCR incoherent')
                 finally:
                     workbook.close()
             fd, stage_name = tempfile.mkstemp(prefix='.openpdf-office-commit-',
@@ -153,11 +173,16 @@ def convert_scanned_office(source, destination, *, language='fra+eng', dpi=200,
                 if scanned else ('Office layout is not preserved',))
             if table_mode:
                 warnings += ('OCR table geometry and values require human verification',)
+                if scanned_pages_without_tables:
+                    warnings += ('Scanned pages without detected editable tables: ' +
+                                 ', '.join(map(str, scanned_pages_without_tables)),)
             return OCROfficeOutcome(
                 'openpdf.ocr-office.v51.1', fmt, str(destination), preflight.page_count,
                 scanned, ocr_pages, recognized_characters, stage.stat().st_size,
                 converted.sha256, original.sha256, warnings,
-                table_mode=table_mode, table_worksheets=table_worksheets)
+                table_mode=table_mode, table_worksheets=table_worksheets,
+                table_pages=table_pages,
+                scanned_pages_without_tables=scanned_pages_without_tables)
     finally:
         if stage is not None:
             stage.unlink(missing_ok=True)
@@ -172,11 +197,14 @@ def main(argv=None):
     parser.add_argument('--min-chars', type=int, default=1)
     parser.add_argument('--editable-tables', action='store_true',
                         help='Opt-in editable table worksheets for XLSX; may refuse ambiguous OCR')
+    parser.add_argument('--require-table-each-scanned-page', action='store_true',
+                        help='Fail closed if any scanned page lacks a detected editable table')
     args = parser.parse_args(argv)
     outcome = convert_scanned_office(args.source, args.destination,
         language=args.language, dpi=args.dpi,
         min_characters_per_scanned_page=args.min_chars,
-        table_mode=args.editable_tables)
+        table_mode=args.editable_tables,
+        require_table_per_scanned_page=args.require_table_each_scanned_page)
     print(json.dumps(outcome.to_dict(), ensure_ascii=False, indent=2))
     return 0
 

@@ -45,9 +45,16 @@ class XLSXGUIV514(unittest.TestCase):
             self.assertEqual(self.call(table_mode=False), 'legacy')
         legacy.assert_called_once()
 
-    def test_ocr_combination_refused(self):
-        with self.assertRaisesRegex(ValueError, 'incompatibles'):
-            self.call(table_mode=True, ocr_before_office=True)
+    def test_ocr_combination_routes_to_pipeline(self):
+        # Both opt-ins now select the OCR pipeline, not the legacy XLSX converter.
+        with patch('openpdf_ocr_office_pipeline_v511.convert_scanned_office',
+                   return_value='ocr-tables') as convert, \
+             patch.object(ops, 'write_event') as audit:
+            self.assertEqual(self.call(table_mode=True, ocr_before_office=True,
+                                       language='eng'), 'ocr-tables')
+        self.assertEqual(convert.call_args.kwargs,
+                         {'language': 'eng', 'table_mode': True})
+        self.assertEqual(audit.call_args.args[:2], ('xlsx', 'success'))
         self.assertFalse(self.dst.exists())
 
     def test_other_operation_refused(self):

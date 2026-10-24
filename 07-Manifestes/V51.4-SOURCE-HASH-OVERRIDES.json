@@ -1,12 +1,12 @@
 {
   "author": "Abdelhalim Talbi",
-  "note": "V535 conservative opt-in per-page raster auto deskew, audited Office pipeline; historical baselines preserved.",
+  "note": "V536 OCR edge-safe rotation: source interface updated; historical baselines preserved.",
   "schema": "openpdf-v51.4-source-hash-overrides-v1",
   "sha256": {
     "03-Sources/openpdf_office_roundtrip_v459.py": "1cd3305f151e9367c9113ccb7844e737e821eee36e068d990958f4c425a9f96e",
     "03-Sources/openpdf_conversion_service_v351.py": "1c2542db57e28f8ef4142d3a59cbf42a4a6dce795fd3cddd74ad9aae72a26271",
     "03-Sources/openpdf_operations.py": "1746477f561ee35e57afabcc7fddb62305bb32b389533cafd7e3507e8594f5d8",
     "03-Sources/openpdf_desktop.py": "a30e29033db51c51122e7c2296a173c834e1bb054663ca7d4d476f99a354a487",
-    "03-Sources/openpdf_ocr_service_v347.py": "18c8a600e24feeff6a93b5a0d406657e4d0cfd864dd2cf3e009b18b5e512c0d9"
+    "03-Sources/openpdf_ocr_service_v347.py": "5615270991cf741ea330bdb698fc3f40a2fc52f7ab8a6ceb3447a66817fc81a8"
   }
 }

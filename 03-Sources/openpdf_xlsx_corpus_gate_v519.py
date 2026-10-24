@@ -135,6 +135,8 @@ def evaluate_corpus(manifest, *, oracle=None):
         elif result.get('annotation_origin') != 'synthetic_known_at_generation':
             raise ValueError('Origine annotation invalide')
         deviations += result['status'] != 'PASS'
+    if counts['expected_tables'] == 0 or counts['annotated_nonempty_cells'] == 0:
+        raise ValueError('Corpus sans tableaux ou cellules non vides annotes')
     measures = {
         'table_precision': _ratio(counts['matched_tables'], counts['observed_tables']),
         'table_recall': _ratio(counts['matched_tables'], counts['expected_tables']),
@@ -143,10 +145,13 @@ def evaluate_corpus(manifest, *, oracle=None):
         'merge_recall': _ratio(counts['matched_merges'], counts['expected_merges']),
     }
     failed = []
-    for key, metric in (('min_nonempty_cell_accuracy', 'nonempty_cell_accuracy'),
-                        ('min_table_recall', 'table_recall'),
-                        ('min_merge_recall', 'merge_recall')):
-        if measures[metric] < thresholds[key]:
+    for key, numerator, denominator in (
+        ('min_nonempty_cell_accuracy', counts['exact_nonempty_cells'], counts['annotated_nonempty_cells']),
+        ('min_table_recall', counts['matched_tables'], counts['expected_tables']),
+        ('min_merge_recall', counts['matched_merges'], counts['expected_merges']),
+    ):
+        # Compare unrounded fractions: a 0.9499996 result must not satisfy 0.95.
+        if (numerator / denominator if denominator else 1.0) < thresholds[key]:
             failed.append(key)
     if counts['extra_nonempty_cells'] > thresholds['max_extra_nonempty_cells']:
         failed.append('max_extra_nonempty_cells')

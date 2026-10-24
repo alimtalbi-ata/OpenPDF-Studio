@@ -1,4 +1,4 @@
-name: V51.3 reconciled source and Windows portable qualification
+name: V51.4 reconciled source and Windows portable qualification
 on:
   pull_request:
   workflow_dispatch:
@@ -28,15 +28,15 @@ jobs:
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_runtime_reconciliation_v503.py -v
       - name: Test version-aware Windows tag-release workflow (static contract)
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_windows_release_dynamic_v508.py -v
-      - name: Test V51.3 Windows uninstall cleanup contract
+      - name: Test V51.4 Windows uninstall cleanup contract
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_windows_installer_cleanup_v504.py -v
-      - name: Test V51.3 scanned-page Office conversion gate (real synthetic PDFs)
+      - name: Test V51.4 scanned-page Office conversion gate (real synthetic PDFs)
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_office_scan_gate_v510.py -v
-      - name: Test V51.3 OCR-to-Office pipeline (offline, functional)
+      - name: Test V51.4 OCR-to-Office pipeline (offline, functional)
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_office_pipeline_v511.py -v
-      - name: Test V51.3 GUI OCR Office routing and symlink regression
+      - name: Test V51.4 GUI OCR Office routing and symlink regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_office_gui_v512.py -v
-      - name: Test V51.3 OCR model resolver and real engine
+      - name: Test V51.4 OCR model resolver and real engine
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_runtime_v513.py -v
       - name: Test original V50.2 closure regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_source_closure_v502.py -v
@@ -60,20 +60,20 @@ jobs:
           --entry openpdf_bind_smoke
           --entry openpdf_publish_binary
           --entry openpdf_binary_manifest
-          --required-manifest 07-Manifestes/V51.3-REQUIRED-RUNTIME-MODULES.json
+          --required-manifest 07-Manifestes/V51.4-REQUIRED-RUNTIME-MODULES.json
           --report source-closure.json
       - name: Preserve evidence even on failure
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v513-source-closure-evidence
+          name: v514-source-closure-evidence
           path: source-closure.json
           if-no-files-found: warn
       - name: Preserve validated source snapshot for cumulative packaging
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: v513-reconciled-source-snapshot
+          name: v514-reconciled-source-snapshot
           path: |
             VERSION.txt
             .gitattributes
@@ -119,7 +119,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v513-windows-portable-build-evidence
+          name: v514-windows-portable-build-evidence
           path: |
             01-Application/binary/*.log
             01-Application/binary/*.json
@@ -153,10 +153,10 @@ jobs:
       - name: Verify native installation evidence
         shell: pwsh
         run: |
-          $path = '01-Application/binary/windows-installation-v51.3.json'
+          $path = '01-Application/binary/windows-installation-v51.4.json'
           if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw 'Installation evidence missing' }
           $report = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
-          if (-not $report.passed -or $report.version -ne '51.3') { throw 'Installation failed' }
+          if (-not $report.passed -or $report.version -ne '51.4') { throw 'Installation failed' }
           if ($report.cleanup_error) { throw 'Unexpected installer cleanup error' }
           foreach ($step in @('silent_install_pass','installed_launch_pass','installed_ocr_pass','silent_uninstall_pass')) {
             if ($report.steps -notcontains $step) { throw "Missing installation step: $step" }
@@ -165,7 +165,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v513-windows-installer-build-evidence
+          name: v514-windows-installer-build-evidence
           path: |
             01-Application/binary/*.log
             01-Application/binary/*.json

@@ -89,6 +89,31 @@ class CorpusGateTests(unittest.TestCase):
         self.assertEqual(result['status'], 'FAIL')
         self.assertIn('min_nonempty_cell_accuracy', result['failed_thresholds'])
 
+    def test_rounded_ratio_cannot_hide_threshold_failure(self):
+        def nearly_good(*paths):
+            result = self.oracle(*paths)
+            result['annotated_nonempty_cells'] = 1000000
+            result['exact_nonempty_cells'] = 949999
+            result['status'] = 'DEVIATION'
+            return result
+        self.thresholds['min_nonempty_cell_accuracy'] = 0.95
+        self.save()
+        result = evaluate_corpus(self.manifest, oracle=nearly_good)
+        self.assertEqual(result['status'], 'FAIL')
+        self.assertEqual(result['nonempty_cell_accuracy'], 0.949999)
+
+    def test_empty_annotated_corpus_fails_closed(self):
+        def empty(*paths):
+            result = self.oracle(*paths)
+            result['expected_tables'] = 0
+            result['observed_tables'] = 0
+            result['matched_tables'] = 0
+            result['annotated_nonempty_cells'] = 0
+            result['exact_nonempty_cells'] = 0
+            return result
+        with self.assertRaisesRegex(ValueError, 'sans tableaux'):
+            evaluate_corpus(self.manifest, oracle=empty)
+
     def test_missing_human_annotation_fails_gate(self):
         self.thresholds['min_human_reviewed'] = 1
         self.save()

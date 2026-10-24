@@ -6,6 +6,10 @@ on:
       - '03-Sources/openpdf_conversion_service_v351.py'
       - '03-Sources/openpdf_office_roundtrip_v459.py'
       - '03-Sources/openpdf_studio.py'
+      - '03-Sources/openpdf_desktop.py'
+      - '03-Sources/openpdf_operations.py'
+      - 'VERSION.txt'
+      - '07-Manifestes/V51.4-REQUIRED-RUNTIME-MODULES.json'
       - '04-Tests-et-Qualification/test_xlsx_tables_v514.py'
       - '04-Tests-et-Qualification/test_source_reconciliation_v503.py'
       - '07-Manifestes/V51.4-SOURCE-HASH-OVERRIDES.json'
@@ -32,5 +36,7 @@ jobs:
         run: python -m py_compile 03-Sources/openpdf_xlsx_tables_v514.py 03-Sources/openpdf_conversion_service_v351.py 03-Sources/openpdf_office_roundtrip_v459.py 03-Sources/openpdf_studio.py
       - name: V51.4 real PDF table extraction, formula and rollback tests
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_xlsx_tables_v514.py -v
+      - name: V51.4 GUI routing and safety regression
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_xlsx_gui_v514.py -v
       - name: V51.0 Office scan preflight regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_office_scan_gate_v510.py -v

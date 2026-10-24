@@ -16,11 +16,13 @@ class ConversionOutcome:
     sha256: str
     warnings: tuple
 
-def convert_office(source, destination, *, output_format=None):
+def convert_office(source, destination, *, output_format=None, table_mode=False):
     source, destination = Path(source), Path(destination)
     fmt = (output_format or destination.suffix.lstrip('.')).lower()
     if fmt not in SUPPORTED_FORMATS or destination.suffix.lower() != '.' + fmt:
         raise ValueError('Format Office invalide : docx, xlsx ou pptx')
+    if type(table_mode) is not bool or (table_mode and fmt != 'xlsx'):
+        raise ValueError('Mode tableaux reserve au format XLSX')
     # Validate the source and target before the historical transactional converter runs.
     if not source.is_file() or source.suffix.lower() != '.pdf':
         raise ValueError('Source PDF invalide')
@@ -55,13 +57,17 @@ def convert_office(source, destination, *, output_format=None):
     try:
         CONVERTERS[fmt](source, temporary)
         check_source()  # The converter may have modified or replaced the PDF.
+        if table_mode:
+            from openpdf_xlsx_tables_v514 import enrich_xlsx_with_tables
+            enrich_xlsx_with_tables(source, temporary)
+            check_source()
         if not temporary.is_file() or temporary.stat().st_size == 0:
             raise RuntimeError('Conversion vide')
         # Audit BEFORE publication: preserve an existing destination on failure.
         audit = audit_conversion(source, temporary)
         check_source()  # The audit re-opens the source: reject concurrent edits.
         from openpdf_office_roundtrip_v459 import verify_editable_text
-        verify_editable_text(source, temporary, fmt)
+        verify_editable_text(source, temporary, fmt, allow_tables=table_mode)
         check_source()  # The strict text audit also reads the PDF.
         size = temporary.stat().st_size
         # Verify the actual bytes rather than trusting a converter/audit report.
@@ -75,7 +81,9 @@ def convert_office(source, destination, *, output_format=None):
             f'Page {number} : éléments graphiques non convertis en objets Office éditables'
             for number in preflight.non_text_graphics_pages
         )
+        extra = (('Tableaux detectes par geometrie : verifier les cellules et valeurs metier',)
+                 if table_mode else ())
         return ConversionOutcome(str(destination), fmt, size, actual_sha256,
-                                 audit.warnings + limitations)
+                                 audit.warnings + limitations + extra)
     finally:
         temporary.unlink(missing_ok=True)

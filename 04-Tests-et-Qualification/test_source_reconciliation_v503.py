@@ -15,6 +15,7 @@ SRC = ROOT / "03-Sources"
 CURRENT_VERSION = (ROOT / "VERSION.txt").read_text(encoding="utf-8").strip()
 MANIFEST = ROOT / f"07-Manifestes/V{CURRENT_VERSION}-REQUIRED-RUNTIME-MODULES.json"
 HASHES = ROOT / "07-Manifestes/V50.3-RESTORED-SOURCE-HASHES.json"
+V514_OVERRIDES = ROOT / "07-Manifestes/V51.4-SOURCE-HASH-OVERRIDES.json"
 
 
 class SourceReconciliationV503Tests(unittest.TestCase):
@@ -22,6 +23,7 @@ class SourceReconciliationV503Tests(unittest.TestCase):
     def setUpClass(cls):
         cls.manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         cls.hashes = json.loads(HASHES.read_text(encoding="utf-8"))
+        cls.overrides = json.loads(V514_OVERRIDES.read_text(encoding="utf-8"))["sha256"] if V514_OVERRIDES.exists() else {}
 
     def test_version_and_schema(self):
         self.assertIn(CURRENT_VERSION, ("50.3", "50.4", "50.5", "50.6", "50.7", "50.8", "50.9", "51.0", "51.1", "51.2", "51.3"))
@@ -38,7 +40,7 @@ class SourceReconciliationV503Tests(unittest.TestCase):
             with self.subTest(path=rel):
                 path = ROOT / rel
                 self.assertTrue(path.is_file() and not path.is_symlink())
-                self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), expected)
+                self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), self.overrides.get(rel, expected))
 
     def test_git_checkout_preserves_pinned_source_bytes(self):
         attrs = (ROOT / ".gitattributes").read_text(encoding="utf-8")
@@ -96,7 +98,7 @@ class SourceReconciliationV503Tests(unittest.TestCase):
             with self.subTest(path=rel):
                 path = ROOT / rel
                 self.assertTrue(path.is_file() and not path.is_symlink())
-                self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), expected)
+                self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), self.overrides.get(rel, expected))
                 ast.parse(path.read_text(encoding="utf-8-sig"))
 
     def test_build_preflight_accepts_dynamic_version_recipe(self):

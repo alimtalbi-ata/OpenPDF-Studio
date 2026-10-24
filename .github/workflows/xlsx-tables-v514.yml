@@ -1,0 +1,36 @@
+name: V51.4 editable XLSX table extraction and regression
+on:
+  pull_request:
+    paths:
+      - '03-Sources/openpdf_xlsx_tables_v514.py'
+      - '03-Sources/openpdf_conversion_service_v351.py'
+      - '03-Sources/openpdf_office_roundtrip_v459.py'
+      - '03-Sources/openpdf_studio.py'
+      - '04-Tests-et-Qualification/test_xlsx_tables_v514.py'
+      - '04-Tests-et-Qualification/test_source_reconciliation_v503.py'
+      - '07-Manifestes/V51.4-SOURCE-HASH-OVERRIDES.json'
+      - '.github/workflows/xlsx-tables-v514.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  xlsx-tables:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install functional dependencies
+        run: python -m pip install "PyMuPDF>=1.26,<2" "openpyxl>=3.1,<4" "python-docx>=1.1,<2" "python-pptx>=1.0,<2" "Pillow>=10,<13"
+      - name: Compile modified Python modules
+        run: python -m py_compile 03-Sources/openpdf_xlsx_tables_v514.py 03-Sources/openpdf_conversion_service_v351.py 03-Sources/openpdf_office_roundtrip_v459.py 03-Sources/openpdf_studio.py
+      - name: V51.4 real PDF table extraction, formula and rollback tests
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_xlsx_tables_v514.py -v
+      - name: V51.0 Office scan preflight regression
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_office_scan_gate_v510.py -v

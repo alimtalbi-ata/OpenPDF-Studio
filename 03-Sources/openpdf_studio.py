@@ -28,6 +28,15 @@ def main():
         print('OPENPDF_OCR_RUNTIME_OK')
         print(json.dumps(result, sort_keys=True))
         return 0
+    if '--xlsx-tables' in sys.argv:
+        import json
+        from openpdf_conversion_service_v351 import convert_office
+        args = sys.argv[sys.argv.index('--xlsx-tables') + 1:]
+        if len(args) != 2:
+            raise ValueError('Usage: --xlsx-tables source.pdf destination.xlsx')
+        result = convert_office(args[0], args[1], table_mode=True)
+        print(json.dumps(result.__dict__, ensure_ascii=False, default=list))
+        return 0
     if '--ocr-office' in sys.argv:
         from openpdf_ocr_office_pipeline_v511 import main as ocr_office_main
         return ocr_office_main(sys.argv[sys.argv.index('--ocr-office') + 1:])

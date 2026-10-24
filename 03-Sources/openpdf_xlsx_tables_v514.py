@@ -91,7 +91,7 @@ def enrich_xlsx_with_tables(source, destination):
             for row_number, row in enumerate(rows, 3):
                 for column_number in range(1, columns + 1):
                     value = row[column_number - 1] if column_number <= len(row) else None
-                    if value is not None:
+                    if value not in (None, ""):
                         cell = sheet.cell(row_number, column_number, value)
                         cell.data_type = 's'  # Never evaluate a PDF-origin Excel formula.
         wb.save(destination)
@@ -120,7 +120,7 @@ def verify_xlsx_tables(source, destination):
                 for column_number in range(1, columns + 1):
                     cell = sheet.cell(row_number, column_number)
                     value = row[column_number - 1] if column_number <= len(row) else None
-                    if cell.value != value or cell.data_type == 'f':
+                    if cell.value != (None if value == '' else value) or cell.data_type == 'f':
                         raise ValueError('Cellule de tableau Excel modifiee ou formule')
         return evidence
     finally:

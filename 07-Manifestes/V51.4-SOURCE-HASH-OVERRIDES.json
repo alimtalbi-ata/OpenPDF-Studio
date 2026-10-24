@@ -1,0 +1,9 @@
+{
+  "author": "Abdelhalim Talbi",
+  "schema": "openpdf-v51.4-source-hash-overrides-v1",
+  "note": "Candidate branch changes only; original V50.3/V51.3 historical manifests remain immutable",
+  "sha256": {
+    "03-Sources/openpdf_office_roundtrip_v459.py": "1cd3305f151e9367c9113ccb7844e737e821eee36e068d990958f4c425a9f96e",
+    "03-Sources/openpdf_conversion_service_v351.py": "8e64ddfe3361b37389a94874a7ab5b37419fc37ab6fc410c1a847b572a458bbc"
+  }
+}

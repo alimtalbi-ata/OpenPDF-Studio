@@ -73,8 +73,25 @@ def pdf_to_docx(source,output):
         if doc.needs_pass: raise PDFOperationError('PDF protégé.')
         for index,page in enumerate(doc):
             if index: document.add_page_break()
-            text=page.get_text(sort=True)
-            for line in text.splitlines(): document.add_paragraph(line)
+            # Preserve images as editable Word drawing objects, not only text.
+            # PDF positioning and complex tables still require dedicated layout reconstruction.
+            from io import BytesIO
+            from docx.shared import Inches
+            blocks=page.get_text('dict',sort=True).get('blocks',[])
+            for block in blocks:
+                if block.get('type')==0:
+                    for line in block.get('lines',[]):
+                        text=''.join(span.get('text','') for span in line.get('spans',[]))
+                        if text.strip():
+                            document.add_paragraph(text)
+                elif block.get('type')==1 and block.get('image'):
+                    width=max(0.5,min(6.0,block.get('width',400)*72/max(block.get('xres',72),1)/72))
+                    try:
+                        document.add_picture(BytesIO(block['image']),width=Inches(width))
+                    except (ValueError, OSError):
+                        # Unsupported embedded image format: conversion continues,
+                        # but fidelity checks must report missing media.
+                        document.add_paragraph('[Image PDF non convertible]')
     output.parent.mkdir(parents=True,exist_ok=True)
     document.save(output)
     return [output]

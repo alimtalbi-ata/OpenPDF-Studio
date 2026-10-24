@@ -16,7 +16,19 @@ from openpyxl import load_workbook
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / '03-Sources'))
 from openpdf_ocr_office_pipeline_v511 import convert_scanned_office
-from test_ocr_office_tables_v531 import english_ocr_available, TABLE
+from openpdf_ocr_language_preflight_v486 import preflight_ocr_languages
+
+TABLE = (('ID', 'STOCK', 'PRICE'),
+         ('A01', '102', '55'),
+         ('A02', '103', '80'),
+         ('A03', '104', '75'))
+
+def english_ocr_available():
+    try:
+        preflight_ocr_languages('eng')
+        return True
+    except (OSError, RuntimeError, ValueError):
+        return False
 
 
 def scanned_pdf(path, *, prose_second=False, native_first=False):

@@ -249,23 +249,36 @@ def _unruled_regions(page_rect, ruled_boxes, *, padding=2.0, limit=64):
 
 
 def _reading_order(candidates):
-    """Stable PDF geometry order for ruled and borderless table candidates.
+    """Approximate visual order across ruled and borderless tables.
 
-    Treat tables whose vertical extents overlap by at least half the shorter
-    height as one horizontal band, sorted left-to-right. Other bands are
-    top-to-bottom. This is a documented heuristic, not semantic layout AI.
+    A staggered row of columns may have transitive vertical overlap: A
+    overlaps B, B overlaps C, but A does not overlap C. Anchoring the band
+    only to A used to place the leftmost table C *after* the rightmost A.
+    Connect to any member, but cap a band's total vertical extent at twice
+    its tallest table to avoid chaining an entire diagonal page into one row.
+    This remains a geometric heuristic, not semantic reading-order proof.
     """
     ordered = sorted(candidates, key=lambda item: (item[3][1], item[3][0],
                                                    item[3][3], item[3][2]))
     bands = []
     for item in ordered:
         box = item[3]
+        height = box[3] - box[1]
+        if height <= 0:
+            raise ValueError('Geometrie de tableau invalide')
         if bands:
-            anchor = bands[-1][0][3]
-            intersection = max(0.0, min(box[3], anchor[3]) - max(box[1], anchor[1]))
-            height = min(box[3] - box[1], anchor[3] - anchor[1])
-            if height > 0 and intersection >= 0.5 * height:
-                bands[-1].append(item)
+            band = bands[-1]
+            heights = [member[3][3] - member[3][1] for member in band]
+            top = min(box[1], *(member[3][1] for member in band))
+            bottom = max(box[3], *(member[3][3] for member in band))
+            bounded = bottom - top <= 2.0 * max(height, *heights)
+            overlaps = any(
+                max(0.0, min(box[3], member[3][3]) - max(box[1], member[3][1]))
+                >= 0.5 * min(height, member[3][3] - member[3][1])
+                for member in band
+            )
+            if bounded and overlaps:
+                band.append(item)
                 continue
         bands.append([item])
     return [item for band in bands for item in sorted(

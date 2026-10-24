@@ -25,6 +25,9 @@ class PDFTableToExcel(unittest.TestCase):
             wb=load_workbook(dst,read_only=True,data_only=False)
             self.assertIn('Texte PDF',wb.sheetnames)
             self.assertIn('Tableau 1',wb.sheetnames)
-            rows=list(wb['Tableau 1'].values)
-            self.assertTrue(any('Alpha' in row and '123' in row for row in rows))
+            try:
+                rows=list(wb['Tableau 1'].values)
+                self.assertTrue(any('Alpha' in row and '123' in row for row in rows))
+            finally:
+                wb.close()
 if __name__=='__main__':unittest.main()

@@ -98,6 +98,84 @@ def _sheet_merges(sheet):
                         for m in sheet.merged_cells.ranges))
 
 
+def _text_only_tables(page):
+    """Conservative text-grid fallback on pages without ruled tables.
+
+    Require multiple aligned rows with visible inter-column gutters; this
+    rejects common prose falsely segmented into columns by PyMuPDF. Remove
+    blank spacer rows, but never infer merged cells from whitespace.
+    """
+    words = page.get_text('words')
+    for table in page.find_tables(strategy='text').tables:
+        matrix = table.extract()
+        width = max((len(row) for row in matrix), default=0)
+        if not 2 <= width <= MAX_COLUMNS or len(table.rows) != len(matrix):
+            continue
+        if any(cell is None for row in table.rows for cell in row.cells):
+            continue
+        dense = []
+        for row, geometry in zip(matrix, table.rows):
+            if len(row) != width or len(geometry.cells) != width:
+                dense = []
+                break
+            nonempty = sum(value not in (None, '') for value in row)
+            if nonempty >= 2:
+                dense.append((list(row), geometry))
+            elif nonempty == 1:
+                # Reject a merged-like header within the grid. A page title
+                # far above the first table row may be ignored safely.
+                if dense:
+                    dense = []
+                    break
+        if len(dense) < 3 or len(dense) > MAX_ROWS_PER_TABLE:
+            continue
+        # A single-cell page heading before the table is permitted only if
+        # there is a clear vertical gap to the first dense table row.
+        first = next((i for i, row in enumerate(matrix)
+                      if sum(v not in (None, '') for v in row) >= 2), None)
+        if first is None:
+            continue
+        preceding = [i for i, row in enumerate(matrix[:first])
+                     if any(v not in (None, '') for v in row)]
+        if preceding:
+            if len(preceding) != 1:
+                continue
+            centers = [((g.cells[0][1] + g.cells[0][3]) / 2) for _, g in dense]
+            pitch = min((centers[i+1] - centers[i] for i in range(len(centers)-1)), default=0)
+            title_rect = table.rows[preceding[0]].cells[0]
+            title_y = (title_rect[1] + title_rect[3]) / 2
+            if pitch <= 0 or centers[0] - title_y < pitch * 1.8:
+                continue
+        rows = [row for row, _ in dense]
+        counts = [sum(row[c] not in (None, '') for row in rows) for c in range(width)]
+        if min(counts) < 3 or sum(counts) * 4 < len(rows) * width * 3:
+            continue
+        # Validate real whitespace between adjacent columns, not just the
+        # artificial cell boundaries returned by the text-table heuristic.
+        gutters = 0
+        for row, geometry in dense:
+            boxes = []
+            for col, value in enumerate(row):
+                if value in (None, ''):
+                    boxes.append(None)
+                    continue
+                rect = geometry.cells[col]
+                found = [w for w in words if rect[0] <= (w[0]+w[2])/2 < rect[2]
+                         and rect[1] <= (w[1]+w[3])/2 < rect[3]]
+                boxes.append((min(w[0] for w in found), max(w[2] for w in found)) if found else None)
+            for left, right in zip(boxes, boxes[1:]):
+                if left is not None and right is not None:
+                    if right[0] - left[1] < 12:
+                        break
+                    gutters += 1
+            else:
+                continue
+            break
+        else:
+            if gutters >= len(rows):
+                yield rows, width
+
+
 def _tables(source):
     count = 0
     cells = 0
@@ -109,14 +187,20 @@ def _tables(source):
             if page_number > 9999:
                 raise ValueError('Nombre de pages hors limite du mode tableaux')
             found = page.find_tables()
-            for table_number, table in enumerate(found.tables, 1):
+            # A text-strategy table can absorb adjacent ruled tables into one
+            # spurious grid. Therefore only use the fallback on pages where
+            # the line strategy found no table at all.
+            if found.tables:
+                candidates = ((table.extract(), None, table) for table in found.tables)
+            else:
+                candidates = ((rows, width, None) for rows, width in _text_only_tables(page))
+            for table_number, (matrix, text_width, table) in enumerate(candidates, 1):
                 count += 1
                 if count > MAX_TABLES or table_number > 999:
                     raise ValueError('Trop de tableaux detectes')
-                matrix = table.extract()
                 if not matrix or len(matrix) > MAX_ROWS_PER_TABLE:
                     raise ValueError('Dimensions de tableau invalides')
-                columns = max((len(row) for row in matrix), default=0)
+                columns = text_width if text_width is not None else max((len(row) for row in matrix), default=0)
                 if not 1 <= columns <= MAX_COLUMNS:
                     raise ValueError('Nombre de colonnes hors limite')
                 for row in matrix:
@@ -132,7 +216,7 @@ def _tables(source):
                     raise ValueError('Trop de cellules detectees')
                 if page_number not in pages:
                     pages.append(page_number)
-                merges = _merged_regions(table, matrix, columns)
+                merges = () if table is None else _merged_regions(table, matrix, columns)
                 yield page_number, table_number, matrix, columns, merges
     if count == 0:
         raise ValueError('Aucun tableau detecte : aucune sortie enrichie')

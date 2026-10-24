@@ -49,7 +49,7 @@ class SourceReconciliationV503Tests(unittest.TestCase):
 
     def test_required_runtime_set_complete(self):
         modules = self.manifest["modules"]
-        self.assertEqual(len(modules), 94 if CURRENT_VERSION == "51.4" else 93 if CURRENT_VERSION == "51.3" else 92 if CURRENT_VERSION in ("51.1", "51.2") else 91 if CURRENT_VERSION == "51.0" else 90 if CURRENT_VERSION in ("50.8", "50.9") else 89 if CURRENT_VERSION == "50.7" else 88 if CURRENT_VERSION == "50.6" else 87 if CURRENT_VERSION == "50.5" else 86)
+        self.assertEqual(len(modules), 95 if CURRENT_VERSION == "51.4" else 93 if CURRENT_VERSION == "51.3" else 92 if CURRENT_VERSION in ("51.1", "51.2") else 91 if CURRENT_VERSION == "51.0" else 90 if CURRENT_VERSION in ("50.8", "50.9") else 89 if CURRENT_VERSION == "50.7" else 88 if CURRENT_VERSION == "50.6" else 87 if CURRENT_VERSION == "50.5" else 86)
         self.assertEqual(len(modules), len(set(modules)))
         for module in modules:
             with self.subTest(module=module):

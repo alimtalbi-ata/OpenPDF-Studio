@@ -69,6 +69,12 @@ def convert_office(source, destination, *, output_format=None, table_mode=False)
         from openpdf_office_roundtrip_v459 import verify_editable_text
         verify_editable_text(source, temporary, fmt, allow_tables=table_mode)
         check_source()  # The strict text audit also reads the PDF.
+        if table_mode:
+            # V51.4 hardening: reject active content, archive bombs and any
+            # extractor-parity drift before the XLSX is made visible.
+            from openpdf_xlsx_fidelity_v515 import audit_xlsx_fidelity
+            audit_xlsx_fidelity(source, temporary)
+            check_source()
         size = temporary.stat().st_size
         # Verify the actual bytes rather than trusting a converter/audit report.
         with temporary.open('rb') as digest_stream:

@@ -194,6 +194,12 @@ def evaluate_ground_truth(pdf, xlsx, annotation) -> dict:
                     observed = cell.value
                     observed = None if observed == '' else observed
                     reference = None if value == '' else value
+                    # A spurious value INSIDE an annotated blank cell is also
+                    # an extra extraction. Previously only cells outside the
+                    # expected rectangle were counted, allowing a false PASS
+                    # at the corpus gate despite invented data in blank cells.
+                    if reference is None and observed is not None:
+                        extra_nonempty += 1
                     if observed == reference:
                         exact += 1
                         if value not in (None, ''):

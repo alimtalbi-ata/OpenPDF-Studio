@@ -19,6 +19,7 @@ on:
       - '03-Sources/openpdf_xlsx_corpus_gate_v519.py'
       - '04-Tests-et-Qualification/test_xlsx_ground_truth_v517.py'
       - '04-Tests-et-Qualification/test_xlsx_corpus_gate_v519.py'
+      - '04-Tests-et-Qualification/test_xlsx_blank_cells_v520.py'
       - '04-Tests-et-Qualification/test_source_reconciliation_v503.py'
       - '07-Manifestes/V51.4-SOURCE-HASH-OVERRIDES.json'
       - '.github/workflows/xlsx-tables-v514.yml'
@@ -54,6 +55,8 @@ jobs:
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_xlsx_ground_truth_v517.py -v
       - name: Independent multi-document corpus fidelity gate (real PDF conversion and adversarial cases)
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_xlsx_corpus_gate_v519.py -v
+      - name: V520 blank-cell false-positive and corpus gate regression (real PDF)
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_xlsx_blank_cells_v520.py -v
       - name: V51.4 GUI routing and safety regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_xlsx_gui_v514.py -v
       - name: V51.0 Office scan preflight regression

@@ -131,6 +131,18 @@ class CorpusGateTests(unittest.TestCase):
         self.assertEqual(result['status'], 'FAIL')
         self.assertEqual(result['extra_nonempty_cells'], 2)
 
+    def test_identical_pdf_bytes_under_different_names_rejected(self):
+        (self.root / self.cases[1]['pdf']).write_bytes(
+            (self.root / self.cases[0]['pdf']).read_bytes())
+        with self.assertRaisesRegex(ValueError, 'non independant'):
+            evaluate_corpus(self.manifest, oracle=self.oracle)
+
+    def test_identical_xlsx_bytes_under_different_names_rejected(self):
+        (self.root / self.cases[1]['xlsx']).write_bytes(
+            (self.root / self.cases[0]['xlsx']).read_bytes())
+        with self.assertRaisesRegex(ValueError, 'non independant'):
+            evaluate_corpus(self.manifest, oracle=self.oracle)
+
     def test_duplicate_case_id_rejected(self):
         self.cases[1]['id'] = self.cases[0]['id']
         self.save()
@@ -198,18 +210,19 @@ class CorpusGateTests(unittest.TestCase):
         from openpdf_conversion_service_v351 import convert_office
         from openpdf_xlsx_ground_truth_v517 import SCHEMA as TRUTH_SCHEMA
         from test_xlsx_tables_v514 import fixture
-        for case in self.cases:
+        for case_number, case in enumerate(self.cases):
             pdf = self.root / case['pdf']
             xlsx = self.root / case['xlsx']
             pdf.unlink()
             xlsx.unlink()
-            fixture(pdf)
+            fixture(pdf, injection=bool(case_number))
             convert_office(pdf, xlsx, table_mode=True)
             truth = {'schema': TRUTH_SCHEMA,
                      'source_sha256': hashlib.sha256(pdf.read_bytes()).hexdigest(),
                      'origin': 'synthetic_known_at_generation',
                      'tables': [{'page': 1, 'index': 1,
-                                 'cells': [['Volume', 'Capacite'], ['SAN-A', '20 To'], ['SAN-B', '50 To']],
+                                 'cells': [['Volume', 'Capacite'], ['SAN-A', '20 To'],
+                                           ['SAN-B', '=1+1' if case_number else '50 To']],
                                  'merges': []}]}
             (self.root / case['annotations']).write_text(json.dumps(truth), encoding='utf-8')
         self.save()

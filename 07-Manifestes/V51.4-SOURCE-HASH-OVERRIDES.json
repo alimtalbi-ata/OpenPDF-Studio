@@ -1,12 +1,12 @@
 {
   "author": "Abdelhalim Talbi",
-  "note": "V534 explicit scanned-page deskew angle in OCR Office GUI/dispatcher; historical baselines preserved.",
+  "note": "V535 conservative opt-in per-page raster auto deskew, audited Office pipeline; historical baselines preserved.",
   "schema": "openpdf-v51.4-source-hash-overrides-v1",
   "sha256": {
     "03-Sources/openpdf_office_roundtrip_v459.py": "1cd3305f151e9367c9113ccb7844e737e821eee36e068d990958f4c425a9f96e",
     "03-Sources/openpdf_conversion_service_v351.py": "1c2542db57e28f8ef4142d3a59cbf42a4a6dce795fd3cddd74ad9aae72a26271",
-    "03-Sources/openpdf_operations.py": "1ef67cf89837c48efd1e9c9d6c40750b762f8ec727fd74064259c5a6e8d1c4fc",
-    "03-Sources/openpdf_desktop.py": "0480f461350bcc07b3bd06152854b430614b5f0af3d256d9cee7cf8f4ee74cf5",
-    "03-Sources/openpdf_ocr_service_v347.py": "68acb63f97ea618c033625a8662b5281ad373b44afb3d959bbe6883d9cb30cdc"
+    "03-Sources/openpdf_operations.py": "1746477f561ee35e57afabcc7fddb62305bb32b389533cafd7e3507e8594f5d8",
+    "03-Sources/openpdf_desktop.py": "a30e29033db51c51122e7c2296a173c834e1bb054663ca7d4d476f99a354a487",
+    "03-Sources/openpdf_ocr_service_v347.py": "18c8a600e24feeff6a93b5a0d406657e4d0cfd864dd2cf3e009b18b5e512c0d9"
   }
 }

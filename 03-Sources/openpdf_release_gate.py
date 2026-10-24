@@ -21,7 +21,7 @@ def validate(directory,mode='all'):
         if data.get('artifact_name')!=name or data.get('artifact_sha256')!=hashlib.sha256(p.read_bytes()).hexdigest():
             raise RuntimeError(f'Smoke report not bound to executable: {report}')
         checks=data.get('checks')
-        if not isinstance(checks,list) or len(checks)!=2 or any(c.get('passed') is not True for c in checks):
+        if not isinstance(checks,list) or len(checks)!=3 or any(c.get('passed') is not True for c in checks):
             raise RuntimeError(f'Incomplete smoke checks: {report}')
         if edition=='installer':
             installation=root/f'windows-installation-v{VERSION}.json'

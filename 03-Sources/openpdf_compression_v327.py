@@ -4,6 +4,7 @@ import os,tempfile
 from openpdf_compression_v319 import validate_compression
 from openpdf_engine_v272 import compress_pdf
 from openpdf_compression_v320 import format_bytes
+from openpdf_atomic_output import publish_exclusive
 
 def diagnose_pdf(source):
     """Mesures factuelles du PDF ; aucune promesse de réduction."""
@@ -43,19 +44,37 @@ def compress_images(source, destination, *, dpi_target=150, quality=75):
 def compress_with_profile(source, destination, profile="smaller_only"):
     if profile not in PROFILES: raise ValueError("Profil inconnu")
     source,destination=validate_compression(source,destination)
-    before=Path(source).stat().st_size
+    if Path(destination).exists() or Path(destination).is_symlink():
+        raise FileExistsError(f'Destination existante : {destination}')
+    source_stat=Path(source).stat()
+    before=source_stat.st_size
     fd,tmp=tempfile.mkstemp(prefix=".openpdf-",suffix=".pdf",dir=str(Path(destination).parent))
     os.close(fd)
     try:
         (compress_images(source,tmp) if profile=="images_balanced" else compress_pdf(source,tmp))
         after=Path(tmp).stat().st_size
+        # A candidate that cannot be published must not trigger expensive
+        # full-document text, image and raster quality checks.
+        if profile=='smaller_only' and after>=before:
+            current_stat=Path(source).stat()
+            if (current_stat.st_size,current_stat.st_mtime_ns,current_stat.st_ino)!=(source_stat.st_size,source_stat.st_mtime_ns,source_stat.st_ino):
+                raise RuntimeError('Source modifiée pendant la compression : sortie rejetée')
+            return f"Aucun gain : original {format_bytes(before)}, candidat {format_bytes(after)}. Aucun fichier de sortie modifié."
         from openpdf_quality_v327 import assess_candidate,quality_summary
         assessment=assess_candidate(source,tmp)
         if assessment['pages_texte_modifie']:
             raise RuntimeError('Le texte extrait diffère sur certaines pages : sortie rejetée')
-        if profile=="smaller_only" and after>=before:
-            return f"Aucun gain : original {format_bytes(before)}, candidat {format_bytes(after)}. Aucun fichier de sortie modifié."
-        os.replace(tmp,destination)
+        if profile in ('standard','smaller_only'):
+            from openpdf_compression_quality_v422 import validate_lossless_images
+            validate_lossless_images(source,tmp)
+            from openpdf_render_quality_v425 import validate_rendered_pages
+            validate_rendered_pages(source,tmp)
+        # Reject a result if the source was edited during a long-running operation.
+        current_stat=Path(source).stat()
+        if (current_stat.st_size,current_stat.st_mtime_ns,current_stat.st_ino)!=(source_stat.st_size,source_stat.st_mtime_ns,source_stat.st_ino):
+            raise RuntimeError('Source modifiée pendant la compression : sortie rejetée')
+        # Never overwrite a destination created while compression was running.
+        publish_exclusive(tmp,destination)
         change=(before-after)*100/before if before else 0
         return f"{destination}\n{quality_summary(assessment)}"
     finally:

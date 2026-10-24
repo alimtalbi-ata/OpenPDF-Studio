@@ -1,6 +1,8 @@
 name: Windows release qualification
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
   push:
     tags: ['v*']
 permissions:
@@ -30,30 +32,119 @@ jobs:
             'C:\ProgramData\chocolatey\bin\ISCC.exe'
           )
           if (-not ($candidates | Where-Object { Test-Path $_ } | Select-Object -First 1)) { throw 'ISCC.exe not found' }
+      - name: Install Tesseract English language data for real OCR qualification
+        shell: pwsh
+        run: |
+          choco install tesseract --yes --no-progress
+          if ($LASTEXITCODE -ne 0) { throw 'Tesseract installation failed' }
+          $data = 'C:\Program Files\Tesseract-OCR\tessdata\eng.traineddata'
+          if (-not (Test-Path $data)) { throw "English OCR model missing: $data" }
+          $fra = 'C:\Program Files\Tesseract-OCR\tessdata\fra.traineddata'
+          if (-not (Test-Path $fra)) {
+            Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/fra.traineddata' -OutFile $fra
+          }
+          if ((Get-Item $fra).Length -lt 100000) { throw 'French OCR model missing or truncated' }
+          "TESSDATA_PREFIX=C:\Program Files\Tesseract-OCR\tessdata" >> $env:GITHUB_ENV
+      - name: Test PDF page publication safety
+        shell: pwsh
+        run: |
+          python -m pip install 'PyMuPDF>=1.24,<2' python-docx openpyxl python-pptx reportlab pypdf
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_page_publication_v403.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_atomic_output_v403.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_split_rollback_v403.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_ui_navigation_v403.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_desktop_scroll_v403.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_destination_naming_v403.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_release_integrity_v404.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_keyboard_accessibility_v405.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_output_safety_v406.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_pdf_functional_v407.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_ocr_functional_v408.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_office_functional_v409.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_release_docs_v412.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_office_fidelity_v413.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_office_archive_safety_v414.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_operation_audit_v415.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_audit_export_v416.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_audit_ui_v417.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_page_integrity_v418.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_compression_exclusive_v419.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_audit_outcome_v420.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_compression_destination_v421.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_compression_images_v422.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_compression_page_images_v423.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_compression_image_placement_v424.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_render_quality_v425.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_page_geometry_v426.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_compression_no_gain_v427.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_compression_source_change_v428.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_compression_no_gain_concurrent_v429.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_merge_source_change_v430.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_page_source_change_v431.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_split_source_change_v432.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_split_windows_fsync_v433.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_merge_order_ui_v434.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_page_options_ui_v435.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_extract_preview_ui_v436.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_preview_loading_state_v437.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_preview_generation_race_v438.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_preview_cache_freshness_v439.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_preview_dedup_v440.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_split_journal_state_v441.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_split_stage_completeness_v442.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_split_journal_integrity_v443.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_office_source_mutation_v444.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_real_operations_e2e_v445.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_real_rotation_v446.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_ocr_diagnostics_v447.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_tessdata_discovery_v448.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_docx_embedded_images_v449.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_xlsx_pdf_tables_v450.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_ocr_empty_result_v451.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_ocr_real_raster_v452.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_ocr_real_french_v455.py' -v
       - name: Build and qualify installer and portable
         shell: cmd
         run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd
-      - name: Verify release files
+      - name: Print build and OCR smoke diagnostics on failure
+        if: failure()
         shell: pwsh
         run: |
-          $dir = '01-Application/binary'
-          @('OpenPDF-Studio-V40.2-Setup.exe','OpenPDF-Studio-Portable-V40.2.exe','binary-manifest-v40.2.json','windows-installation-v40.2.json','windows-smoke-installer.json','windows-smoke-portable.json') | ForEach-Object {
-            $path = Join-Path $dir $_
-            if (!(Test-Path $path) -or (Get-Item $path).Length -eq 0) { throw "Missing/empty artifact: $path" }
-          }
+          Get-ChildItem '01-Application/binary' -Filter 'build-v*.log' -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "===== $($_.Name) ====="; Get-Content -LiteralPath $_.FullName -Tail 140 }
+          Get-ChildItem '01-Application/binary' -Filter 'failed-windows-smoke-*.json' -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "===== $($_.Name) ====="; Get-Content -LiteralPath $_.FullName }
+
+      - name: Verify versioned release files and evidence
+        shell: pwsh
+        run: |
+          & '02-Compilation/VERIFY-WINDOWS-RELEASE.ps1'
+      - name: Generate version-specific Word and PDF documentation
+        shell: pwsh
+        run: python 02-Compilation/generate_release_docs.py
+      - name: Package cumulative Windows release
+        shell: pwsh
+        run: |
+          & '02-Compilation/PACKAGE-CUMULATIVE.ps1'
+      - name: Upload cumulative release
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenPDF-Studio-Windows-cumulative
+          path: 01-Application/release/*.zip
+          if-no-files-found: error
       - name: Upload build evidence even on failure
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: OpenPDF-Studio-V40.2-build-evidence
+          name: OpenPDF-Studio-build-evidence
           path: |
             01-Application/binary/*.log
             01-Application/binary/*.json
+            01-Application/binary/.staging-*/windows-*.json
           if-no-files-found: warn
       - name: Upload qualified binaries
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: OpenPDF-Studio-V40.2-Windows-binary
+          name: OpenPDF-Studio-Windows-binary
           path: 01-Application/binary/*.exe
           if-no-files-found: error

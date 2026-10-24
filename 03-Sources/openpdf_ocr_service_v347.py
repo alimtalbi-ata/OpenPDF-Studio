@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, asdict
 from pathlib import Path
 import hashlib, os, tempfile, re
+from openpdf_atomic_output import publish_exclusive
 
 @dataclass(frozen=True)
 class OCRReceipt:
@@ -23,6 +24,35 @@ def _digest(path):
     return h.hexdigest()
 
 
+def locate_tessdata(language, explicit=None):
+    """Find a local language-data folder; never download models implicitly.
+
+    Return None for an unknown location so the underlying OCR engine can
+    report the failure; return a folder only when all requested models exist.
+    """
+    import sys
+    names=[part+'.traineddata' for part in language.split('+')]
+    candidates=[]
+    if explicit is not None:
+        candidates.append(Path(explicit))
+    else:
+        prefix=os.environ.get('TESSDATA_PREFIX')
+        if prefix:
+            candidates.extend((Path(prefix),Path(prefix)/'tessdata'))
+        root=Path(getattr(sys,'_MEIPASS',Path(__file__).resolve().parent))
+        candidates.extend((root/'tessdata',root/'Tesseract-OCR'/'tessdata'))
+        if os.name=='nt':
+            for env in ('ProgramFiles','ProgramFiles(x86)','LOCALAPPDATA'):
+                value=os.environ.get(env)
+                if value:
+                    candidates.append(Path(value)/'Tesseract-OCR'/'tessdata')
+    for folder in candidates:
+        if folder.is_dir() and all((folder/name).is_file() for name in names):
+            return str(folder)
+    if explicit is not None:
+        raise ValueError('Données OCR manquantes : '+', '.join(names))
+    return None
+
 def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=True, progress=None, tessdata=None):
     """Generate searchable PDF without modifying input; commit only complete valid output.
 
@@ -39,6 +69,7 @@ def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=T
     if not re.fullmatch(r'[A-Za-z]{3}(?:\+[A-Za-z]{3})*',language):raise ValueError('Langue OCR invalide')
     if not isinstance(dpi,int) or not 100<=dpi<=400:raise ValueError('DPI hors limites [100,400]')
     if tessdata is not None and not Path(tessdata).is_dir():raise ValueError('Dossier tessdata absent')
+    resolved_tessdata=locate_tessdata(language,tessdata)
     fd,tmp=tempfile.mkstemp(prefix='.openpdf-ocr-',suffix='.pdf',dir=destination.parent)
     os.close(fd)
     processed=0; skipped=0
@@ -53,9 +84,28 @@ def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=T
                 else:
                     pix=page.get_pixmap(dpi=dpi,alpha=False)
                     kwargs={'language':language}
-                    if tessdata is not None:kwargs['tessdata']=str(tessdata)
-                    pdf_bytes=pix.pdfocr_tobytes(**kwargs)
+                    if resolved_tessdata is not None:kwargs['tessdata']=resolved_tessdata
+                    try:
+                        pdf_bytes=pix.pdfocr_tobytes(**kwargs)
+                    except RuntimeError as exc:
+                        details=str(exc).lower()
+                        if any(word in details for word in ('tessdata','tesseract','language','traineddata')):
+                            raise RuntimeError(
+                                'OCR indisponible : moteur Tesseract ou langues '
+                                + language + ' manquants. Installez Tesseract OCR '
+                                'avec les données de langue requises (fra et eng), '
+                                'puis configurez TESSDATA_PREFIX vers le dossier tessdata.'
+                            ) from exc
+                        raise
                     with fitz.open(stream=pdf_bytes,filetype='pdf') as recognized:
+                        if recognized.page_count != 1:
+                            raise RuntimeError('OCR invalide : nombre de pages inattendu')
+                        if not recognized[0].get_text('text').strip():
+                            raise RuntimeError(
+                                'OCR sans texte reconnu : vérifiez la lisibilité du scan, '
+                                'la langue sélectionnée et la qualité de l’image. '
+                                'Aucun fichier de sortie n’a été publié.'
+                            )
                         result.insert_pdf(recognized)
                     processed+=1
                 if progress:progress(i+1,original.page_count)
@@ -64,12 +114,11 @@ def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=T
         with fitz.open(tmp) as check:
             if check.page_count!=processed+skipped:raise RuntimeError('PDF OCR invalide')
         if Path(tmp).stat().st_size==0:raise RuntimeError('Sortie OCR vide')
-        # Publication exclusive: do not overwrite a file created by another process.
-        try:
-            os.link(tmp,destination)
-        except FileExistsError:
-            raise FileExistsError(f'Destination créée pendant le traitement : {destination}')
-        os.unlink(tmp)
-        return OCRReceipt(str(source),str(destination),processed+skipped,processed,skipped,_digest(destination),destination.stat().st_size,language)
+        # Compute the receipt before publishing: an audit failure must not leave
+        # a committed document with a failed operation result.
+        digest = _digest(tmp)
+        size = Path(tmp).stat().st_size
+        publish_exclusive(tmp, destination)
+        return OCRReceipt(str(source),str(destination),processed+skipped,processed,skipped,digest,size,language)
     finally:
         if os.path.exists(tmp):os.unlink(tmp)

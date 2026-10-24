@@ -10,6 +10,8 @@ import argparse
 import hashlib
 import json
 import math
+import os
+import stat
 from pathlib import Path
 import re
 
@@ -26,6 +28,7 @@ REQUIRED_THRESHOLD_KEYS = frozenset({
 OPTIONAL_THRESHOLD_KEYS = frozenset({
     'min_case_nonempty_cell_accuracy', 'min_case_table_recall',
     'max_case_extra_nonempty_cells',
+    'min_case_cell_exact_accuracy', 'min_case_merge_recall',
 })
 
 
@@ -66,6 +69,38 @@ def _safe_file(root: Path, relative: str) -> Path:
     if not current.is_file() or not current.resolve().is_relative_to(root.resolve()):
         raise ValueError('Fichier de corpus absent ou hors racine')
     return current
+
+
+
+# V528: independently bind every oracle claim to the bytes actually audited.
+# The oracle is replaceable in tests/integrations; a syntactically valid digest
+# is not evidence that the claimed artifact was read. Refuse symlinks, oversized
+# inputs and in-place modifications even when a custom oracle reports PASS.
+MAX_EVIDENCE_BYTES = (256 * 1024 * 1024, 128 * 1024 * 1024, 2 * 1024 * 1024)
+
+
+def _evidence_digest(path: Path, max_bytes: int) -> str:
+    flags = os.O_RDONLY | getattr(os, 'O_BINARY', 0) | getattr(os, 'O_NOFOLLOW', 0)
+    fd = os.open(path, flags)
+    try:
+        before = os.fstat(fd)
+        if not stat.S_ISREG(before.st_mode) or before.st_size > max_bytes:
+            raise ValueError('Preuve absente ou hors limite')
+        digest = hashlib.sha256()
+        total = 0
+        with os.fdopen(os.dup(fd), 'rb') as stream:
+            while block := stream.read(min(1024 * 1024, max_bytes - total + 1)):
+                total += len(block)
+                if total > max_bytes:
+                    raise ValueError('Preuve trop volumineuse')
+                digest.update(block)
+        after = os.fstat(fd)
+        if (before.st_size, before.st_mtime_ns, before.st_ino) != (
+                after.st_size, after.st_mtime_ns, after.st_ino):
+            raise ValueError('Preuve modifiee pendant la lecture')
+        return digest.hexdigest()
+    finally:
+        os.close(fd)
 
 
 def _thresholds(value):
@@ -118,6 +153,7 @@ def evaluate_corpus(manifest, *, oracle=None):
     )}
     deviations = humans = case_regressions = 0
     worst_case_accuracy = worst_case_recall = 1.0
+    worst_case_cell_accuracy = worst_case_merge_recall = 1.0
     worst_case_extra = 0
     for case in cases:
         if not isinstance(case, dict) or set(case) != {'id', 'pdf', 'xlsx', 'annotations'}:
@@ -130,7 +166,13 @@ def evaluate_corpus(manifest, *, oracle=None):
         if len(set(files)) != 3 or files in triples:
             raise ValueError('Fichiers ou cas de corpus reutilises')
         triples.add(files)
+        before_hashes = tuple(_evidence_digest(path, limit)
+                              for path, limit in zip(files, MAX_EVIDENCE_BYTES))
         result = oracle(*files)
+        after_hashes = tuple(_evidence_digest(path, limit)
+                             for path, limit in zip(files, MAX_EVIDENCE_BYTES))
+        if before_hashes != after_hashes:
+            raise ValueError('Preuve modifiee pendant le controle du corpus')
         if result.get('schema') != 'openpdf.xlsx.ground_truth.report.v1' or result.get('status') not in ('PASS', 'DEVIATION'):
             raise ValueError('Rapport individuel non conforme')
         for key in counts:
@@ -157,6 +199,18 @@ def evaluate_corpus(manifest, *, oracle=None):
             recall = result['matched_tables'] / denominator
             worst_case_recall = min(worst_case_recall, recall)
             case_failed |= recall < thresholds['min_case_table_recall']
+        if 'min_case_cell_exact_accuracy' in thresholds:
+            denominator = result['annotated_cells']
+            if denominator == 0:
+                raise ValueError('Cas sans cellules : exactitude individuelle non mesurable')
+            accuracy = result['exact_cells'] / denominator
+            worst_case_cell_accuracy = min(worst_case_cell_accuracy, accuracy)
+            case_failed |= accuracy < thresholds['min_case_cell_exact_accuracy']
+        if 'min_case_merge_recall' in thresholds:
+            denominator = result['expected_merges']
+            recall = result['matched_merges'] / denominator if denominator else 1.0
+            worst_case_merge_recall = min(worst_case_merge_recall, recall)
+            case_failed |= recall < thresholds['min_case_merge_recall']
         if 'max_case_extra_nonempty_cells' in thresholds:
             worst_case_extra = max(worst_case_extra, result['extra_nonempty_cells'])
             case_failed |= result['extra_nonempty_cells'] > thresholds['max_case_extra_nonempty_cells']
@@ -166,6 +220,8 @@ def evaluate_corpus(manifest, *, oracle=None):
             if not isinstance(value, str) or re.fullmatch(r'[0-9a-f]{64}', value) is None:
                 raise ValueError('Empreinte de preuve invalide')
             hashes.append(value)
+        if tuple(result[key] for key in ('source_sha256', 'workbook_sha256', 'annotation_sha256')) != before_hashes:
+            raise ValueError('Empreinte de preuve non liee aux fichiers controles')
         pdf_hash = result['source_sha256']
         xlsx_hash = result['workbook_sha256']
         if pdf_hash in seen_pdf_hashes or xlsx_hash in seen_xlsx_hashes:
@@ -224,6 +280,8 @@ def evaluate_corpus(manifest, *, oracle=None):
         'worst_case_nonempty_cell_accuracy': round(worst_case_accuracy, 6) if 'min_case_nonempty_cell_accuracy' in thresholds else None,
         'worst_case_table_recall': round(worst_case_recall, 6) if 'min_case_table_recall' in thresholds else None,
         'worst_case_extra_nonempty_cells': worst_case_extra if 'max_case_extra_nonempty_cells' in thresholds else None,
+        'worst_case_cell_exact_accuracy': round(worst_case_cell_accuracy, 6) if 'min_case_cell_exact_accuracy' in thresholds else None,
+        'worst_case_merge_recall': round(worst_case_merge_recall, 6) if 'min_case_merge_recall' in thresholds else None,
         **counts, **measures,
         'thresholds': thresholds, 'failed_thresholds': failed,
     }

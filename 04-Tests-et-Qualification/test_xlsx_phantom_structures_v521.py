@@ -32,7 +32,7 @@ class PhantomStructureTests(unittest.TestCase):
             pdf = self.root / f'doc{n}.pdf'
             xlsx = self.root / f'doc{n}.xlsx'
             annotation = self.root / f'doc{n}.json'
-            fixture(pdf)
+            fixture(pdf, injection=(n == 2))
             convert_office(pdf, xlsx, table_mode=True)
             annotation.write_text(json.dumps({
                 'schema': TRUTH_SCHEMA,
@@ -40,7 +40,7 @@ class PhantomStructureTests(unittest.TestCase):
                 'origin': 'synthetic_known_at_generation',
                 'tables': [{'page': 1, 'index': 1,
                             'cells': [['Volume', 'Capacite'], ['SAN-A', '20 To'],
-                                      ['SAN-B', '50 To']], 'merges': []}],
+                                      ['SAN-B', '=1+1' if n == 2 else '50 To']], 'merges': []}],
             }), encoding='utf-8')
             self.cases.append((pdf, xlsx, annotation))
         self.manifest = self.root / 'corpus.json'

@@ -1,11 +1,11 @@
 {
   "author": "Abdelhalim Talbi",
-  "note": "V531 updated GUI/dispatcher hashes after verified OCR + XLSX opt-in; immutable earlier baselines preserved",
+  "note": "V533 GUI and dispatcher OCR cell occupancy option; previous baselines preserved, updated hashes pinned.",
   "schema": "openpdf-v51.4-source-hash-overrides-v1",
   "sha256": {
     "03-Sources/openpdf_office_roundtrip_v459.py": "1cd3305f151e9367c9113ccb7844e737e821eee36e068d990958f4c425a9f96e",
     "03-Sources/openpdf_conversion_service_v351.py": "1c2542db57e28f8ef4142d3a59cbf42a4a6dce795fd3cddd74ad9aae72a26271",
-    "03-Sources/openpdf_operations.py": "3389abee1452298bb2be80427731f968b16ecc0cf1487779f2ee66d643df990d",
-    "03-Sources/openpdf_desktop.py": "516f225e15b48c24669fa21b426ac8f48357e045aaba60e7c03a37994aa5cefd"
+    "03-Sources/openpdf_operations.py": "947c7c310b4e6868604edb0f8f8ad0e8c829917dedaa71a6aec953108e8ee9f2",
+    "03-Sources/openpdf_desktop.py": "7e6054b5325280780b9aa187af527f6db8f2b165f8641270f492e896cb4c944e"
   }
 }

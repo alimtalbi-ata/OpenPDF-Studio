@@ -74,6 +74,7 @@ class OpenPDFStudio(tk.Tk):
         self.ocr_mode=tk.StringVar(value='Pages sans texte')
         self.ocr_before_office=tk.BooleanVar(value=False)  # explicit consent; never OCR silently
         self.xlsx_tables=tk.BooleanVar(value=False)  # explicit opt-in; preserve legacy Excel by default
+        self.min_ocr_table_cells=tk.StringVar(value='0')  # 0 disables the strict occupancy gate
         self.compression_quality=tk.StringVar(value=QUALITY_MODES[0])
         self.full_rgb_audit=tk.BooleanVar(value=False)  # V49.0 opt-in, not a default guarantee
         self._build();self.protocol("WM_DELETE_WINDOW",self._on_close);self.after(100,self._poll)
@@ -128,7 +129,7 @@ class OpenPDFStudio(tk.Tk):
                 self.operation_buttons.append(button)
         self.options=ttk.LabelFrame(left,text='Paramètres',padding=10);self.options.pack(fill='x',pady=10)
         self.opts={}
-        for name,var in [('Profil',self.profile),('Début',self.first),('Fin',self.last),('Pages par fichier',self.chunk),('Ordre des pages',self.order),('Pages à extraire',self.extraction_selection),('Langue OCR',self.language),('Mode OCR',self.ocr_mode),('OCR avant conversion',self.ocr_before_office),('Tableaux Excel éditables',self.xlsx_tables),('Contrôle qualité',self.compression_quality),('Audit RGB intégral',self.full_rgb_audit)]:
+        for name,var in [('Profil',self.profile),('Début',self.first),('Fin',self.last),('Pages par fichier',self.chunk),('Ordre des pages',self.order),('Pages à extraire',self.extraction_selection),('Langue OCR',self.language),('Mode OCR',self.ocr_mode),('OCR avant conversion',self.ocr_before_office),('Tableaux Excel éditables',self.xlsx_tables),('Cellules OCR min/page',self.min_ocr_table_cells),('Contrôle qualité',self.compression_quality),('Audit RGB intégral',self.full_rgb_audit)]:
             frame=ttk.Frame(self.options);self.opts[name]=frame
             if name not in ('OCR avant conversion','Tableaux Excel éditables'):
                 ttk.Label(frame,text=('Ordre (ex. toutes,!paires)' if name=='Ordre des pages' else 'Pages (optionnel, ex. !paires)' if name=='Pages à extraire' else name),width=22).pack(side='left')
@@ -137,10 +138,10 @@ class OpenPDFStudio(tk.Tk):
             elif name=='Audit RGB intégral': ttk.Checkbutton(frame,variable=var,text='Tous les pixels à 50 % (plus lent, seuil 2 %)').pack(side='left')
             elif name=='Mode OCR': ttk.Combobox(frame,textvariable=var,values=tuple(OCR_MODES),state='readonly',width=28).pack(side='left')
             elif name=='Tableaux Excel éditables':
-                self.xlsx_tables_check=ttk.Checkbutton(frame,variable=var,text='Tableaux en feuilles Excel éditables (OCR : vérifier les valeurs)')
+                self.xlsx_tables_check=ttk.Checkbutton(frame,variable=var,command=self._refresh,text='Tableaux en feuilles Excel éditables (OCR : vérifier les valeurs)')
                 self.xlsx_tables_check.pack(side='left')
             elif name=='OCR avant conversion':
-                self.ocr_office_check=ttk.Checkbutton(frame,variable=var,text='OCR si PDF numérisé (fidélité limitée)')
+                self.ocr_office_check=ttk.Checkbutton(frame,variable=var,command=self._refresh,text='OCR si PDF numérisé (fidélité limitée)')
                 self.ocr_office_check.pack(side='left')
             else: ttk.Entry(frame,textvariable=var,width=28).pack(side='left')
         ttk.Label(left,text='3. Destination',font=('Segoe UI',12,'bold')).pack(anchor='w',pady=(12,4))
@@ -255,6 +256,8 @@ class OpenPDFStudio(tk.Tk):
             self.status.configure(text='Opération modifiée : choisissez une nouvelle destination')
     def _refresh(self):
         key=self.operation.get();show={'compression':('Profil','Contrôle qualité','Audit RGB intégral'),'extraction':('Début','Fin','Pages à extraire'),'decoupage':('Pages par fichier',),'reorganisation':('Ordre des pages',),'ocr':('Langue OCR','Mode OCR'),'docx':('Langue OCR','OCR avant conversion'),'xlsx':('Langue OCR','OCR avant conversion','Tableaux Excel éditables'),'pptx':('Langue OCR','OCR avant conversion')}.get(key,())
+        if key == 'xlsx' and self.ocr_before_office.get() and self.xlsx_tables.get():
+            show += ('Cellules OCR min/page',)
         for name,frame in self.opts.items():frame.pack(fill='x',pady=2) if name in show else frame.pack_forget()
     def _add(self):
         known={str(Path(p).resolve()).casefold() for p in self.sources}
@@ -337,6 +340,12 @@ class OpenPDFStudio(tk.Tk):
         op=self.operation.get();sources=tuple(self.sources);dest=self.destination.get().strip()
         kwargs=dict(profile=self.profile.get(),first=self.first.get(),last=self.last.get(),chunk=self.chunk.get(),order=self.order.get(),extraction_selection=self.extraction_selection.get(),language=self.language.get(),ocr_mode=self.ocr_mode.get(),compression_quality=self.compression_quality.get(),full_rgb_audit=self.full_rgb_audit.get(),ocr_before_office=self.ocr_before_office.get(),table_mode=self.xlsx_tables.get() if op=='xlsx' else False)
         try:
+            if op=='xlsx' and self.ocr_before_office.get() and self.xlsx_tables.get():
+                raw=self.min_ocr_table_cells.get().strip()
+                if not raw.isdecimal() or int(raw)>10000:
+                    raise ValueError('Cellules OCR min/page : entier entre 0 et 10000')
+                if int(raw):
+                    kwargs['min_nonempty_cells_per_scanned_page']=int(raw)
             if op in ('docx','xlsx','pptx') and self.ocr_before_office.get() and any(Path(p).expanduser().is_symlink() for p in sources):
                 raise ValueError('Source OCR Office : lien symbolique interdit')
             sources,dest=validate_request(op,sources,dest)

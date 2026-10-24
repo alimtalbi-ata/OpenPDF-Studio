@@ -12,6 +12,11 @@ def run_operation(operation, sources, destination, **kwargs):
     if operation not in OPERATIONS:
         raise ValueError("Opération inconnue")
     table_mode = kwargs.get('table_mode', False)
+    minimum_cells = kwargs.get('min_nonempty_cells_per_scanned_page', 0)
+    if (type(minimum_cells) is not int or not 0 <= minimum_cells <= 10000
+            or (minimum_cells and not (operation == 'xlsx' and table_mode
+                                       and kwargs.get('ocr_before_office', False)))):
+        raise ValueError('Seuil de cellules OCR invalide ou OCR Excel non active')
     if type(table_mode) is not bool or (table_mode and operation != 'xlsx'):
         raise ValueError('Mode tableaux réservé à la conversion Excel')
     if not destination:
@@ -53,6 +58,8 @@ def run_operation(operation, sources, destination, **kwargs):
                     raise ValueError("La conversion Office exige un seul PDF source")
                 from openpdf_ocr_office_pipeline_v511 import convert_scanned_office
                 table_options = {'table_mode': table_mode} if operation == 'xlsx' else {}
+                if minimum_cells:
+                    table_options['min_nonempty_cells_per_scanned_page'] = minimum_cells
                 result=convert_scanned_office(inputs[0], output,
                                               language=kwargs.get("language", "fra+eng"),
                                               **table_options)

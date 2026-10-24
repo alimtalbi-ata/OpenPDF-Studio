@@ -5,6 +5,7 @@ Author: Abdelhalim Talbi.
 """
 from __future__ import annotations
 import hashlib
+import io
 from pathlib import Path
 import sys
 import tempfile
@@ -22,7 +23,28 @@ from openpdf_ocr_autodeskew_v535 import estimate_deskew
 from openpdf_ocr_language_preflight_v486 import preflight_ocr_languages
 from openpdf_ocr_office_pipeline_v511 import convert_scanned_office
 from openpdf_ocr_service_v347 import searchable_pdf
-from test_ocr_deskew_v534 import make_tilted_scan, TABLE
+TABLE = (('ID', 'STOCK', 'PRICE'), ('A01', '102', '55'),
+         ('A02', '103', '80'), ('A03', '104', '74'))
+
+
+def make_tilted_scan(path, *, angle=8, native_first=False):
+    """Self-contained synthetic fixture; do not depend on historical V534 helper."""
+    with fitz.open() as source:
+        page = source.new_page(width=600, height=400)
+        for row, values in enumerate(TABLE):
+            for col, value in enumerate(values):
+                page.insert_text((55 + col * 160, 100 + row * 50), value, fontsize=17)
+        raster = page.get_pixmap(matrix=fitz.Matrix(2, 2), alpha=False)
+        tilted = Image.frombytes('RGB', (raster.width, raster.height), raster.samples).rotate(
+            angle, resample=Image.Resampling.BICUBIC, expand=False, fillcolor='white')
+        buffer = io.BytesIO()
+        tilted.save(buffer, format='PNG')
+    with fitz.open() as output:
+        if native_first:
+            output.new_page(width=600, height=400).insert_text((50, 60), 'Native text', fontsize=15)
+        output.new_page(width=600, height=400).insert_image(
+            fitz.Rect(0, 0, 600, 400), stream=buffer.getvalue())
+        output.save(path)
 import openpdf_operations as operations
 
 

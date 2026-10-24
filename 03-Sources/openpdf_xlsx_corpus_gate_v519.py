@@ -18,9 +18,14 @@ REPORT_SCHEMA = 'openpdf.xlsx.corpus.report.v1'
 MAX_MANIFEST_BYTES = 256 * 1024
 MAX_CASES = 64
 ID_PATTERN = re.compile(r'^[a-z0-9][a-z0-9_-]{0,63}$')
-THRESHOLD_KEYS = frozenset({
+REQUIRED_THRESHOLD_KEYS = frozenset({
     'min_nonempty_cell_accuracy', 'min_table_recall', 'min_merge_recall',
     'max_extra_nonempty_cells', 'min_human_reviewed',
+})
+# V527 optional floors prevent good documents masking a failed case.
+OPTIONAL_THRESHOLD_KEYS = frozenset({
+    'min_case_nonempty_cell_accuracy', 'min_case_table_recall',
+    'max_case_extra_nonempty_cells',
 })
 
 
@@ -64,7 +69,9 @@ def _safe_file(root: Path, relative: str) -> Path:
 
 
 def _thresholds(value):
-    if not isinstance(value, dict) or set(value) != THRESHOLD_KEYS:
+    if (not isinstance(value, dict) or
+            not REQUIRED_THRESHOLD_KEYS <= set(value) or
+            set(value) - REQUIRED_THRESHOLD_KEYS - OPTIONAL_THRESHOLD_KEYS):
         raise ValueError('Seuils de qualification incomplets')
     result = {}
     for name, number in value.items():
@@ -109,7 +116,9 @@ def evaluate_corpus(manifest, *, oracle=None):
         'exact_nonempty_cells', 'extra_nonempty_cells',
         'expected_merges', 'observed_merges', 'matched_merges',
     )}
-    deviations = humans = 0
+    deviations = humans = case_regressions = 0
+    worst_case_accuracy = worst_case_recall = 1.0
+    worst_case_extra = 0
     for case in cases:
         if not isinstance(case, dict) or set(case) != {'id', 'pdf', 'xlsx', 'annotations'}:
             raise ValueError('Cas de corpus invalide')
@@ -129,6 +138,29 @@ def evaluate_corpus(manifest, *, oracle=None):
             if type(value) is not int or value < 0:
                 raise ValueError('Compteur individuel invalide')
             counts[key] += value
+        # V527: aggregate micro-averages can hide a near-total failure in one
+        # small document. Per-case floors are opt-in to preserve v1 manifests.
+        # Compare exact fractions, not rounded presentation metrics; never
+        # include document names or cell contents in the release report.
+        case_failed = False
+        if 'min_case_nonempty_cell_accuracy' in thresholds:
+            denominator = result['annotated_nonempty_cells']
+            if denominator == 0:
+                raise ValueError('Cas sans cellules non vides : plancher individuel non mesurable')
+            accuracy = result['exact_nonempty_cells'] / denominator
+            worst_case_accuracy = min(worst_case_accuracy, accuracy)
+            case_failed |= accuracy < thresholds['min_case_nonempty_cell_accuracy']
+        if 'min_case_table_recall' in thresholds:
+            denominator = result['expected_tables']
+            if denominator == 0:
+                raise ValueError('Cas sans tableaux : rappel individuel non mesurable')
+            recall = result['matched_tables'] / denominator
+            worst_case_recall = min(worst_case_recall, recall)
+            case_failed |= recall < thresholds['min_case_table_recall']
+        if 'max_case_extra_nonempty_cells' in thresholds:
+            worst_case_extra = max(worst_case_extra, result['extra_nonempty_cells'])
+            case_failed |= result['extra_nonempty_cells'] > thresholds['max_case_extra_nonempty_cells']
+        case_regressions += bool(case_failed)
         for key in ('source_sha256', 'workbook_sha256', 'annotation_sha256'):
             value = result.get(key)
             if not isinstance(value, str) or re.fullmatch(r'[0-9a-f]{64}', value) is None:
@@ -176,6 +208,8 @@ def evaluate_corpus(manifest, *, oracle=None):
         failed.append('max_extra_nonempty_cells')
     if humans < thresholds['min_human_reviewed']:
         failed.append('min_human_reviewed')
+    if case_regressions:
+        failed.append('case_quality_floors')
     # Exact deviations are visible even when permissive thresholds allow a pass.
     return {
         'schema': REPORT_SCHEMA,
@@ -186,6 +220,10 @@ def evaluate_corpus(manifest, *, oracle=None):
         'evidence_set_sha256': hashlib.sha256('\n'.join(sorted(hashes)).encode('ascii')).hexdigest(),
         'cases': len(cases), 'human_reviewed_cases': humans,
         'synthetic_cases': len(cases) - humans, 'deviating_cases': deviations,
+        'cases_below_quality_floors': case_regressions,
+        'worst_case_nonempty_cell_accuracy': round(worst_case_accuracy, 6) if 'min_case_nonempty_cell_accuracy' in thresholds else None,
+        'worst_case_table_recall': round(worst_case_recall, 6) if 'min_case_table_recall' in thresholds else None,
+        'worst_case_extra_nonempty_cells': worst_case_extra if 'max_case_extra_nonempty_cells' in thresholds else None,
         **counts, **measures,
         'thresholds': thresholds, 'failed_thresholds': failed,
     }

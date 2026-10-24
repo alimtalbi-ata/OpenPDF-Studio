@@ -14,8 +14,6 @@ def run_operation(operation, sources, destination, **kwargs):
     table_mode = kwargs.get('table_mode', False)
     if type(table_mode) is not bool or (table_mode and operation != 'xlsx'):
         raise ValueError('Mode tableaux réservé à la conversion Excel')
-    if table_mode and kwargs.get('ocr_before_office', False):
-        raise ValueError('Mode tableaux et OCR Office incompatibles : effectuer un OCR PDF préalable')
     if not destination:
         raise ValueError("Destination obligatoire")
     if Path(destination).expanduser().is_symlink():
@@ -48,18 +46,21 @@ def run_operation(operation, sources, destination, **kwargs):
                 if len(inputs) != 1:
                     raise ValueError("Le découpage exige une seule source")
                 result=split_transaction(inputs[0], output, int(kwargs.get("chunk", 1)))
+            elif operation in ("docx", "xlsx", "pptx") and kwargs.get("ocr_before_office", False):
+                # OCR is explicitly selected; for XLSX the independent table
+                # opt-in is passed through to the verified OCR Office pipeline.
+                if len(inputs) != 1:
+                    raise ValueError("La conversion Office exige un seul PDF source")
+                from openpdf_ocr_office_pipeline_v511 import convert_scanned_office
+                table_options = {'table_mode': table_mode} if operation == 'xlsx' else {}
+                result=convert_scanned_office(inputs[0], output,
+                                              language=kwargs.get("language", "fra+eng"),
+                                              **table_options)
             elif operation == 'xlsx' and table_mode:
                 if len(inputs) != 1:
                     raise ValueError('La conversion Excel exige un seul PDF source')
                 from openpdf_conversion_service_v351 import convert_office
                 result = convert_office(inputs[0], output, output_format='xlsx', table_mode=True)
-            elif operation in ("docx", "xlsx", "pptx") and kwargs.get("ocr_before_office", False):
-                # Explicit opt-in: retain reservation and audit for GUI jobs.
-                if len(inputs) != 1:
-                    raise ValueError("La conversion Office exige un seul PDF source")
-                from openpdf_ocr_office_pipeline_v511 import convert_scanned_office
-                result=convert_scanned_office(inputs[0], output,
-                                              language=kwargs.get("language", "fra+eng"))
             else:
                 result=_legacy_run_operation(operation, sources, destination, **kwargs)
             # Compression 'smaller_only' can legitimately yield no new output.

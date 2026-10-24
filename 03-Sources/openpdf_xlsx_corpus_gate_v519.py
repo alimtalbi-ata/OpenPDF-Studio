@@ -153,6 +153,15 @@ def evaluate_corpus(manifest, *, oracle=None):
         # Compare unrounded fractions: a 0.9499996 result must not satisfy 0.95.
         if (numerator / denominator if denominator else 1.0) < thresholds[key]:
             failed.append(key)
+    # V521: a corpus must never PASS when the converter invents empty table
+    # worksheets or blank merged ranges. The v1 threshold schema has recall
+    # but no minimum precision threshold; previously such phantom structures
+    # escaped every release gate despite table/merge precision < 1.0.
+    # Fail closed without changing the established manifest format.
+    if counts['observed_tables'] != counts['matched_tables']:
+        failed.append('unexpected_tables')
+    if counts['observed_merges'] != counts['matched_merges']:
+        failed.append('unexpected_merges')
     if counts['extra_nonempty_cells'] > thresholds['max_extra_nonempty_cells']:
         failed.append('max_extra_nonempty_cells')
     if humans < thresholds['min_human_reviewed']:

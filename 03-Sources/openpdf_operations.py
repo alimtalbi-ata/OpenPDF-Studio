@@ -11,6 +11,11 @@ from openpdf_ui_controller_v348 import OPERATIONS, run_operation as _legacy_run_
 def run_operation(operation, sources, destination, **kwargs):
     if operation not in OPERATIONS:
         raise ValueError("Opération inconnue")
+    table_mode = kwargs.get('table_mode', False)
+    if type(table_mode) is not bool or (table_mode and operation != 'xlsx'):
+        raise ValueError('Mode tableaux réservé à la conversion Excel')
+    if table_mode and kwargs.get('ocr_before_office', False):
+        raise ValueError('Mode tableaux et OCR Office incompatibles : effectuer un OCR PDF préalable')
     if not destination:
         raise ValueError("Destination obligatoire")
     if Path(destination).expanduser().is_symlink():
@@ -43,6 +48,11 @@ def run_operation(operation, sources, destination, **kwargs):
                 if len(inputs) != 1:
                     raise ValueError("Le découpage exige une seule source")
                 result=split_transaction(inputs[0], output, int(kwargs.get("chunk", 1)))
+            elif operation == 'xlsx' and table_mode:
+                if len(inputs) != 1:
+                    raise ValueError('La conversion Excel exige un seul PDF source')
+                from openpdf_conversion_service_v351 import convert_office
+                result = convert_office(inputs[0], output, output_format='xlsx', table_mode=True)
             elif operation in ("docx", "xlsx", "pptx") and kwargs.get("ocr_before_office", False):
                 # Explicit opt-in: retain reservation and audit for GUI jobs.
                 if len(inputs) != 1:

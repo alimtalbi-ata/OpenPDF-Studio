@@ -44,6 +44,67 @@ def _file_hash(path: Path, maximum: int) -> tuple[str, int]:
     return digest.hexdigest(), size
 
 
+def _check_xlsx_relationships(archive: zipfile.ZipFile, names: set[str]) -> None:
+    """Reject active/external OOXML relationships, including unreferenced .rels parts.
+
+    This inspects package metadata *before* openpyxl opens the workbook. The
+    archive member list has already been checked for duplicate/unsafe names.
+    """
+    import posixpath
+    from urllib.parse import unquote
+    import xml.etree.ElementTree as ET
+
+    ns = '{http://schemas.openxmlformats.org/package/2006/relationships}'
+    relationship_count = 0
+    for item in archive.infolist():
+        member = item.filename.replace('\\', '/')
+        if not member.lower().endswith('.rels'):
+            continue
+        if item.file_size > 1024 * 1024:
+            raise ValueError('Relations XLSX trop volumineuses')
+        payload = archive.read(item)
+        if b'<!DOCTYPE' in payload.upper() or b'<!ENTITY' in payload.upper():
+            raise ValueError('DTD ou entite XML interdite dans XLSX')
+        try:
+            root = ET.fromstring(payload)
+        except ET.ParseError as exc:
+            raise ValueError('Relations XLSX XML invalides') from exc
+        if root.tag != ns + 'Relationships':
+            raise ValueError('Structure des relations XLSX invalide')
+        # The relationship part _rels/foo.xml.rels belongs to foo.xml.
+        if member == '_rels/.rels':
+            owner_dir = ''
+        else:
+            prefix, sep, filename = member.rpartition('/_rels/')
+            if not sep or not filename.endswith('.rels'):
+                raise ValueError('Emplacement des relations XLSX invalide')
+            owner_dir = prefix
+        ids = set()
+        for rel in root:
+            relationship_count += 1
+            if relationship_count > 4096 or rel.tag != ns + 'Relationship':
+                raise ValueError('Relations XLSX trop nombreuses ou invalides')
+            identifier = rel.get('Id')
+            if not identifier or identifier in ids:
+                raise ValueError('Identifiant de relation XLSX invalide')
+            ids.add(identifier)
+            mode = rel.get('TargetMode', 'Internal')
+            if mode != 'Internal':
+                raise ValueError('Relation XLSX externe ou non reconnue interdite')
+            target = rel.get('Target', '')
+            decoded = unquote(target)
+            if (not decoded or '\\' in decoded or ':' in decoded or '?' in decoded
+                    or '#' in decoded or '\x00' in decoded):
+                raise ValueError('Cible de relation XLSX dangereuse')
+            path = (decoded.lstrip('/') if decoded.startswith('/')
+                    else posixpath.join(owner_dir, decoded))
+            normalized = posixpath.normpath(path)
+            if normalized in ('.', '..') or normalized.startswith('../'):
+                raise ValueError('Relation XLSX hors archive')
+            if normalized.lower() not in names:
+                raise ValueError('Relation XLSX vers composant absent')
+
+
 def _xlsx_preflight(path: Path) -> None:
     """Reject dangerous/oversized ZIP members before openpyxl decompresses XML."""
     try:
@@ -74,6 +135,7 @@ def _xlsx_preflight(path: Path) -> None:
                 raise ValueError('Structure XLSX incomplete')
             if archive.testzip() is not None:
                 raise ValueError('CRC XLSX invalide')
+            _check_xlsx_relationships(archive, names)
     except (zipfile.BadZipFile, OSError, RuntimeError) as exc:
         raise ValueError('Archive XLSX invalide') from exc
 

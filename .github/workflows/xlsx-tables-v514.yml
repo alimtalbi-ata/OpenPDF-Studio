@@ -14,6 +14,7 @@ on:
       - '04-Tests-et-Qualification/test_xlsx_merged_cells_v515.py'
       - '03-Sources/openpdf_xlsx_fidelity_v515.py'
       - '04-Tests-et-Qualification/test_xlsx_fidelity_v515.py'
+      - '04-Tests-et-Qualification/test_xlsx_relationships_v516.py'
       - '04-Tests-et-Qualification/test_source_reconciliation_v503.py'
       - '07-Manifestes/V51.4-SOURCE-HASH-OVERRIDES.json'
       - '.github/workflows/xlsx-tables-v514.yml'
@@ -43,6 +44,8 @@ jobs:
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_xlsx_merged_cells_v515.py -v
       - name: XLSX archive security, exact-cell audit and rollback (real PDFs)
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_xlsx_fidelity_v515.py -v
+      - name: OOXML relationship security and real-PDF rollback regression
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_xlsx_relationships_v516.py -v
       - name: V51.4 GUI routing and safety regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_xlsx_gui_v514.py -v
       - name: V51.0 Office scan preflight regression

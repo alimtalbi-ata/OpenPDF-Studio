@@ -37,7 +37,7 @@ jobs:
       - name: Test V51.4 GUI OCR Office routing and symlink regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_office_gui_v512.py -v
       - name: Test V51.4 OCR model resolver and real engine
-        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_runtime_v514.py -v
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_runtime_v513.py -v
       - name: Test original V50.2 closure regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_source_closure_v502.py -v
   source-readiness:

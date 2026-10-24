@@ -61,6 +61,22 @@ def run():
                 excel.close()
             slides=Presentation(pptx)
             assert any("FACTURE TEST CONVERSION" in shape.text for slide in slides.slides for shape in slide.shapes if shape.has_text_frame)
+        # Verify that image-bearing PDF pages retain embedded image content in DOCX.
+        with tempfile.TemporaryDirectory(prefix="openpdf-image-smoke-") as tmp:
+            root=Path(tmp); source=root/"image-source.pdf"; target=root/"image-output.docx"
+            with fitz.open() as graphic:
+                p=graphic.new_page(width=220,height=100)
+                p.draw_rect(fitz.Rect(10,10,210,90),color=(0,0,0),fill=(0.3,0.6,0.9))
+                png=p.get_pixmap(dpi=100).tobytes("png")
+            with fitz.open() as d:
+                p=d.new_page();p.insert_text((72,72),"ILLUSTRATION TEST")
+                p.insert_image(fitz.Rect(72,100,292,200),stream=png)
+                d.save(source)
+            pdf_to_docx(source,target)
+            from zipfile import ZipFile
+            with ZipFile(target) as archive:
+                media=[name for name in archive.namelist() if name.startswith("word/media/")]
+                assert media,"DOCX lost the PDF embedded image"
         print("OPENPDF_FUNCTIONAL_TEST_OK")
         return 0
     except Exception as exc:

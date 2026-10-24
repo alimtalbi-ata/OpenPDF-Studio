@@ -35,6 +35,32 @@ def run():
                     output.save(split)
             with fitz.open(split) as d:
                 assert len(d) == 1 and "page B" in d[0].get_text(), "split validation"
+        # Real end-to-end conversions executed from the packaged Windows binary.
+        from openpdf_core_v260 import pdf_to_docx, pdf_to_xlsx, pdf_to_pptx
+        from docx import Document
+        from openpyxl import load_workbook
+        from pptx import Presentation
+        with tempfile.TemporaryDirectory(prefix="openpdf-conversion-smoke-") as tmp:
+            root=Path(tmp)
+            source=root/"source.pdf"
+            with fitz.open() as d:
+                page=d.new_page()
+                page.insert_text((72,100),"FACTURE TEST CONVERSION",fontsize=16)
+                page.insert_text((72,140),"Ligne Excel controle")
+                d.save(source)
+            docx=root/"output.docx"; xlsx=root/"output.xlsx"; pptx=root/"output.pptx"
+            assert pdf_to_docx(source,docx)==[docx]
+            assert pdf_to_xlsx(source,xlsx)==[xlsx]
+            assert pdf_to_pptx(source,pptx)==[pptx]
+            word=Document(docx)
+            assert "FACTURE TEST CONVERSION" in "\\n".join(p.text for p in word.paragraphs)
+            excel=load_workbook(xlsx,read_only=True)
+            try:
+                assert any("FACTURE TEST CONVERSION" in str(row[2]) for row in excel.active.iter_rows(min_row=2,values_only=True))
+            finally:
+                excel.close()
+            slides=Presentation(pptx)
+            assert any("FACTURE TEST CONVERSION" in shape.text for slide in slides.slides for shape in slide.shapes if shape.has_text_frame)
         print("OPENPDF_FUNCTIONAL_TEST_OK")
         return 0
     except Exception as exc:

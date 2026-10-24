@@ -137,7 +137,7 @@ class OpenPDFStudio(tk.Tk):
             elif name=='Audit RGB intégral': ttk.Checkbutton(frame,variable=var,text='Tous les pixels à 50 % (plus lent, seuil 2 %)').pack(side='left')
             elif name=='Mode OCR': ttk.Combobox(frame,textvariable=var,values=tuple(OCR_MODES),state='readonly',width=28).pack(side='left')
             elif name=='Tableaux Excel éditables':
-                self.xlsx_tables_check=ttk.Checkbutton(frame,variable=var,text='Tableaux en feuilles Excel éditables')
+                self.xlsx_tables_check=ttk.Checkbutton(frame,variable=var,text='Tableaux en feuilles Excel éditables (OCR : vérifier les valeurs)')
                 self.xlsx_tables_check.pack(side='left')
             elif name=='OCR avant conversion':
                 self.ocr_office_check=ttk.Checkbutton(frame,variable=var,text='OCR si PDF numérisé (fidélité limitée)')
@@ -337,8 +337,6 @@ class OpenPDFStudio(tk.Tk):
         op=self.operation.get();sources=tuple(self.sources);dest=self.destination.get().strip()
         kwargs=dict(profile=self.profile.get(),first=self.first.get(),last=self.last.get(),chunk=self.chunk.get(),order=self.order.get(),extraction_selection=self.extraction_selection.get(),language=self.language.get(),ocr_mode=self.ocr_mode.get(),compression_quality=self.compression_quality.get(),full_rgb_audit=self.full_rgb_audit.get(),ocr_before_office=self.ocr_before_office.get(),table_mode=self.xlsx_tables.get() if op=='xlsx' else False)
         try:
-            if op=='xlsx' and self.xlsx_tables.get() and self.ocr_before_office.get():
-                raise ValueError('Tableaux Excel et OCR Office ne sont pas combinables : effectuez d’abord un OCR PDF séparé')
             if op in ('docx','xlsx','pptx') and self.ocr_before_office.get() and any(Path(p).expanduser().is_symlink() for p in sources):
                 raise ValueError('Source OCR Office : lien symbolique interdit')
             sources,dest=validate_request(op,sources,dest)

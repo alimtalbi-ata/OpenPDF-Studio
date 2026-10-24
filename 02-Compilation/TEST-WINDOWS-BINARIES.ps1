@@ -7,7 +7,7 @@ $report = [ordered]@{version=$version;mode=$Mode;host=$env:COMPUTERNAME;exe=$exe
 try {
   if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) { throw "Executable missing: $exe" }
   $report.exists = $true
-  foreach ($check in @(@{arg='--self-test';marker='OPENPDF_SELF_TEST_OK'},@{arg='--functional-self-test';marker='OPENPDF_FUNCTIONAL_TEST_OK'})) {
+  foreach ($check in @(@{arg='--self-test';marker='OPENPDF_SELF_TEST_OK'},@{arg='--functional-self-test';marker='OPENPDF_FUNCTIONAL_TEST_OK'},@{arg='--ocr-self-test';marker='OPENPDF_OCR_BINARY_TEST_OK'})) {
     $out = Join-Path $env:TEMP ([guid]::NewGuid().ToString() + '.out')
     $err = Join-Path $env:TEMP ([guid]::NewGuid().ToString() + '.err')
     $result = [ordered]@{argument=$check.arg;exit_code=$null;stdout='';stderr='';timed_out=$false;passed=$false}
@@ -27,7 +27,7 @@ try {
     $report.checks += $result
     if (-not $result.passed) { break }
   }
-  $report.passed = ($report.checks.Count -eq 2 -and @($report.checks | Where-Object { -not $_.passed }).Count -eq 0)
+  $report.passed = ($report.checks.Count -eq 3 -and @($report.checks | Where-Object { -not $_.passed }).Count -eq 0)
 } catch { $report.error = $_.Exception.Message }
 $report | ConvertTo-Json -Depth 7 | Set-Content -LiteralPath $ReportPath -Encoding UTF8
 if (-not $report.passed) { Write-Error "Windows smoke test failed; see $ReportPath"; exit 1 }

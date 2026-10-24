@@ -13,6 +13,13 @@ def run_operation(operation, sources, destination, **kwargs):
         raise ValueError("Opération inconnue")
     table_mode = kwargs.get('table_mode', False)
     minimum_cells = kwargs.get('min_nonempty_cells_per_scanned_page', 0)
+    deskew_angle = kwargs.get('deskew_angle_degrees', 0.0)
+    import math
+    if (type(deskew_angle) not in (int, float) or not math.isfinite(deskew_angle)
+            or not -12 <= deskew_angle <= 12
+            or (deskew_angle and not (operation in ('docx', 'xlsx', 'pptx')
+                                      and kwargs.get('ocr_before_office', False)))):
+        raise ValueError('Angle de redressement OCR invalide ou OCR Office non active')
     if (type(minimum_cells) is not int or not 0 <= minimum_cells <= 10000
             or (minimum_cells and not (operation == 'xlsx' and table_mode
                                        and kwargs.get('ocr_before_office', False)))):
@@ -60,6 +67,8 @@ def run_operation(operation, sources, destination, **kwargs):
                 table_options = {'table_mode': table_mode} if operation == 'xlsx' else {}
                 if minimum_cells:
                     table_options['min_nonempty_cells_per_scanned_page'] = minimum_cells
+                if deskew_angle:
+                    table_options['deskew_angle_degrees'] = float(deskew_angle)
                 result=convert_scanned_office(inputs[0], output,
                                               language=kwargs.get("language", "fra+eng"),
                                               **table_options)

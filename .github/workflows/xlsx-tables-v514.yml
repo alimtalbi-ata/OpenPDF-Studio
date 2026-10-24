@@ -7,6 +7,8 @@ on:
       - '03-Sources/openpdf_office_roundtrip_v459.py'
       - '03-Sources/openpdf_studio.py'
       - '04-Tests-et-Qualification/test_xlsx_tables_v514.py'
+      - '04-Tests-et-Qualification/test_source_reconciliation_v503.py'
+      - '07-Manifestes/V51.4-SOURCE-HASH-OVERRIDES.json'
       - '.github/workflows/xlsx-tables-v514.yml'
   workflow_dispatch:
 permissions:

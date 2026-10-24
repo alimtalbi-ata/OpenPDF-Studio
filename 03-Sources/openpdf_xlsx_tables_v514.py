@@ -389,10 +389,22 @@ def verify_xlsx_tables(source, destination):
                 raise ValueError('Ordre ou nom des tableaux Excel invalide')
             if (sheet['A1'].value, sheet['B1'].value, sheet['C1'].value, sheet['D1'].value) != ('Page PDF', page, 'Tableau', index):
                 raise ValueError('Provenance du tableau Excel invalide')
+            if sheet.sheet_state != 'visible':
+                raise ValueError('Feuille de tableau Excel masquee : extraction non visible')
             if _sheet_merges(sheet) != merges:
                 raise ValueError('Fusions de cellules Excel modifiees ou manquantes')
             if sheet.max_row != len(rows) + 2 or sheet.max_column != max(columns, 4):
                 raise ValueError('Dimensions du tableau Excel modifiees')
+            # A1:D1 is reserved for provenance, row 2 is always empty. A
+            # two/three-column table still has a four-column worksheet because
+            # of the provenance header: inspect those unused columns too.
+            # Otherwise extra values could pass the exact-cell parity audit.
+            if any(sheet.cell(2, c).value is not None for c in range(1, max(columns, 4) + 1)):
+                raise ValueError('Cellule fantome inattendue dans la ligne de separation Excel')
+            for row_number in range(3, len(rows) + 3):
+                if any(sheet.cell(row_number, c).value is not None
+                       for c in range(columns + 1, max(columns, 4) + 1)):
+                    raise ValueError('Cellule fantome inattendue hors de la grille PDF')
             for row_number, row in enumerate(rows, 3):
                 for column_number in range(1, columns + 1):
                     cell = sheet.cell(row_number, column_number)

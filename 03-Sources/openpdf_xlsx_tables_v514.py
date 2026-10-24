@@ -248,6 +248,30 @@ def _unruled_regions(page_rect, ruled_boxes, *, padding=2.0, limit=64):
     return tuple(free)
 
 
+def _reading_order(candidates):
+    """Stable PDF geometry order for ruled and borderless table candidates.
+
+    Treat tables whose vertical extents overlap by at least half the shorter
+    height as one horizontal band, sorted left-to-right. Other bands are
+    top-to-bottom. This is a documented heuristic, not semantic layout AI.
+    """
+    ordered = sorted(candidates, key=lambda item: (item[3][1], item[3][0],
+                                                   item[3][3], item[3][2]))
+    bands = []
+    for item in ordered:
+        box = item[3]
+        if bands:
+            anchor = bands[-1][0][3]
+            intersection = max(0.0, min(box[3], anchor[3]) - max(box[1], anchor[1]))
+            height = min(box[3] - box[1], anchor[3] - anchor[1])
+            if height > 0 and intersection >= 0.5 * height:
+                bands[-1].append(item)
+                continue
+        bands.append([item])
+    return [item for band in bands for item in sorted(
+        band, key=lambda entry: (entry[3][0], entry[3][1], entry[3][2], entry[3][3]))]
+
+
 def _tables(source):
     count = 0
     cells = 0
@@ -263,13 +287,16 @@ def _tables(source):
             # disjoint regions. Whole-page text detection can merge a ruled
             # table and a borderless table into a fictitious single grid.
             ruled = list(found.tables)
-            candidates = [(table.extract(), None, table) for table in ruled]
+            candidates = [(table.extract(), None, table, tuple(table.bbox)) for table in ruled]
             for clip in _unruled_regions(page.rect, [table.bbox for table in ruled]):
                 for rows, width, bbox in _text_only_tables(page, clip=clip):
                     if any(_rect_overlap(bbox, table.bbox) for table in ruled):
                         raise ValueError('Tableau textuel chevauche un tableau borde')
-                    candidates.append((rows, width, None))
-            for table_number, (matrix, text_width, table) in enumerate(candidates, 1):
+                    candidates.append((rows, width, None, bbox))
+            # Preserve approximate visual reading order across both detection
+            # strategies instead of always emitting ruled tables first.
+            for table_number, (matrix, text_width, table, _bbox) in enumerate(
+                    _reading_order(candidates), 1):
                 count += 1
                 if count > MAX_TABLES or table_number > 999:
                     raise ValueError('Trop de tableaux detectes')

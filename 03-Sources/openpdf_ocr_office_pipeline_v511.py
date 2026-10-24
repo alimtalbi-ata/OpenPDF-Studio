@@ -43,6 +43,8 @@ class OCROfficeOutcome:
     scanned_pages_without_tables: tuple[int, ...] = ()
     table_cells_by_page: tuple[tuple[int, int, int], ...] = ()
     deskew_angle_degrees: float = 0.0
+    auto_deskew: bool = False
+    deskew_pages: tuple[tuple[int, float, str], ...] = ()
     fidelity: str = 'editable_text_only_no_layout_or_recognition_accuracy_guarantee'
 
     def to_dict(self):
@@ -54,6 +56,9 @@ class OCROfficeOutcome:
             {'page': page, 'cells': total, 'nonempty_cells': nonempty}
             for page, total, nonempty in self.table_cells_by_page]
         data['warnings'] = list(self.warnings)
+        data['deskew_pages'] = [
+            {'page': page, 'angle_degrees': angle, 'decision': decision}
+            for page, angle, decision in self.deskew_pages]
         return data
 
 
@@ -66,7 +71,7 @@ def convert_scanned_office(source, destination, *, language='fra+eng', dpi=200,
                            min_characters_per_scanned_page=1, tessdata=None,
                            table_mode=False, require_table_per_scanned_page=False,
                            min_nonempty_cells_per_scanned_page=0,
-                           deskew_angle_degrees=0.0):
+                           deskew_angle_degrees=0.0, auto_deskew=False):
     """Convert scanned/mixed PDF into DOCX/XLSX/PPTX via offline Tesseract.
 
     The opt-in table_mode attempts editable table worksheets in XLSX only.
@@ -97,6 +102,8 @@ def convert_scanned_office(source, destination, *, language='fra+eng', dpi=200,
             or not -12 <= deskew_angle_degrees <= 12):
         raise ValueError('Angle de redressement OCR invalide [-12, 12]')
     deskew_angle_degrees = float(deskew_angle_degrees)
+    if type(auto_deskew) is not bool or (auto_deskew and deskew_angle_degrees):
+        raise ValueError('Redressement OCR automatique incompatible avec angle manuel')
     if source.is_symlink() or not source.is_file() or source.suffix.lower() != '.pdf':
         raise ValueError('Source PDF invalide ou lien symbolique interdit')
     if destination.is_symlink() or destination.exists():
@@ -114,6 +121,7 @@ def convert_scanned_office(source, destination, *, language='fra+eng', dpi=200,
         raise RuntimeError('Source modifiee pendant le precontrole')
     scanned = tuple(preflight.scanned_pages)
     stage = None
+    deskew_pages = ()
     try:
         with tempfile.TemporaryDirectory(prefix='.openpdf-ocr-office-', dir=destination.parent) as private:
             private = Path(private)
@@ -126,6 +134,7 @@ def convert_scanned_office(source, destination, *, language='fra+eng', dpi=200,
                     source, pdf_for_office, language=language, dpi=dpi,
                     skip_text=True, tessdata=tessdata,
                     deskew_angle_degrees=deskew_angle_degrees,
+                    auto_deskew=auto_deskew,
                     quality_policy=OCRQualityPolicy(
                         min_covered_fraction=0.0,
                         min_characters_per_page=0,
@@ -133,6 +142,7 @@ def convert_scanned_office(source, destination, *, language='fra+eng', dpi=200,
                 if receipt.sha256 != _sha256(pdf_for_office):
                     raise RuntimeError('Empreinte du PDF OCR incoherente')
                 ocr_pages = receipt.ocr_pages
+                deskew_pages = getattr(receipt, 'deskew_pages', ())
                 if ocr_pages < len(scanned):
                     raise RuntimeError('Pages scannees non traitees par OCR')
                 import pymupdf as fitz
@@ -223,7 +233,9 @@ def convert_scanned_office(source, destination, *, language='fra+eng', dpi=200,
                 table_pages=table_pages,
                 scanned_pages_without_tables=scanned_pages_without_tables,
                 table_cells_by_page=table_cells_by_page,
-                deskew_angle_degrees=deskew_angle_degrees)
+                deskew_angle_degrees=deskew_angle_degrees,
+                auto_deskew=auto_deskew,
+                deskew_pages=deskew_pages)
     finally:
         if stage is not None:
             stage.unlink(missing_ok=True)
@@ -236,6 +248,8 @@ def main(argv=None):
     parser.add_argument('--language', default='fra+eng')
     parser.add_argument('--dpi', type=int, default=200)
     parser.add_argument('--min-chars', type=int, default=1)
+    parser.add_argument('--auto-deskew', action='store_true',
+                        help='Opt-in conservative per-page raster alignment; no OCR accuracy guarantee')
     parser.add_argument('--deskew-angle', type=float, default=0.0,
                         help='Explicit counter-rotation of raster-only pages, -12..12 degrees; 0 disables')
     parser.add_argument('--editable-tables', action='store_true',
@@ -251,7 +265,7 @@ def main(argv=None):
         table_mode=args.editable_tables,
         require_table_per_scanned_page=args.require_table_each_scanned_page,
         min_nonempty_cells_per_scanned_page=args.min_nonempty_table_cells_per_scanned_page,
-        deskew_angle_degrees=args.deskew_angle)
+        deskew_angle_degrees=args.deskew_angle, auto_deskew=args.auto_deskew)
     print(json.dumps(outcome.to_dict(), ensure_ascii=False, indent=2))
     return 0
 

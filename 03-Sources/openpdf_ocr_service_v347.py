@@ -45,6 +45,8 @@ class OCRReceipt:
     quality: object = None  # V48.7: measured coverage, not OCR accuracy
     quality_gate: object = None  # V48.8: optional policy decision
     deskew_angle_degrees: float = 0.0  # V534: explicit raster-only correction
+    auto_deskew: bool = False  # V535: opt-in conservative estimation
+    deskew_pages: tuple[tuple[int, float, str], ...] = ()  # page, applied angle, decision
 
 
 def _digest(path):
@@ -56,7 +58,7 @@ def _digest(path):
 
 def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=True, progress=None, tessdata=None, *,
                    max_ocr_pixels=DEFAULT_TOTAL_OCR_PIXELS, max_ocr_pages=DEFAULT_OCR_PAGES,
-                   quality_policy=None, deskew_angle_degrees=0.0):
+                   quality_policy=None, deskew_angle_degrees=0.0, auto_deskew=False):
     """Generate searchable PDF without modifying input; commit only complete valid output.
 
     Existing text pages are copied if skip_text=True; scanned pages OCR'd.
@@ -77,6 +79,8 @@ def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=T
             or not -12.0 <= deskew_angle_degrees <= 12.0):
         raise ValueError('Angle de redressement OCR invalide [-12, 12]')
     deskew_angle_degrees = float(deskew_angle_degrees)
+    if type(auto_deskew) is not bool or (auto_deskew and deskew_angle_degrees):
+        raise ValueError('Redressement OCR automatique incompatible avec angle manuel')
     if tessdata is not None and not Path(tessdata).is_dir():raise ValueError('Dossier tessdata absent')
     from openpdf_ocr_quality_gate_v488 import OCRQualityPolicy
     if quality_policy is not None and not isinstance(quality_policy, OCRQualityPolicy):
@@ -85,6 +89,7 @@ def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=T
     fd,tmp=tempfile.mkstemp(prefix='.openpdf-ocr-',suffix='.pdf',dir=destination.parent)
     os.close(fd)
     processed=0; skipped=0
+    deskew_pages = []
     native_checks = {}  # 1-based page -> original native text for smart OCR
     try:
         with fitz.open(source) as original, fitz.open() as result:
@@ -110,17 +115,27 @@ def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=T
                     # must not silently destroy its extractable words.
                     native_text = page.get_text('text')
                     validate_ocr_raster(page, dpi)
-                    if deskew_angle_degrees and native_text.strip():
+                    if (deskew_angle_degrees or auto_deskew) and native_text.strip():
                         raise ValueError('Redressement interdit sur page contenant du texte natif')
                     pix=page.get_pixmap(dpi=dpi,alpha=False)
-                    if deskew_angle_degrees:
+                    applied_angle = deskew_angle_degrees
+                    if auto_deskew:
+                        from PIL import Image
+                        from openpdf_ocr_autodeskew_v535 import estimate_deskew
+                        estimate = estimate_deskew(Image.frombytes(
+                            'RGB', (pix.width, pix.height), pix.samples))
+                        applied_angle = estimate.angle_degrees if estimate.applied else 0.0
+                        deskew_pages.append((i + 1, applied_angle, estimate.reason))
+                    elif deskew_angle_degrees:
+                        deskew_pages.append((i + 1, applied_angle, 'manual'))
+                    if applied_angle:
                         # Pillow is already an explicit Windows build dependency.
                         # Keep the original raster canvas dimensions and resolution;
                         # white fill avoids artificial black OCR margins.
                         from PIL import Image
                         import io
                         bitmap = Image.frombytes('RGB', (pix.width, pix.height), pix.samples)
-                        corrected = bitmap.rotate(deskew_angle_degrees,
+                        corrected = bitmap.rotate(applied_angle,
                             resample=Image.Resampling.BICUBIC, expand=False, fillcolor='white')
                         buffer = io.BytesIO()
                         corrected.save(buffer, format='PNG')
@@ -161,6 +176,6 @@ def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=T
         size = Path(tmp).stat().st_size
         verify_source_unchanged(source, source_fingerprint)
         publish_exclusive(tmp, destination)
-        return OCRReceipt(str(source),str(destination),processed+skipped,processed,skipped,digest,size,language,quality.to_dict(),gate,deskew_angle_degrees)
+        return OCRReceipt(str(source),str(destination),processed+skipped,processed,skipped,digest,size,language,quality.to_dict(),gate,deskew_angle_degrees,auto_deskew,tuple(deskew_pages))
     finally:
         if os.path.exists(tmp):os.unlink(tmp)

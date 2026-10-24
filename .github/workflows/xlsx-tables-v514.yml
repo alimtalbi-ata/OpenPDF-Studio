@@ -24,6 +24,7 @@ on:
       - '04-Tests-et-Qualification/test_xlsx_borderless_v522.py'
       - '04-Tests-et-Qualification/test_xlsx_mixed_v523.py'
       - '04-Tests-et-Qualification/test_xlsx_reading_order_v524.py'
+      - '04-Tests-et-Qualification/test_xlsx_independent_corpus_v525.py'
       - '04-Tests-et-Qualification/test_source_reconciliation_v503.py'
       - '07-Manifestes/V51.4-SOURCE-HASH-OVERRIDES.json'
       - '.github/workflows/xlsx-tables-v514.yml'
@@ -69,6 +70,8 @@ jobs:
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_xlsx_mixed_v523.py -v
       - name: V524 mixed-table visual reading order (real PDF to XLSX, mutation)
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_xlsx_reading_order_v524.py -v
+      - name: V525 independent real-PDF corpus diversity and tamper-detection
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_xlsx_independent_corpus_v525.py -v
       - name: V51.4 GUI routing and safety regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_xlsx_gui_v514.py -v
       - name: V51.0 Office scan preflight regression

@@ -23,7 +23,7 @@ Une première implémentation appliquait systématiquement la remise à l'échel
 - CI Windows/Linux : vérifier le statut du commit de la PR #43 ; les jobs ne remplacent pas une qualification graphique humaine.
 
 ## Limites et risques
-La remise à l'échelle peut diminuer la taille des caractères si des éléments sont en bordure. Le seuil de premier plan est une heuristique et ne garantit ni exactitude OCR ni fidélité métier. Les tests sont **synthétiques** et ne constituent pas un corpus métier annoté indépendamment. L'interface Windows n'a pas été testée manuellement, et les binaires historiques V535 ne sont pas des builds V536.
+La remise à l'échelle peut diminuer la taille des caractères si des éléments sont en bordure. Le seuil de premier plan est une heuristique et ne garantit ni exactitude OCR ni fidélité métier. Les tests sont **synthétiques** et ne constituent pas un corpus métier annoté indépendamment. L'interface Windows n'a pas été testée manuellement. Le portable et l'installateur ont été reconstruits sur runner Windows depuis le commit fonctionnel V536 `afc31101` (2/2 jobs PASS, autocontrôles et installation/désinstallation silencieuses). Les deux commits suivants modifient uniquement le test de réconciliation et le manifeste SHA-256 ; le code runtime est identique (comparaison GitHub vérifiée).
 
 ## Priorité V537
 Constituer un corpus métier légalement partageable et annoté indépendamment ; mesurer précision/rappel de reconnaissance, puis comparer les conversions Word, Excel et PowerPoint. Qualifier l'interface Windows interactive et les installateurs reconstruits à partir du commit final.

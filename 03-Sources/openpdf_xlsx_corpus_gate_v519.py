@@ -98,6 +98,10 @@ def evaluate_corpus(manifest, *, oracle=None):
         from openpdf_xlsx_ground_truth_v517 import evaluate_ground_truth
         oracle = evaluate_ground_truth
     ids, triples = set(), set()
+    # Independent corpus samples must not reuse identical source PDFs or
+    # conversion outputs under different filenames. Distinct paths alone
+    # allowed duplicated cases to inflate release-quality statistics.
+    seen_pdf_hashes, seen_xlsx_hashes = set(), set()
     hashes = []
     counts = {key: 0 for key in (
         'expected_tables', 'observed_tables', 'matched_tables',
@@ -130,6 +134,12 @@ def evaluate_corpus(manifest, *, oracle=None):
             if not isinstance(value, str) or re.fullmatch(r'[0-9a-f]{64}', value) is None:
                 raise ValueError('Empreinte de preuve invalide')
             hashes.append(value)
+        pdf_hash = result['source_sha256']
+        xlsx_hash = result['workbook_sha256']
+        if pdf_hash in seen_pdf_hashes or xlsx_hash in seen_xlsx_hashes:
+            raise ValueError('Corpus non independant : PDF ou XLSX identique sous un autre nom')
+        seen_pdf_hashes.add(pdf_hash)
+        seen_xlsx_hashes.add(xlsx_hash)
         if result.get('annotation_origin') == 'human_reviewed':
             humans += 1
         elif result.get('annotation_origin') != 'synthetic_known_at_generation':

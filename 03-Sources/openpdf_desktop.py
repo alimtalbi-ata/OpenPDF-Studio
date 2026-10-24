@@ -137,7 +137,7 @@ class OpenPDFStudio(tk.Tk):
             elif name=='Audit RGB intégral': ttk.Checkbutton(frame,variable=var,text='Tous les pixels à 50 % (plus lent, seuil 2 %)').pack(side='left')
             elif name=='Mode OCR': ttk.Combobox(frame,textvariable=var,values=tuple(OCR_MODES),state='readonly',width=28).pack(side='left')
             elif name=='Tableaux Excel éditables':
-                self.xlsx_tables_check=ttk.Checkbutton(frame,variable=var,text='Extraire les tableaux en feuilles éditables (contrôle requis)')
+                self.xlsx_tables_check=ttk.Checkbutton(frame,variable=var,text='Tableaux en feuilles Excel éditables')
                 self.xlsx_tables_check.pack(side='left')
             elif name=='OCR avant conversion':
                 self.ocr_office_check=ttk.Checkbutton(frame,variable=var,text='OCR si PDF numérisé (fidélité limitée)')

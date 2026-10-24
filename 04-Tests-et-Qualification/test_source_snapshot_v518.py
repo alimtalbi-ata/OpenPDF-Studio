@@ -26,8 +26,8 @@ class SourceSnapshotV518Tests(unittest.TestCase):
 
     def test_single_entrypoint_delegates_to_build_pipeline(self):
         launcher = (ROOT / 'BUILD-OPENPDF-WINDOWS.cmd').read_text(encoding='utf-8')
-        self.assertIn('BUILD-WINDOWS-INSTALLER.cmd', launcher)
-        self.assertIn('%*', launcher)
+        self.assertIn('BUILD-AND-PACKAGE-WINDOWS.cmd', launcher)
+        self.assertIn('exit /b %errorlevel%', launcher)
 
 
 if __name__ == '__main__':

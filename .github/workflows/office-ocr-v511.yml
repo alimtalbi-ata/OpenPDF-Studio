@@ -1,4 +1,4 @@
-name: V533 OCR editable table cell occupancy and Office qualification
+name: V534 OCR deskew and editable Office qualification
 on:
   pull_request:
     paths:
@@ -14,6 +14,8 @@ on:
       - '04-Tests-et-Qualification/test_ocr_office_tables_v531.py'
       - '04-Tests-et-Qualification/test_ocr_table_coverage_v532.py'
       - '04-Tests-et-Qualification/test_ocr_table_cell_density_v533.py'
+      - '04-Tests-et-Qualification/test_ocr_deskew_v534.py'
+      - '02-Compilation/PREPARE-OCR-MODELS.ps1'
       - '.github/workflows/office-ocr-v511.yml'
   workflow_dispatch:
 permissions:
@@ -36,6 +38,25 @@ jobs:
       - name: Install offline English OCR model on Linux
         if: runner.os == 'Linux'
         run: sudo apt-get update -qq && sudo apt-get install -y tesseract-ocr-eng
+      - name: Install pinned OCR models for real Windows OCR tests
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $models = Join-Path $env:RUNNER_TEMP 'openpdf-v534-tessdata'
+          & ./02-Compilation/PREPARE-OCR-MODELS.ps1 -TargetDir $models
+          $siteModels = (python -c 'import fitz; print(fitz.get_tessdata())').Trim()
+          if ($LASTEXITCODE -ne 0 -or -not $siteModels) { throw 'PyMuPDF tessdata location missing' }
+          New-Item -ItemType Directory -Force -Path $siteModels | Out-Null
+          foreach ($lang in @('eng', 'fra')) {
+            $source = Join-Path $models ($lang + '.traineddata')
+            $target = Join-Path $siteModels ($lang + '.traineddata')
+            Copy-Item -LiteralPath $source -Destination $target -Force
+            if ((Get-FileHash $source -Algorithm SHA256).Hash -ne (Get-FileHash $target -Algorithm SHA256).Hash) {
+              throw "OCR model copy mismatch: $lang"
+            }
+          }
+          python -c "import sys; sys.path.insert(0, '03-Sources'); from openpdf_ocr_language_preflight_v486 import preflight_ocr_languages; print(preflight_ocr_languages('eng'))"
+          if ($LASTEXITCODE -ne 0) { throw 'English OCR not ready on Windows' }
       - name: V51.3 OCR model resolver and real engine
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_runtime_v513.py -v
       - name: V51.1 OCR to Office tests (OCR real when eng model is present)
@@ -46,6 +67,8 @@ jobs:
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_table_coverage_v532.py -v
       - name: V533 editable OCR cell occupancy, GUI routing and fail-closed gate
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_table_cell_density_v533.py -v
+      - name: V534 real tilted scanned PDF deskew and editable XLSX
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_deskew_v534.py -v
       - name: V51.0 scan gate regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_office_scan_gate_v510.py -v
       - name: V51.3 GUI OCR Office opt-in and safety regression

@@ -74,6 +74,7 @@ class OpenPDFStudio(tk.Tk):
         self.ocr_mode=tk.StringVar(value='Pages sans texte')
         self.ocr_before_office=tk.BooleanVar(value=False)  # explicit consent; never OCR silently
         self.xlsx_tables=tk.BooleanVar(value=False)  # explicit opt-in; preserve legacy Excel by default
+        self.deskew_angle=tk.StringVar(value='0')  # V534: manual correction of tilted scans
         self.min_ocr_table_cells=tk.StringVar(value='0')  # 0 disables the strict occupancy gate
         self.compression_quality=tk.StringVar(value=QUALITY_MODES[0])
         self.full_rgb_audit=tk.BooleanVar(value=False)  # V49.0 opt-in, not a default guarantee
@@ -129,7 +130,7 @@ class OpenPDFStudio(tk.Tk):
                 self.operation_buttons.append(button)
         self.options=ttk.LabelFrame(left,text='Paramètres',padding=10);self.options.pack(fill='x',pady=10)
         self.opts={}
-        for name,var in [('Profil',self.profile),('Début',self.first),('Fin',self.last),('Pages par fichier',self.chunk),('Ordre des pages',self.order),('Pages à extraire',self.extraction_selection),('Langue OCR',self.language),('Mode OCR',self.ocr_mode),('OCR avant conversion',self.ocr_before_office),('Tableaux Excel éditables',self.xlsx_tables),('Cellules OCR min/page',self.min_ocr_table_cells),('Contrôle qualité',self.compression_quality),('Audit RGB intégral',self.full_rgb_audit)]:
+        for name,var in [('Profil',self.profile),('Début',self.first),('Fin',self.last),('Pages par fichier',self.chunk),('Ordre des pages',self.order),('Pages à extraire',self.extraction_selection),('Langue OCR',self.language),('Mode OCR',self.ocr_mode),('OCR avant conversion',self.ocr_before_office),('Tableaux Excel éditables',self.xlsx_tables),('Cellules OCR min/page',self.min_ocr_table_cells),('Redresser scan (degrés)',self.deskew_angle),('Contrôle qualité',self.compression_quality),('Audit RGB intégral',self.full_rgb_audit)]:
             frame=ttk.Frame(self.options);self.opts[name]=frame
             if name not in ('OCR avant conversion','Tableaux Excel éditables'):
                 ttk.Label(frame,text=('Ordre (ex. toutes,!paires)' if name=='Ordre des pages' else 'Pages (optionnel, ex. !paires)' if name=='Pages à extraire' else name),width=22).pack(side='left')
@@ -256,6 +257,8 @@ class OpenPDFStudio(tk.Tk):
             self.status.configure(text='Opération modifiée : choisissez une nouvelle destination')
     def _refresh(self):
         key=self.operation.get();show={'compression':('Profil','Contrôle qualité','Audit RGB intégral'),'extraction':('Début','Fin','Pages à extraire'),'decoupage':('Pages par fichier',),'reorganisation':('Ordre des pages',),'ocr':('Langue OCR','Mode OCR'),'docx':('Langue OCR','OCR avant conversion'),'xlsx':('Langue OCR','OCR avant conversion','Tableaux Excel éditables'),'pptx':('Langue OCR','OCR avant conversion')}.get(key,())
+        if key in ('docx', 'xlsx', 'pptx') and self.ocr_before_office.get():
+            show += ('Redresser scan (degrés)',)
         if key == 'xlsx' and self.ocr_before_office.get() and self.xlsx_tables.get():
             show += ('Cellules OCR min/page',)
         for name,frame in self.opts.items():frame.pack(fill='x',pady=2) if name in show else frame.pack_forget()
@@ -340,6 +343,14 @@ class OpenPDFStudio(tk.Tk):
         op=self.operation.get();sources=tuple(self.sources);dest=self.destination.get().strip()
         kwargs=dict(profile=self.profile.get(),first=self.first.get(),last=self.last.get(),chunk=self.chunk.get(),order=self.order.get(),extraction_selection=self.extraction_selection.get(),language=self.language.get(),ocr_mode=self.ocr_mode.get(),compression_quality=self.compression_quality.get(),full_rgb_audit=self.full_rgb_audit.get(),ocr_before_office=self.ocr_before_office.get(),table_mode=self.xlsx_tables.get() if op=='xlsx' else False)
         try:
+            if op in ('docx','xlsx','pptx') and self.ocr_before_office.get():
+                import math
+                try: angle=float(self.deskew_angle.get().strip())
+                except ValueError: raise ValueError('Angle OCR : nombre entre -12 et 12')
+                if not math.isfinite(angle) or not -12 <= angle <= 12:
+                    raise ValueError('Angle OCR : nombre entre -12 et 12')
+                if angle:
+                    kwargs['deskew_angle_degrees']=angle
             if op=='xlsx' and self.ocr_before_office.get() and self.xlsx_tables.get():
                 raw=self.min_ocr_table_cells.get().strip()
                 if not raw.isdecimal() or int(raw)>10000:

@@ -42,6 +42,7 @@ class OCROfficeOutcome:
     table_pages: tuple[int, ...] = ()
     scanned_pages_without_tables: tuple[int, ...] = ()
     table_cells_by_page: tuple[tuple[int, int, int], ...] = ()
+    deskew_angle_degrees: float = 0.0
     fidelity: str = 'editable_text_only_no_layout_or_recognition_accuracy_guarantee'
 
     def to_dict(self):
@@ -64,7 +65,8 @@ def _sha256(path):
 def convert_scanned_office(source, destination, *, language='fra+eng', dpi=200,
                            min_characters_per_scanned_page=1, tessdata=None,
                            table_mode=False, require_table_per_scanned_page=False,
-                           min_nonempty_cells_per_scanned_page=0):
+                           min_nonempty_cells_per_scanned_page=0,
+                           deskew_angle_degrees=0.0):
     """Convert scanned/mixed PDF into DOCX/XLSX/PPTX via offline Tesseract.
 
     The opt-in table_mode attempts editable table worksheets in XLSX only.
@@ -89,6 +91,12 @@ def convert_scanned_office(source, destination, *, language='fra+eng', dpi=200,
             or not 0 <= min_nonempty_cells_per_scanned_page <= 10000
             or (min_nonempty_cells_per_scanned_page and not table_mode)):
         raise ValueError('Seuil de cellules OCR invalide ou mode tableaux XLSX absent')
+    import math
+    if (type(deskew_angle_degrees) not in (int, float)
+            or not math.isfinite(deskew_angle_degrees)
+            or not -12 <= deskew_angle_degrees <= 12):
+        raise ValueError('Angle de redressement OCR invalide [-12, 12]')
+    deskew_angle_degrees = float(deskew_angle_degrees)
     if source.is_symlink() or not source.is_file() or source.suffix.lower() != '.pdf':
         raise ValueError('Source PDF invalide ou lien symbolique interdit')
     if destination.is_symlink() or destination.exists():
@@ -117,6 +125,7 @@ def convert_scanned_office(source, destination, *, language='fra+eng', dpi=200,
                 receipt = searchable_pdf(
                     source, pdf_for_office, language=language, dpi=dpi,
                     skip_text=True, tessdata=tessdata,
+                    deskew_angle_degrees=deskew_angle_degrees,
                     quality_policy=OCRQualityPolicy(
                         min_covered_fraction=0.0,
                         min_characters_per_page=0,
@@ -213,7 +222,8 @@ def convert_scanned_office(source, destination, *, language='fra+eng', dpi=200,
                 table_mode=table_mode, table_worksheets=table_worksheets,
                 table_pages=table_pages,
                 scanned_pages_without_tables=scanned_pages_without_tables,
-                table_cells_by_page=table_cells_by_page)
+                table_cells_by_page=table_cells_by_page,
+                deskew_angle_degrees=deskew_angle_degrees)
     finally:
         if stage is not None:
             stage.unlink(missing_ok=True)
@@ -226,6 +236,8 @@ def main(argv=None):
     parser.add_argument('--language', default='fra+eng')
     parser.add_argument('--dpi', type=int, default=200)
     parser.add_argument('--min-chars', type=int, default=1)
+    parser.add_argument('--deskew-angle', type=float, default=0.0,
+                        help='Explicit counter-rotation of raster-only pages, -12..12 degrees; 0 disables')
     parser.add_argument('--editable-tables', action='store_true',
                         help='Opt-in editable table worksheets for XLSX; may refuse ambiguous OCR')
     parser.add_argument('--require-table-each-scanned-page', action='store_true',
@@ -238,7 +250,8 @@ def main(argv=None):
         min_characters_per_scanned_page=args.min_chars,
         table_mode=args.editable_tables,
         require_table_per_scanned_page=args.require_table_each_scanned_page,
-        min_nonempty_cells_per_scanned_page=args.min_nonempty_table_cells_per_scanned_page)
+        min_nonempty_cells_per_scanned_page=args.min_nonempty_table_cells_per_scanned_page,
+        deskew_angle_degrees=args.deskew_angle)
     print(json.dumps(outcome.to_dict(), ensure_ascii=False, indent=2))
     return 0
 

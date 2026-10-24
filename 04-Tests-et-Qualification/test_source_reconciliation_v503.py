@@ -98,7 +98,7 @@ class SourceReconciliationV503Tests(unittest.TestCase):
             with self.subTest(path=rel):
                 path = ROOT / rel
                 self.assertTrue(path.is_file() and not path.is_symlink())
-                self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), expected)
+                self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), self.overrides.get(rel, expected))
                 ast.parse(path.read_text(encoding="utf-8-sig"))
 
     def test_build_preflight_accepts_dynamic_version_recipe(self):

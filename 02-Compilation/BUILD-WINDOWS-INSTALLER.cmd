@@ -43,6 +43,7 @@ if exist "%ProgramFiles%\Tesseract-OCR\tessdata\eng.traineddata" copy /y "%Progr
 if not exist "%OCR_STAGE%\eng.traineddata" if exist "%ProgramFiles(x86)%\Tesseract-OCR\tessdata\eng.traineddata" copy /y "%ProgramFiles(x86)%\Tesseract-OCR\tessdata\*.traineddata" "%OCR_STAGE%\" >nul || goto fail
 rem CI must never publish a package silently missing the OCR model.
 if defined CI if not exist "%OCR_STAGE%\eng.traineddata" goto fail
+if defined CI if not exist "%OCR_STAGE%\fra.traineddata" goto fail
 if /I "%MODE%"=="portable" goto portable
 "%VPY%" -m PyInstaller --noconfirm --clean --windowed --onedir --name OpenPDF-Studio --collect-all fitz --collect-all pymupdf --hidden-import tkinter --add-data "..\VERSION.txt;." --add-data "ocr-models;tessdata" openpdf_studio.py >> "%LOG%" 2>&1 || goto fail
 if not exist "dist\OpenPDF-Studio\OpenPDF-Studio.exe" goto fail

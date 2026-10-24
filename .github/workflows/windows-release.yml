@@ -39,6 +39,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Tesseract installation failed' }
           $data = 'C:\Program Files\Tesseract-OCR\tessdata\eng.traineddata'
           if (-not (Test-Path $data)) { throw "English OCR model missing: $data" }
+          $fra = 'C:\Program Files\Tesseract-OCR\tessdata\fra.traineddata'
+          if (-not (Test-Path $fra)) {
+            Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/fra.traineddata' -OutFile $fra
+          }
+          if ((Get-Item $fra).Length -lt 100000) { throw 'French OCR model missing or truncated' }
           "TESSDATA_PREFIX=C:\Program Files\Tesseract-OCR\tessdata" >> $env:GITHUB_ENV
       - name: Test PDF page publication safety
         shell: pwsh
@@ -97,6 +102,7 @@ jobs:
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_xlsx_pdf_tables_v450.py' -v
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_ocr_empty_result_v451.py' -v
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_ocr_real_raster_v452.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_ocr_real_french_v455.py' -v
       - name: Build and qualify installer and portable
         shell: cmd
         run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd

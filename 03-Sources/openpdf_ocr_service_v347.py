@@ -98,6 +98,14 @@ def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=T
                             ) from exc
                         raise
                     with fitz.open(stream=pdf_bytes,filetype='pdf') as recognized:
+                        if recognized.page_count != 1:
+                            raise RuntimeError('OCR invalide : nombre de pages inattendu')
+                        if not recognized[0].get_text('text').strip():
+                            raise RuntimeError(
+                                'OCR sans texte reconnu : vérifiez la lisibilité du scan, '
+                                'la langue sélectionnée et la qualité de l’image. '
+                                'Aucun fichier de sortie n’a été publié.'
+                            )
                         result.insert_pdf(recognized)
                     processed+=1
                 if progress:progress(i+1,original.page_count)

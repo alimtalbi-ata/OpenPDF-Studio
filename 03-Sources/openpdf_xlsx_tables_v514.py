@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from statistics import median
 
 import fitz
 from openpyxl import load_workbook
@@ -98,15 +99,15 @@ def _sheet_merges(sheet):
                         for m in sheet.merged_cells.ranges))
 
 
-def _text_only_tables(page):
-    """Conservative text-grid fallback on pages without ruled tables.
+def _text_table_candidates(page, clip=None):
+    """Conservative text-grid fallback inside an unruled page region.
 
     Require multiple aligned rows with visible inter-column gutters; this
     rejects common prose falsely segmented into columns by PyMuPDF. Remove
     blank spacer rows, but never infer merged cells from whitespace.
     """
-    words = page.get_text('words')
-    for table in page.find_tables(strategy='text').tables:
+    words = page.get_text('words', clip=clip)
+    for table in page.find_tables(strategy='text', clip=clip).tables:
         matrix = table.extract()
         width = max((len(row) for row in matrix), default=0)
         if not 2 <= width <= MAX_COLUMNS or len(table.rows) != len(matrix):
@@ -173,7 +174,78 @@ def _text_only_tables(page):
             break
         else:
             if gutters >= len(rows):
-                yield rows, width
+                yield rows, width, tuple(table.bbox)
+
+
+def _text_subclips(page, clip):
+    """Split distant blocks before PyMuPDF can merge their column boundaries.
+
+    The text strategy derives global x-columns from *all* visible words.
+    A distant prose paragraph can split every table cell into fragments.
+    Partition at unusually large vertical gaps between text baselines.
+    """
+    region = fitz.Rect(clip if clip is not None else page.rect)
+    words = page.get_text('words', clip=region)
+    centers = sorted((w[1] + w[3]) / 2 for w in words)
+    lines = []
+    for y in centers:
+        if not lines or y - lines[-1][-1] > 3.5:
+            lines.append([y])
+        else:
+            lines[-1].append(y)
+    ys = [median(line) for line in lines]
+    gaps = [b - a for a, b in zip(ys, ys[1:]) if b > a]
+    if len(gaps) < 2:
+        return (region,)
+    small = sorted(gaps)[:max(1, (len(gaps) + 1) // 2)]
+    threshold = max(45.0, 2.5 * median(small))
+    boundaries = [(a + b) / 2 for a, b in zip(ys, ys[1:])
+                  if b - a > threshold]
+    if len(boundaries) > 32:
+        raise ValueError('Texte trop fragmente : detection refusee')
+    edges = [region.y0, *boundaries, region.y1]
+    return tuple(fitz.Rect(region.x0, a, region.x1, b)
+                 for a, b in zip(edges, edges[1:]) if b - a > 12)
+
+
+def _text_only_tables(page, clip=None):
+    for segment in _text_subclips(page, clip):
+        yield from _text_table_candidates(page, segment)
+
+
+def _rect_overlap(a, b):
+    """True only for a positive-area intersection of two bounding boxes."""
+    return max(a[0], b[0]) < min(a[2], b[2]) and max(a[1], b[1]) < min(a[3], b[3])
+
+
+def _unruled_regions(page_rect, ruled_boxes, *, padding=2.0, limit=64):
+    """Partition the page into disjoint rectangles excluding ruled tables.
+
+    Using disjoint clips avoids the text heuristic merging separated tables or
+    re-extracting ruled content. Cap fragments to prevent pathological pages.
+    """
+    free = [fitz.Rect(page_rect)]
+    for box in ruled_boxes:
+        b = fitz.Rect(box)
+        b = fitz.Rect(b.x0 - padding, b.y0 - padding,
+                      b.x1 + padding, b.y1 + padding) & page_rect
+        next_free = []
+        for region in free:
+            overlap = region & b
+            if overlap.is_empty or overlap.get_area() <= 0:
+                next_free.append(region)
+                continue
+            pieces = (
+                fitz.Rect(region.x0, region.y0, region.x1, overlap.y0),
+                fitz.Rect(region.x0, overlap.y1, region.x1, region.y1),
+                fitz.Rect(region.x0, overlap.y0, overlap.x0, overlap.y1),
+                fitz.Rect(overlap.x1, overlap.y0, region.x1, overlap.y1),
+            )
+            next_free.extend(p for p in pieces if p.width > 12 and p.height > 12)
+        if len(next_free) > limit:
+            raise ValueError('Page trop fragmentee : detection mixte refusee')
+        free = next_free
+    return tuple(free)
 
 
 def _tables(source):
@@ -187,13 +259,16 @@ def _tables(source):
             if page_number > 9999:
                 raise ValueError('Nombre de pages hors limite du mode tableaux')
             found = page.find_tables()
-            # A text-strategy table can absorb adjacent ruled tables into one
-            # spurious grid. Therefore only use the fallback on pages where
-            # the line strategy found no table at all.
-            if found.tables:
-                candidates = ((table.extract(), None, table) for table in found.tables)
-            else:
-                candidates = ((rows, width, None) for rows, width in _text_only_tables(page))
+            # Mixed pages: keep ruled tables, then inspect only geometrically
+            # disjoint regions. Whole-page text detection can merge a ruled
+            # table and a borderless table into a fictitious single grid.
+            ruled = list(found.tables)
+            candidates = [(table.extract(), None, table) for table in ruled]
+            for clip in _unruled_regions(page.rect, [table.bbox for table in ruled]):
+                for rows, width, bbox in _text_only_tables(page, clip=clip):
+                    if any(_rect_overlap(bbox, table.bbox) for table in ruled):
+                        raise ValueError('Tableau textuel chevauche un tableau borde')
+                    candidates.append((rows, width, None))
             for table_number, (matrix, text_width, table) in enumerate(candidates, 1):
                 count += 1
                 if count > MAX_TABLES or table_number > 999:

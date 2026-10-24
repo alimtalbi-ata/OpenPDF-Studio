@@ -159,6 +159,8 @@ def evaluate_ground_truth(pdf, xlsx, annotation) -> dict:
         if sum(len(sheet._cells) for sheet in workbook.worksheets) > 300_000:
             raise ValueError('Classeur Excel trop volumineux pour audit')
         for sheet in workbook.worksheets:
+            if sheet.sheet_state != 'visible':
+                raise ValueError('Feuille Excel masquee : preuve non visible')
             for cell in sheet._cells.values():
                 if cell.data_type == 'f' or cell.hyperlink is not None:
                     raise ValueError('Formule ou hyperlien actif dans Excel')
@@ -206,8 +208,14 @@ def evaluate_ground_truth(pdf, xlsx, annotation) -> dict:
                             exact_nonempty += 1
                     if isinstance(observed, (str, type(None))) and _normalized(observed) == _normalized(reference):
                         normalized += 1
+            # Every nonempty cell outside the annotated grid is an extraction
+            # anomaly, including row 2 (reserved blank spacer), additional
+            # provenance-row columns, and out-of-grid cells. Do not count the
+            # four trusted provenance fields A1:D1 as content.
             for (r, c), cell in sheet._cells.items():
-                if r >= 3 and (r > height + 2 or c > width) and cell.value not in (None, ''):
+                outside_grid = not (3 <= r <= height + 2 and 1 <= c <= width)
+                provenance = r == 1 and 1 <= c <= 4
+                if outside_grid and not provenance and cell.value not in (None, ''):
                     extra_nonempty += 1
         for key, sheet in actual.items():
             if key not in expected:
@@ -248,6 +256,8 @@ def evaluate_ground_truth(pdf, xlsx, annotation) -> dict:
         workbook.close()
     if _sha256(pdf, 256 * 1024 * 1024) != source_hash or _sha256(xlsx, 128 * 1024 * 1024) != workbook_hash:
         raise ValueError('PDF ou XLSX modifie pendant le controle')
+    if _sha256(annotation, MAX_ANNOTATION_BYTES) != annotation_hash:
+        raise ValueError('Annotation modifiee pendant le controle')
     return result
 
 

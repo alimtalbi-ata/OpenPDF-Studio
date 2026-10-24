@@ -48,15 +48,17 @@ def verify_pptx_text(source, destination):
     return cursor
 
 
-def verify_xlsx_text(source, destination):
+def verify_xlsx_text(source, destination, *, allow_tables=False):
     """Check exact cell text, order and segment metadata; no silent truncation."""
     from openpyxl import load_workbook
     from openpdf_core_v260 import _excel_text_fragments
 
     wb = load_workbook(destination, read_only=True, data_only=False)
     try:
-        if len(wb.worksheets) != 1:
+        if len(wb.worksheets) != 1 and not allow_tables:
             raise OfficeRoundtripError('Nombre de feuilles Excel inattendu')
+        if wb.worksheets[0].title != 'Texte PDF':
+            raise OfficeRoundtripError('Feuille texte PDF absente')
         ws = wb.worksheets[0]
         rows = ws.iter_rows(values_only=True)
         if next(rows, None) != ('Page', 'Ligne', 'Texte', 'Segment'):
@@ -80,13 +82,17 @@ def verify_xlsx_text(source, destination):
         wb.close()
 
 
-def verify_editable_text(source, destination, fmt):
+def verify_editable_text(source, destination, fmt, *, allow_tables=False):
     """Verify exact extracted text for all three native Office exporters."""
     source, destination = Path(source), Path(destination)
     if fmt == 'pptx':
         return verify_pptx_text(source, destination)
     if fmt == 'xlsx':
-        return verify_xlsx_text(source, destination)
+        result = verify_xlsx_text(source, destination, allow_tables=allow_tables)
+        if allow_tables:
+            from openpdf_xlsx_tables_v514 import verify_xlsx_tables
+            verify_xlsx_tables(source, destination)
+        return result
     if fmt == 'docx':
         from openpdf_docx_roundtrip_v460 import verify_docx_text
         return verify_docx_text(source, destination)

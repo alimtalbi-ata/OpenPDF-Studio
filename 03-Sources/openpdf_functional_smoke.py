@@ -99,6 +99,22 @@ def run():
                 assert any(row[:2]==["Sauvegarde","75"] for row in values),repr(values)
             finally:
                 workbook.close()
+        # Exercise the same public dispatcher used by the GUI, for all rotation angles.
+        from openpdf_operations import run_operation
+        with tempfile.TemporaryDirectory(prefix="openpdf-rotation-smoke-") as tmp:
+            root=Path(tmp); source=root/"rotation-source.pdf"
+            with fitz.open() as d:
+                p=d.new_page(width=320,height=480)
+                p.insert_text((50,80),"ROTATION TEST PAGE")
+                d.save(source)
+            original=source.read_bytes()
+            for angle in (90,180,270):
+                target=root/("rotation-"+str(angle)+".pdf")
+                run_operation("rotation",[source],target,order=str(angle))
+                with fitz.open(target) as d:
+                    assert d.page_count==1 and d[0].rotation==angle,(angle,d[0].rotation)
+                    assert "ROTATION TEST PAGE" in d[0].get_text(),angle
+                assert source.read_bytes()==original,"Rotation modified source PDF"
         print("OPENPDF_FUNCTIONAL_TEST_OK")
         return 0
     except Exception as exc:

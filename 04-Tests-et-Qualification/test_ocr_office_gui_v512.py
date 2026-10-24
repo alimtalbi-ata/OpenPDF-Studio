@@ -105,10 +105,11 @@ class OCRGUIRouteV512(unittest.TestCase):
         source = (ROOT / '03-Sources/openpdf_desktop.py').read_text(encoding='utf-8')
         ast.parse(source)
         self.assertIn('self.ocr_before_office=tk.BooleanVar(value=False)', source)
-        for ext in ('docx', 'xlsx', 'pptx'):
+        for ext in ('docx', 'pptx'):
             self.assertIn("'"+ext+"':('Langue OCR','OCR avant conversion')", source)
+        self.assertIn("'xlsx':('Langue OCR','OCR avant conversion'", source)
         self.assertIn('ocr_before_office=self.ocr_before_office.get()', source)
-        self.assertIn('self.ocr_office_check,*self.operation_buttons', source)
+        self.assertIn('self.ocr_office_check,self.xlsx_tables_check,*self.operation_buttons', source)
 
 if __name__ == '__main__':
     unittest.main()

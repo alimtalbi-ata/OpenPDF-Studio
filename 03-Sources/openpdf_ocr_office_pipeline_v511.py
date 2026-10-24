@@ -37,6 +37,8 @@ class OCROfficeOutcome:
     sha256: str
     source_sha256: str
     warnings: tuple[str, ...]
+    table_mode: bool = False
+    table_worksheets: int = 0
     fidelity: str = 'editable_text_only_no_layout_or_recognition_accuracy_guarantee'
 
     def to_dict(self):
@@ -52,9 +54,12 @@ def _sha256(path):
 
 
 def convert_scanned_office(source, destination, *, language='fra+eng', dpi=200,
-                           min_characters_per_scanned_page=1, tessdata=None):
+                           min_characters_per_scanned_page=1, tessdata=None,
+                           table_mode=False):
     """Convert scanned/mixed PDF into DOCX/XLSX/PPTX via offline Tesseract.
 
+    The opt-in table_mode attempts editable table worksheets in XLSX only.
+    It refuses output when no sufficiently reliable table is detected.
     Scanned pages must have at least min_characters_per_scanned_page
     extractable characters after OCR. This does not measure correctness.
     The staged Office file is audited by convert_office before exclusive commit.
@@ -63,6 +68,8 @@ def convert_scanned_office(source, destination, *, language='fra+eng', dpi=200,
     fmt = destination.suffix.lower().lstrip('.')
     if fmt not in SUPPORTED_FORMATS:
         raise ValueError('Format Office invalide : docx, xlsx ou pptx')
+    if type(table_mode) is not bool or (table_mode and fmt != 'xlsx'):
+        raise ValueError('Mode tableaux OCR reserve au format XLSX')
     if source.is_symlink() or not source.is_file() or source.suffix.lower() != '.pdf':
         raise ValueError('Source PDF invalide ou lien symbolique interdit')
     if destination.is_symlink() or destination.exists():
@@ -113,10 +120,23 @@ def convert_scanned_office(source, destination, *, language='fra+eng', dpi=200,
                 require_editable_source(assess_office_source(pdf_for_office))
             verify_source_unchanged(source, original)
             office_stage = private / ('converted.' + fmt)
-            converted = convert_office(pdf_for_office, office_stage, output_format=fmt)
+            converted = convert_office(pdf_for_office, office_stage,
+                                       output_format=fmt, table_mode=table_mode)
             verify_source_unchanged(source, original)
             if converted.sha256 != _sha256(office_stage):
                 raise RuntimeError('Empreinte du document Office incoherente')
+            table_worksheets = 0
+            if table_mode:
+                # The production converter already verifies every extracted cell.
+                # Report table coverage, not a semantic OCR accuracy score.
+                from openpyxl import load_workbook
+                workbook = load_workbook(office_stage, read_only=True, data_only=False)
+                try:
+                    table_worksheets = len(workbook.sheetnames) - 1
+                    if table_worksheets < 1:
+                        raise RuntimeError('Aucune feuille de tableau OCR editable')
+                finally:
+                    workbook.close()
             fd, stage_name = tempfile.mkstemp(prefix='.openpdf-office-commit-',
                                                suffix='.' + fmt, dir=destination.parent)
             os.close(fd)
@@ -131,10 +151,13 @@ def convert_scanned_office(source, destination, *, language='fra+eng', dpi=200,
             warnings = tuple(converted.warnings) + (
                 ('OCR coverage is not recognition accuracy; Office layout is not preserved',)
                 if scanned else ('Office layout is not preserved',))
+            if table_mode:
+                warnings += ('OCR table geometry and values require human verification',)
             return OCROfficeOutcome(
                 'openpdf.ocr-office.v51.1', fmt, str(destination), preflight.page_count,
                 scanned, ocr_pages, recognized_characters, stage.stat().st_size,
-                converted.sha256, original.sha256, warnings)
+                converted.sha256, original.sha256, warnings,
+                table_mode=table_mode, table_worksheets=table_worksheets)
     finally:
         if stage is not None:
             stage.unlink(missing_ok=True)
@@ -147,10 +170,13 @@ def main(argv=None):
     parser.add_argument('--language', default='fra+eng')
     parser.add_argument('--dpi', type=int, default=200)
     parser.add_argument('--min-chars', type=int, default=1)
+    parser.add_argument('--editable-tables', action='store_true',
+                        help='Opt-in editable table worksheets for XLSX; may refuse ambiguous OCR')
     args = parser.parse_args(argv)
     outcome = convert_scanned_office(args.source, args.destination,
         language=args.language, dpi=args.dpi,
-        min_characters_per_scanned_page=args.min_chars)
+        min_characters_per_scanned_page=args.min_chars,
+        table_mode=args.editable_tables)
     print(json.dumps(outcome.to_dict(), ensure_ascii=False, indent=2))
     return 0
 

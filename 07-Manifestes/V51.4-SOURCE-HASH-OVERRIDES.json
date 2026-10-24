@@ -1,11 +1,11 @@
 {
   "author": "Abdelhalim Talbi",
-  "note": "V51.4 checked source overrides including pre-publication XLSX security/fidelity audit; immutable baselines preserved",
+  "note": "V531 updated GUI/dispatcher hashes after verified OCR + XLSX opt-in; immutable earlier baselines preserved",
   "schema": "openpdf-v51.4-source-hash-overrides-v1",
   "sha256": {
     "03-Sources/openpdf_office_roundtrip_v459.py": "1cd3305f151e9367c9113ccb7844e737e821eee36e068d990958f4c425a9f96e",
     "03-Sources/openpdf_conversion_service_v351.py": "1c2542db57e28f8ef4142d3a59cbf42a4a6dce795fd3cddd74ad9aae72a26271",
-    "03-Sources/openpdf_operations.py": "7c7731db66c698f3da166105e0ec1b11e138a084272ebd06f52c01e4250b55e5",
-    "03-Sources/openpdf_desktop.py": "6eea657a727998337fe7dc51c448c31ba2098d34e46125e27b0eb84070b00a2b"
+    "03-Sources/openpdf_operations.py": "3389abee1452298bb2be80427731f968b16ecc0cf1487779f2ee66d643df990d",
+    "03-Sources/openpdf_desktop.py": "516f225e15b48c24669fa21b426ac8f48357e045aaba60e7c03a37994aa5cefd"
   }
 }

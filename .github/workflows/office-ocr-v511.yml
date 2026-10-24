@@ -1,4 +1,4 @@
-name: V51.3 OCR to editable Office functional qualification
+name: V531 OCR to editable Office and Excel tables functional qualification
 on:
   pull_request:
     paths:
@@ -11,6 +11,7 @@ on:
       - '03-Sources/openpdf_workspace_v349.py'
       - '04-Tests-et-Qualification/test_ocr_office_gui_v512.py'
       - '04-Tests-et-Qualification/test_ocr_office_pipeline_v511.py'
+      - '04-Tests-et-Qualification/test_ocr_office_tables_v531.py'
       - '.github/workflows/office-ocr-v511.yml'
   workflow_dispatch:
 permissions:
@@ -37,6 +38,8 @@ jobs:
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_runtime_v513.py -v
       - name: V51.1 OCR to Office tests (OCR real when eng model is present)
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_office_pipeline_v511.py -v
+      - name: V531 scanned and mixed PDF to editable XLSX tables
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_office_tables_v531.py -v
       - name: V51.0 scan gate regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_office_scan_gate_v510.py -v
       - name: V51.3 GUI OCR Office opt-in and safety regression

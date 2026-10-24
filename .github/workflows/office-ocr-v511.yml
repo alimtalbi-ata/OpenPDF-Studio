@@ -44,17 +44,12 @@ jobs:
         run: |
           $models = Join-Path $env:RUNNER_TEMP 'openpdf-v534-tessdata'
           & ./02-Compilation/PREPARE-OCR-MODELS.ps1 -TargetDir $models
-          $siteModels = (python -c 'import fitz; print(fitz.get_tessdata())').Trim()
-          if ($LASTEXITCODE -ne 0 -or -not $siteModels) { throw 'PyMuPDF tessdata location missing' }
-          New-Item -ItemType Directory -Force -Path $siteModels | Out-Null
-          foreach ($lang in @('eng', 'fra')) {
-            $source = Join-Path $models ($lang + '.traineddata')
-            $target = Join-Path $siteModels ($lang + '.traineddata')
-            Copy-Item -LiteralPath $source -Destination $target -Force
-            if ((Get-FileHash $source -Algorithm SHA256).Hash -ne (Get-FileHash $target -Algorithm SHA256).Hash) {
-              throw "OCR model copy mismatch: $lang"
-            }
-          }
+          # PyMuPDF get_tessdata() fails on Windows without system Tesseract.
+          # Point it to the independently SHA-256 verified offline models.
+          $env:TESSDATA_PREFIX = $models
+          "TESSDATA_PREFIX=$models" >> $env:GITHUB_ENV
+          python -c "import fitz; print(fitz.get_tessdata())"
+          if ($LASTEXITCODE -ne 0) { throw 'PyMuPDF OCR data resolution failed' }
           python -c "import sys; sys.path.insert(0, '03-Sources'); from openpdf_ocr_language_preflight_v486 import preflight_ocr_languages; print(preflight_ocr_languages('eng'))"
           if ($LASTEXITCODE -ne 0) { throw 'English OCR not ready on Windows' }
       - name: V51.3 OCR model resolver and real engine

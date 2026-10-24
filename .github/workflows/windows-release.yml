@@ -106,6 +106,13 @@ jobs:
       - name: Build and qualify installer and portable
         shell: cmd
         run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd
+      - name: Print build and OCR smoke diagnostics on failure
+        if: failure()
+        shell: pwsh
+        run: |
+          Get-ChildItem '01-Application/binary' -Filter 'build-v*.log' -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "===== $($_.Name) ====="; Get-Content -LiteralPath $_.FullName -Tail 140 }
+          Get-ChildItem '01-Application/binary' -Filter 'failed-windows-smoke-*.json' -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "===== $($_.Name) ====="; Get-Content -LiteralPath $_.FullName }
+
       - name: Verify versioned release files and evidence
         shell: pwsh
         run: |

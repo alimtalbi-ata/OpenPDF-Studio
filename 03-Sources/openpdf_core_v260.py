@@ -108,6 +108,35 @@ def pdf_to_xlsx(source,output):
                 # Prevent spreadsheet formula execution when opening untrusted PDF text.
                 if line.startswith(('=','+','-','@')): line="'"+line
                 ws.append([page_num,line_num,line[:32767]])
+    # Export recognized PDF tables as real spreadsheet cells in additional sheets.
+    # Keep the original text inventory sheet for backward compatibility.
+    from openpyxl.utils import get_column_letter
+    with fitz.open(source) as doc:
+        table_index=0
+        for page_number,page in enumerate(doc,1):
+            if not hasattr(page,'find_tables'):
+                continue
+            try:
+                tables=page.find_tables()
+            except (ValueError, RuntimeError):
+                continue
+            for table in tables.tables:
+                cells=table.extract()
+                if not cells or not any(any(value is not None for value in row) for row in cells):
+                    continue
+                table_index+=1
+                sheet=wb.create_sheet(f'Tableau {table_index}')
+                sheet.append([f'Page PDF {page_number}'])
+                for row in cells:
+                    sheet.append([
+                        ("'"+value if value.startswith(('=','+','-','@')) else value)[:32767]
+                        if isinstance(value,str) else value
+                        for value in row
+                    ])
+                sheet.freeze_panes='A2'
+                for column in sheet.columns:
+                    letter=get_column_letter(column[0].column)
+                    sheet.column_dimensions[letter].width=min(55,max(12,max(len(str(cell.value or '')) for cell in column)+2))
     output.parent.mkdir(parents=True,exist_ok=True); wb.save(output)
     return [output]
 

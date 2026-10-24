@@ -86,6 +86,7 @@ jobs:
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_ocr_diagnostics_v447.py' -v
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_tessdata_discovery_v448.py' -v
           python -m unittest discover -s 04-Tests-et-Qualification -p 'test_docx_embedded_images_v449.py' -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p 'test_xlsx_pdf_tables_v450.py' -v
       - name: Build and qualify installer and portable
         shell: cmd
         run: call 02-Compilation\BUILD-WINDOWS-INSTALLER.cmd

@@ -77,6 +77,28 @@ def run():
             with ZipFile(target) as archive:
                 media=[name for name in archive.namelist() if name.startswith("word/media/")]
                 assert media,"DOCX lost the PDF embedded image"
+        # Real bordered table: ensure PDF cell geometry becomes editable Excel cells.
+        with tempfile.TemporaryDirectory(prefix="openpdf-table-smoke-") as tmp:
+            root=Path(tmp); source=root/"table-source.pdf"; target=root/"table-output.xlsx"
+            with fitz.open() as d:
+                p=d.new_page(width=595,height=842)
+                xs=(60,250,440); ys=(100,145,190,235)
+                for x in xs: p.draw_line((x,ys[0]),(x,ys[-1]),color=(0,0,0),width=1)
+                for y in ys: p.draw_line((xs[0],y),(xs[-1],y),color=(0,0,0),width=1)
+                for i,row in enumerate((("Produit","Montant"),("Stockage","125"),("Sauvegarde","75"))):
+                    for j,value in enumerate(row): p.insert_text((xs[j]+10,ys[i]+28),value,fontsize=12)
+                d.save(source)
+            pdf_to_xlsx(source,target)
+            workbook=load_workbook(target,read_only=True,data_only=True)
+            try:
+                tables=[workbook[name] for name in workbook.sheetnames if name.startswith("Tableau ")]
+                assert tables,"No structured Excel table detected from bordered PDF"
+                values=[[str(cell or "").strip() for cell in row] for sheet in tables for row in sheet.iter_rows(values_only=True)]
+                assert any(row[:2]==["Produit","Montant"] for row in values),repr(values)
+                assert any(row[:2]==["Stockage","125"] for row in values),repr(values)
+                assert any(row[:2]==["Sauvegarde","75"] for row in values),repr(values)
+            finally:
+                workbook.close()
         print("OPENPDF_FUNCTIONAL_TEST_OK")
         return 0
     except Exception as exc:

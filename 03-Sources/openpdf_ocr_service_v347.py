@@ -129,14 +129,14 @@ def searchable_pdf(source, destination, language='fra+eng', dpi=200, skip_text=T
                     elif deskew_angle_degrees:
                         deskew_pages.append((i + 1, applied_angle, 'manual'))
                     if applied_angle:
-                        # Pillow is already an explicit Windows build dependency.
-                        # Keep the original raster canvas dimensions and resolution;
-                        # white fill avoids artificial black OCR margins.
+                        # V536: preserve page-edge pixels during rotation.
+                        # Uniformly fit the expanded raster onto the original
+                        # canvas; do not silently clip corners or stretch text.
                         from PIL import Image
+                        from openpdf_ocr_canvas_v536 import rotate_ocr_canvas
                         import io
                         bitmap = Image.frombytes('RGB', (pix.width, pix.height), pix.samples)
-                        corrected = bitmap.rotate(applied_angle,
-                            resample=Image.Resampling.BICUBIC, expand=False, fillcolor='white')
+                        corrected = rotate_ocr_canvas(bitmap, applied_angle)
                         buffer = io.BytesIO()
                         corrected.save(buffer, format='PNG')
                         pix = fitz.Pixmap(buffer.getvalue())

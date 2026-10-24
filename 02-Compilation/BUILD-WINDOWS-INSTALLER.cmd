@@ -35,11 +35,13 @@ set "VPY=%CD%\.venv\Scripts\python.exe"
 "%VPY%" openpdf_build_preflight.py >> "%LOG%" 2>&1 || goto fail
 "%VPY%" -m unittest test_openpdf_v402 test_openpdf_v385 test_openpdf_v384 >> "%LOG%" 2>&1 || goto fail
 if /I "%MODE%"=="portable" goto portable
-rem Include locally installed OCR language data when available, without downloading it.
-set "OCR_DATA_ARG="
-if exist "%ProgramFiles%\Tesseract-OCR\tessdata\eng.traineddata" set "OCR_DATA_ARG=--add-data ^"%ProgramFiles%\Tesseract-OCR\tessdata;tessdata^""
-if not defined OCR_DATA_ARG if exist "%ProgramFiles(x86)%\Tesseract-OCR\tessdata\eng.traineddata" set "OCR_DATA_ARG=--add-data ^"%ProgramFiles(x86)%\Tesseract-OCR\tessdata;tessdata^""
-"%VPY%" -m PyInstaller --noconfirm --clean --windowed --onedir --name OpenPDF-Studio --collect-all fitz --collect-all pymupdf --hidden-import tkinter --add-data "..\VERSION.txt;." %OCR_DATA_ARG% openpdf_studio.py >> "%LOG%" 2>&1 || goto fail
+rem Stage OCR models in a short relative path; avoid CMD quoting issues with Program Files.
+set "OCR_STAGE=%CD%\ocr-models"
+if not exist "%OCR_STAGE%" mkdir "%OCR_STAGE%" || goto fail
+echo Optional offline OCR models > "%OCR_STAGE%\README.txt"
+if exist "%ProgramFiles%\Tesseract-OCR\tessdata\eng.traineddata" copy /y "%ProgramFiles%\Tesseract-OCR\tessdata\*.traineddata" "%OCR_STAGE%\" >nul || goto fail
+if not exist "%OCR_STAGE%\eng.traineddata" if exist "%ProgramFiles(x86)%\Tesseract-OCR\tessdata\eng.traineddata" copy /y "%ProgramFiles(x86)%\Tesseract-OCR\tessdata\*.traineddata" "%OCR_STAGE%\" >nul || goto fail
+"%VPY%" -m PyInstaller --noconfirm --clean --windowed --onedir --name OpenPDF-Studio --collect-all fitz --collect-all pymupdf --hidden-import tkinter --add-data "..\VERSION.txt;." --add-data "ocr-models;tessdata" openpdf_studio.py >> "%LOG%" 2>&1 || goto fail
 if not exist "dist\OpenPDF-Studio\OpenPDF-Studio.exe" goto fail
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0TEST-WINDOWS-BINARIES.ps1" -Mode installer -SourceDir "%CD%" -ReportPath "%STAGE%\windows-smoke-installer.json" >> "%LOG%" 2>&1 || goto fail
 set "ISCC=%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe"
@@ -60,7 +62,7 @@ for %%F in ("%STAGE%\OpenPDF-Studio-V%VERSION%-Setup.exe") do if %%~zF LEQ 0 got
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0TEST-WINDOWS-INSTALLATION.ps1" -SetupExe "%STAGE%\OpenPDF-Studio-V%VERSION%-Setup.exe" -ReportPath "%STAGE%\windows-installation-v%VERSION%.json" >> "%LOG%" 2>&1 || goto fail
 if /I "%MODE%"=="installer" goto publish
 :portable
-"%VPY%" -m PyInstaller --noconfirm --clean --windowed --onefile --name OpenPDF-Studio-Portable-V%VERSION% --collect-all fitz --collect-all pymupdf --hidden-import tkinter --add-data "..\VERSION.txt;." --distpath "%STAGE%" openpdf_studio.py >> "%LOG%" 2>&1 || goto fail
+"%VPY%" -m PyInstaller --noconfirm --clean --windowed --onefile --name OpenPDF-Studio-Portable-V%VERSION% --collect-all fitz --collect-all pymupdf --hidden-import tkinter --add-data "..\VERSION.txt;." --distpath "%STAGE%" --add-data "ocr-models;tessdata" openpdf_studio.py >> "%LOG%" 2>&1 || goto fail
 if not exist "%STAGE%\OpenPDF-Studio-Portable-V%VERSION%.exe" goto fail
 for %%F in ("%STAGE%\OpenPDF-Studio-Portable-V%VERSION%.exe") do if %%~zF LEQ 0 goto fail
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0TEST-WINDOWS-BINARIES.ps1" -Mode portable -SourceDir "%CD%" -ReportPath "%STAGE%\windows-smoke-portable.json" >> "%LOG%" 2>&1 || goto fail

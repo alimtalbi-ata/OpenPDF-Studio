@@ -28,6 +28,7 @@ on:
       - '04-Tests-et-Qualification/test_xlsx_staggered_order_v526.py'
       - '04-Tests-et-Qualification/test_xlsx_case_quality_v527.py'
       - '04-Tests-et-Qualification/test_xlsx_evidence_binding_v528.py'
+      - '04-Tests-et-Qualification/test_xlsx_ghost_cells_v529.py'
       - '04-Tests-et-Qualification/test_source_reconciliation_v503.py'
       - '07-Manifestes/V51.4-SOURCE-HASH-OVERRIDES.json'
       - '.github/workflows/xlsx-tables-v514.yml'
@@ -81,6 +82,8 @@ jobs:
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_xlsx_case_quality_v527.py -v
       - name: V528 independent SHA-256 evidence binding and case cell/merge fidelity floors
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_xlsx_evidence_binding_v528.py -v
+      - name: V529 reject phantom cells and hidden tables in real PDF to XLSX
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_xlsx_ghost_cells_v529.py -v
       - name: V51.4 GUI routing and safety regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_xlsx_gui_v514.py -v
       - name: V51.0 Office scan preflight regression

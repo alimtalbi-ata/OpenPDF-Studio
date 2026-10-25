@@ -111,6 +111,21 @@ class SourceReconciliationV503Tests(unittest.TestCase):
         self.assertTrue(report["passed"], report["checks"])
         self.assertTrue(report["checks"]["build_references_inno"])
 
+    def test_v547_cumulative_zip_uses_only_qualified_windows_artifacts(self):
+        workflow = (ROOT / ".github/workflows/source-closure-v502.yml").read_text(encoding="utf-8")
+        self.assertIn("windows-cumulative-package:", workflow)
+        self.assertIn("needs: [source-readiness, windows-portable-build, windows-installer-build]", workflow)
+        for contract in (
+            "v514-windows-portable-build-evidence",
+            "v514-windows-installer-build-evidence",
+            "package_cumulative_v434.py --verify",
+            "Get-FileHash -LiteralPath $zip -Algorithm SHA256",
+            "OpenPDF-Studio-V",
+            "actions/upload-artifact@v4",
+        ):
+            with self.subTest(contract=contract):
+                self.assertIn(contract, workflow)
+
     def test_ci_has_native_windows_job_and_preserves_evidence(self):
         workflow = (ROOT / ".github/workflows/source-closure-v502.yml").read_text(encoding="utf-8")
         self.assertIn("windows-portable-build:", workflow)

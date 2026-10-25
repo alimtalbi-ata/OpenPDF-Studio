@@ -19,7 +19,7 @@ Le dispatcher et le service de pages normalisaient certains chemins via `Path.re
 
 ## Qualification attendue
 
-Le workflow `.github/workflows/page-order-v497.yml` compile les modules modifiés et exécute les tests V547 avec les régressions réelles de réorganisation et d'exclusion. La qualification globale de source/réconciliation et les campagnes Windows s'exécutent dans leurs workflows séparés. Les statuts doivent être lus dans GitHub Actions après chaque commit ; ce document ne transforme pas un test planifié en test réussi.
+Le workflow `.github/workflows/page-order-v497.yml` compile les modules modifiés et exécute les tests V547 avec les régressions réelles de réorganisation et d'exclusion. Le workflow `.github/workflows/source-closure-v502.yml` inclut aussi une étape `windows-cumulative-package` qui réassemble le portable et l'installateur depuis leurs artefacts de qualification Windows natifs, régénère le manifeste binaire combiné et le guide Word/PDF, produit le ZIP cumulatif puis vérifie l'inventaire, les CRC, les reçus et le SHA-256 avant d'exposer l'artefact CI. Les statuts doivent être lus dans GitHub Actions après chaque commit ; ce document ne transforme pas un test planifié en test réussi.
 
 ## Limites
 

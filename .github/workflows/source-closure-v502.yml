@@ -175,3 +175,81 @@ jobs:
             01-Application/binary/*.json
             01-Application/binary/*Setup.exe
           if-no-files-found: warn
+
+  windows-cumulative-package:
+    name: Assemble and verify cumulative ZIP from qualified Windows artifacts
+    needs: [source-readiness, windows-portable-build, windows-installer-build]
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download portable Windows build evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: v514-windows-portable-build-evidence
+          path: ${{ runner.temp }}/v547-portable
+      - name: Download installer Windows build evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: v514-windows-installer-build-evidence
+          path: ${{ runner.temp }}/v547-installer
+      - name: Assemble exact binaries and their native receipts
+        shell: pwsh
+        run: |
+          $version = (Get-Content -LiteralPath VERSION.txt -Raw).Trim()
+          if ($version -ne '51.4') { throw "Unexpected application version: $version" }
+          "OPENPDF_VERSION=$version" >> $env:GITHUB_ENV
+          $binary = Join-Path $env:GITHUB_WORKSPACE '01-Application/binary'
+          if (Test-Path -LiteralPath $binary) { Remove-Item -LiteralPath $binary -Recurse -Force }
+          New-Item -ItemType Directory -Path $binary -Force | Out-Null
+          $portable = Join-Path $env:RUNNER_TEMP 'v547-portable'
+          $installer = Join-Path $env:RUNNER_TEMP 'v547-installer'
+          $copy = @(
+            @{ From = (Join-Path $portable "OpenPDF-Studio-Portable-V$version.exe"); Name = "OpenPDF-Studio-Portable-V$version.exe" },
+            @{ From = (Join-Path $portable 'windows-smoke-portable.json'); Name = 'windows-smoke-portable.json' },
+            @{ From = (Join-Path $installer "OpenPDF-Studio-V$version-Setup.exe"); Name = "OpenPDF-Studio-V$version-Setup.exe" },
+            @{ From = (Join-Path $installer 'windows-smoke-installer.json'); Name = 'windows-smoke-installer.json' },
+            @{ From = (Join-Path $installer "windows-installation-v$version.json"); Name = "windows-installation-v$version.json" }
+          )
+          foreach ($item in $copy) {
+            if (-not (Test-Path -LiteralPath $item.From -PathType Leaf)) { throw "Required qualified evidence missing: $($item.Name)" }
+            Copy-Item -LiteralPath $item.From -Destination (Join-Path $binary $item.Name)
+          }
+      - name: Rebuild combined binary manifest and generate versioned Word/PDF guide
+        shell: pwsh
+        run: |
+          py -3.12 03-Sources/openpdf_binary_manifest.py 01-Application/binary
+          if ($LASTEXITCODE -ne 0) { throw 'Combined binary manifest generation failed' }
+          py -3.12 -m pip install "python-docx>=1.1,<2" "reportlab>=4,<5" "pypdf>=5,<7"
+          if ($LASTEXITCODE -ne 0) { throw 'Documentation dependencies failed to install' }
+          py -3.12 02-Compilation/generate_release_docs.py
+          if ($LASTEXITCODE -ne 0) { throw 'Versioned Word/PDF generation failed' }
+      - name: Build the cumulative ZIP and verify CRC, inventory and binary receipts
+        shell: pwsh
+        run: |
+          $version = $env:OPENPDF_VERSION
+          $zip = Join-Path $env:GITHUB_WORKSPACE "01-Application/release/OpenPDF Studio V$version --- Windows Cumulative.zip"
+          py -3.12 02-Compilation/package_cumulative_v434.py --root . --commit $env:GITHUB_SHA
+          if ($LASTEXITCODE -ne 0) { throw 'Cumulative ZIP creation failed' }
+          if (-not (Test-Path -LiteralPath $zip -PathType Leaf)) { throw 'Cumulative ZIP missing' }
+          $resultText = py -3.12 02-Compilation/package_cumulative_v434.py --verify $zip
+          if ($LASTEXITCODE -ne 0) { throw 'Cumulative ZIP verification failed' }
+          $result = ($resultText -join [Environment]::NewLine) | ConvertFrom-Json
+          if ($result.verified_files -lt 100 -or $result.archive_bytes -le 0) { throw 'Incomplete archive verification receipt' }
+          $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne $result.archive_sha256) { throw 'ZIP SHA-256 differs from internal verification receipt' }
+          "$hash  $(Split-Path -Leaf $zip)" | Set-Content -LiteralPath "$zip.sha256" -Encoding ascii
+          $resultText | Set-Content -LiteralPath 'cumulative-package-verification.json' -Encoding utf8
+      - name: Upload verified cumulative ZIP, SHA-256 and qualification receipt
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenPDF-Studio-V${{ env.OPENPDF_VERSION }}-V547-Cumulative-Windows
+          path: |
+            01-Application/release/*.zip
+            01-Application/release/*.zip.sha256
+            cumulative-package-verification.json
+          if-no-files-found: error

@@ -85,10 +85,10 @@ def run():
             root=Path(tmp); source=root/"table-source.pdf"; target=root/"table-output.xlsx"
             with fitz.open() as d:
                 p=d.new_page(width=595,height=842)
-                xs=(60,250,440); ys=(100,145,190,235)
+                xs=(60,250,440); ys=(100,145,190,235,280)
                 for x in xs: p.draw_line((x,ys[0]),(x,ys[-1]),color=(0,0,0),width=1)
                 for y in ys: p.draw_line((xs[0],y),(xs[-1],y),color=(0,0,0),width=1)
-                for i,row in enumerate((("Produit","Montant"),("Stockage","125"),("Sauvegarde","75"))):
+                for i,row in enumerate((("Produit","Montant"),("Stockage","125"),("Sauvegarde","75"),("Texte externe",'=HYPERLINK("https://example.invalid","ouvrir")'))):
                     for j,value in enumerate(row): p.insert_text((xs[j]+10,ys[i]+28),value,fontsize=12)
                 d.save(source)
             pdf_to_xlsx(source,target)
@@ -100,6 +100,7 @@ def run():
                 assert any(row[:2]==["Produit","Montant"] for row in values),repr(values)
                 assert any(row[:2]==["Stockage","125"] for row in values),repr(values)
                 assert any(row[:2]==["Sauvegarde","75"] for row in values),repr(values)
+                assert any(row[:2]==["Texte externe",'\'=HYPERLINK("https://example.invalid","ouvrir")'] for row in values),repr(values)
             finally:
                 workbook.close()
         # Validate rotation parameters at the desktop UI boundary, not only in the PDF engine.

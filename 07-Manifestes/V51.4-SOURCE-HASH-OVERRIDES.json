@@ -1,12 +1,12 @@
 {
   "author": "Abdelhalim Talbi",
-  "note": "V546: expose controlled/adaptive compression profiles, gate lossy use with consent and source preview, route verified auto-selection, and report measured size/quality. Hashes pin exact UTF-8/LF source.",
+  "note": "V546: expose controlled/adaptive compression profiles, hide inactive quality controls in auto mode, gate lossy use with consent and source preview, route verified auto-selection, and report measured size/quality. Hashes pin exact UTF-8/LF source.",
   "schema": "openpdf-v51.4-source-hash-overrides-v1",
   "sha256": {
     "03-Sources/openpdf_auto_compression_v505.py": "329587aa9a24858b039908f16a5bb223ce4e53499d2870938d428e1fce88526d",
     "03-Sources/openpdf_compression_acceptance_v489.py": "f83890cdccefe28791b6a27030f2a7c048d97798307b11417a1c292b75d0f468",
     "03-Sources/openpdf_conversion_service_v351.py": "1c2542db57e28f8ef4142d3a59cbf42a4a6dce795fd3cddd74ad9aae72a26271",
-    "03-Sources/openpdf_desktop.py": "eb9c5c9477e930df840392b77fad12b14d5fe884eac6edd67bdab106db2560c6",
+    "03-Sources/openpdf_desktop.py": "8f3aced132c854932db4e66f9b3499f6940a67fdb7e71a4d00d4e8dbd8d8b5b4",
     "03-Sources/openpdf_ocr_service_v347.py": "5615270991cf741ea330bdb698fc3f40a2fc52f7ab8a6ceb3447a66817fc81a8",
     "03-Sources/openpdf_office_precision_order_ui_v544.py": "c6139b0c5318aa1dfc97ebee9a70cafc0e374be2119da8c2e21393c1974bf3dd",
     "03-Sources/openpdf_office_reference_v542.py": "480fc4421bcc8970d9473fa801b00c0dc9e0029966db2d61386818a9f5057bba",

@@ -99,6 +99,17 @@ def run():
                 assert any(row[:2]==["Sauvegarde","75"] for row in values),repr(values)
             finally:
                 workbook.close()
+        # Validate rotation parameters at the desktop UI boundary, not only in the PDF engine.
+        from openpdf_desktop import validate_page_options
+        for valid_angle in ('90','180','270'):
+            assert validate_page_options('rotation',order=valid_angle) is True
+        for invalid_angle in ('0','45','360','abc',''):
+            try:
+                validate_page_options('rotation',order=invalid_angle)
+            except ValueError:
+                pass
+            else:
+                raise AssertionError(f"UI accepted invalid rotation angle: {invalid_angle!r}")
         # Exercise the same public dispatcher used by the GUI, for all rotation angles.
         from openpdf_operations import run_operation
         with tempfile.TemporaryDirectory(prefix="openpdf-rotation-smoke-") as tmp:

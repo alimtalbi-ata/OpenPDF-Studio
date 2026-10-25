@@ -164,6 +164,7 @@ class OpenPDFStudio(tk.Tk):
         self.operation.trace_add('write',lambda *_:self._on_operation_changed())
         self.recover_button=ttk.Button(footer,text='Récupérer',command=self._recover_dialog);self.recover_button.pack(side='left',pady=4)
         self.audit_button=ttk.Button(footer,text='Audit',command=self._audit_dialog);self.audit_button.pack(side='left',padx=5,pady=4)
+        self.ocr_quality_button=ttk.Button(footer,text='Qualité OCR',command=self._ocr_quality_dialog);self.ocr_quality_button.pack(side='left',padx=5,pady=4)
         self._form_canvas=canvas
         bind_wheel(left)
         ttk.Label(right,text='Aperçu du document',font=('Segoe UI',12,'bold')).pack(anchor='w')
@@ -187,7 +188,7 @@ class OpenPDFStudio(tk.Tk):
     def _set_busy(self, busy):
         self.busy=busy
         state='disabled' if busy else 'normal'
-        for widget in (self.go,self.add_button,self.remove_button,self.browse_button,self.recover_button,self.audit_button,self.destination_shortcut,self.ocr_office_check,self.xlsx_tables_check,*self.operation_buttons):
+        for widget in (self.go,self.add_button,self.remove_button,self.browse_button,self.recover_button,self.audit_button,self.ocr_quality_button,self.destination_shortcut,self.ocr_office_check,self.xlsx_tables_check,*self.operation_buttons):
             widget.configure(state=state)
         self.files.configure(state=state)
 
@@ -242,6 +243,101 @@ class OpenPDFStudio(tk.Tk):
         ttk.Button(buttons,text='Exporter',command=export).pack(side='left',padx=(0,8))
         ttk.Button(buttons,text='Vérifier',command=verify).pack(side='left')
         ttk.Label(frame,text='Activation limitée à la session. SHA-256 ne prouve pas l’authenticité.',wraplength=460).pack(anchor='w',pady=8)
+
+    def _ocr_quality_dialog(self):
+        """Opt-in OCR corpus quality check; never show extracted text or source names."""
+        if self.busy:
+            return
+        from openpdf_ocr_quality_ui_v541 import (safe_receipt,
+            format_ocr_quality_summary, serialize_ocr_quality_receipt)
+        window = tk.Toplevel(self)
+        window.title('Qualité OCR — références indépendantes')
+        window.geometry('620x440')
+        window.transient(self)
+        frame = ttk.Frame(window, padding=16); frame.pack(fill='both', expand=True)
+        ttk.Label(frame, text='Qualification OCR sur corpus annoté',
+                  font=('Segoe UI', 13, 'bold')).pack(anchor='w')
+        ttk.Label(frame, text=('Compare la couche texte des PDF à des références locales. '
+                  'Ne mesure ni la fidélité visuelle ni la qualité des conversions Office.'),
+                  wraplength=570).pack(anchor='w', pady=8)
+        manifest = tk.StringVar()
+        selection = ttk.Frame(frame); selection.pack(fill='x', pady=6)
+        ttk.Entry(selection, textvariable=manifest).pack(side='left', fill='x', expand=True)
+        def browse():
+            selected = filedialog.askopenfilename(parent=window,
+                title='Manifeste du corpus OCR', filetypes=[('JSON', '*.json')])
+            if selected:
+                manifest.set(selected)
+        browse_button = ttk.Button(selection, text='Manifeste…', command=browse)
+        browse_button.pack(side='left', padx=6)
+        output = tk.Text(frame, height=12, wrap='word', state='disabled')
+        output.pack(fill='both', expand=True, pady=8)
+        actions = ttk.Frame(frame); actions.pack(fill='x')
+        result_holder = {'report': None}
+        replies = queue.Queue()
+        def show(message):
+            output.configure(state='normal')
+            output.delete('1.0', 'end')
+            output.insert('end', message)
+            output.configure(state='disabled')
+        def export():
+            report = result_holder['report']
+            if report is None:
+                return
+            destination = filedialog.asksaveasfilename(parent=window,
+                title='Exporter le reçu de qualification', defaultextension='.json',
+                filetypes=[('JSON', '*.json')])
+            if not destination:
+                return
+            try:
+                # Exclusive create: no overwrite, including pre-existing symlinks.
+                with Path(destination).open('x', encoding='utf-8') as stream:
+                    stream.write(serialize_ocr_quality_receipt(report))
+                messagebox.showinfo('Qualité OCR', 'Reçu JSON enregistré sans contenu PDF.', parent=window)
+            except (ValueError, OSError):
+                messagebox.showerror('Export refusé',
+                    'Destination déjà existante ou non accessible.', parent=window)
+        export_button = ttk.Button(actions, text='Exporter le reçu', command=export,
+                                   state='disabled')
+        export_button.pack(side='right')
+        def poll():
+            if not window.winfo_exists():
+                return
+            try:
+                status, payload = replies.get_nowait()
+            except queue.Empty:
+                window.after(100, poll)
+                return
+            browse_button.configure(state='normal')
+            run_button.configure(state='normal')
+            if status == 'success':
+                result_holder['report'] = payload
+                show(format_ocr_quality_summary(payload))
+                export_button.configure(state='normal')
+            else:
+                show('Qualification impossible : preuve invalide, illisible ou incomplète. '
+                     'Consultez le manifeste local. Aucun texte PDF affiché.')
+        def run():
+            selected = manifest.get().strip()
+            if not selected:
+                messagebox.showwarning('Qualité OCR', 'Choisissez un manifeste JSON.', parent=window)
+                return
+            result_holder['report'] = None
+            export_button.configure(state='disabled')
+            run_button.configure(state='disabled')
+            browse_button.configure(state='disabled')
+            show('Analyse locale en cours…')
+            def worker():
+                try:
+                    from openpdf_ocr_reference_corpus_v539 import evaluate_ocr_reference_corpus
+                    result = safe_receipt(evaluate_ocr_reference_corpus(selected))
+                    replies.put(('success', result))
+                except (ValueError, OSError, RuntimeError, TypeError, ImportError):
+                    replies.put(('error', None))
+            threading.Thread(target=worker, daemon=True).start()
+            window.after(100, poll)
+        run_button = ttk.Button(actions, text='Analyser', command=run)
+        run_button.pack(side='left')
 
     def _recover_dialog(self):
         folder=filedialog.askdirectory(parent=self,title="Dossier à récupérer")

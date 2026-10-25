@@ -15,7 +15,7 @@ def inspect_release(root):
       "entrypoint_exists": (sources/"openpdf_studio.py").is_file(),
       "desktop_exists": (sources/"openpdf_desktop.py").is_file(),
       "inno_exists": iss.is_file(),
-      "build_references_inno": f"OpenPDF-Studio-V{VERSION}.iss" in script,
+      "build_references_inno": "OpenPDF-Studio-V%VERSION%.iss" in script,
       "smoke_script_exists": (root/"02-Compilation"/"TEST-WINDOWS-BINARIES.ps1").is_file(),
       "smoke_both_modes": "-Mode installer" in script and "-Mode portable" in script,
       "build_portable": "--onefile" in script,

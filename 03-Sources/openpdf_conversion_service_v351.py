@@ -4,6 +4,7 @@ import hashlib
 from dataclasses import dataclass
 from openpdf_conversion_controller_v309 import ConversionController
 from openpdf_conversion_audit_v346 import audit_conversion
+from openpdf_atomic_output import publish_exclusive
 
 SUPPORTED_FORMATS = ('docx', 'xlsx', 'pptx')
 
@@ -33,6 +34,9 @@ def convert_office(source, destination, *, output_format=None):
     validate_output([source.resolve()], destination.resolve())
     if destination.exists():
         raise FileExistsError(f'Destination existante : {destination}')
+    # Source identity is captured before conversion and checked immediately
+    # before publication to avoid releasing a result from a changed PDF.
+    source_identity = (source.stat().st_size, source.stat().st_mtime_ns, source.stat().st_ino)
     fd, tmp_name = tempfile.mkstemp(prefix='.openpdf-office-', suffix='.' + fmt, dir=destination.parent)
     os.close(fd)
     temporary = Path(tmp_name)
@@ -48,19 +52,10 @@ def convert_office(source, destination, *, output_format=None):
             actual_sha256 = hashlib.file_digest(digest_stream, 'sha256').hexdigest()
         if audit.sha256.lower() != actual_sha256:
             raise RuntimeError('Empreinte de conversion incoherente : sortie non publiee')
-        # Flush converted bytes before exposing the result to another process.
-        with temporary.open('rb') as stream:
-            import os
-            os.fsync(stream.fileno())
-        # Atomic exclusive publication on local filesystems supporting hard links.
-        # Unlike os.replace, this never silently overwrites an existing document.
-        # The temporary file lives beside the destination (same filesystem).
-        try:
-            os.link(temporary, destination)
-        except FileExistsError:
-            raise FileExistsError(f'Destination apparue pendant la conversion : {destination}')
-        except OSError as exc:
-            raise OSError('Publication exclusive indisponible sur ce volume ; aucune sortie publiee') from exc
+        current_identity = (source.stat().st_size, source.stat().st_mtime_ns, source.stat().st_ino)
+        if current_identity != source_identity:
+            raise RuntimeError('Source PDF modifiee pendant la conversion : sortie non publiee')
+        publish_exclusive(temporary, destination)
         return ConversionOutcome(str(destination), fmt, size, actual_sha256, audit.warnings)
     finally:
         temporary.unlink(missing_ok=True)

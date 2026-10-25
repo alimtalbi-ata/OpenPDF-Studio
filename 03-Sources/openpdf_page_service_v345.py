@@ -5,6 +5,7 @@ import hashlib
 import os
 import tempfile
 import fitz
+from openpdf_atomic_output import publish_exclusive
 
 @dataclass(frozen=True)
 class PageReceipt:
@@ -28,9 +29,10 @@ def _target(path,sources):
     p=Path(path).resolve()
     if p.suffix.lower()!='.pdf' or p in sources:raise ValueError('Destination PDF invalide ou source écrasée')
     if not p.parent.is_dir():raise ValueError('Dossier de destination inexistant')
+    if p.exists():raise FileExistsError(f'Destination existante : {p}')
     return p
 
-def _publish(destination,writer):
+def _publish(destination,writer,expected_pages=None,pre_publish=None):
     fd,tmp=tempfile.mkstemp(prefix='.openpdf-pages-',suffix='.pdf',dir=destination.parent)
     os.close(fd)
     try:
@@ -38,15 +40,29 @@ def _publish(destination,writer):
         with fitz.open(tmp) as check:
             if check.page_count<1 or check.needs_pass:raise ValueError('PDF produit invalide')
             pages=check.page_count
-        os.replace(tmp,destination)
-        return str(destination),pages,_digest(destination)
+            if expected_pages is not None and pages != expected_pages:
+                raise ValueError(f'Nombre de pages inattendu : {pages} au lieu de {expected_pages}')
+        digest = _digest(tmp)
+        if pre_publish is not None:pre_publish()
+        publish_exclusive(tmp, destination)
+        return str(destination),pages,digest
     finally:
         if os.path.exists(tmp):os.unlink(tmp)
+
+def _source_identity(path):
+    stat=Path(path).stat()
+    return (stat.st_size,stat.st_mtime_ns,stat.st_ino)
 
 def merge(sources,destination):
     paths=[_source(p) for p in sources]
     if not paths:raise ValueError('Aucune source')
     dest=_target(destination,set(paths))
+    identities={path:_source_identity(path) for path in paths}
+    expected=0
+    for path in paths:
+        with fitz.open(path) as document:
+            if document.needs_pass or document.page_count==0:raise ValueError('PDF source vide ou protégé')
+            expected+=document.page_count
     def writer(tmp):
         with fitz.open() as result:
             for path in paths:
@@ -54,11 +70,16 @@ def merge(sources,destination):
                     if doc.needs_pass or doc.page_count==0:raise ValueError('PDF source vide ou protégé')
                     result.insert_pdf(doc)
             result.save(tmp,garbage=3,deflate=True)
-    p,n,h=_publish(dest,writer)
+    def verify_sources():
+        for path,identity in identities.items():
+            if _source_identity(path)!=identity:
+                raise RuntimeError('Source modifiée pendant la fusion : sortie rejetée')
+    p,n,h=_publish(dest,writer,expected_pages=expected,pre_publish=verify_sources)
     return PageReceipt('merge',(p,),(n,),(h,))
 
 def extract(source,destination,first,last):
     src=_source(source);dest=_target(destination,{src})
+    identity=_source_identity(src)
     if not isinstance(first,int) or isinstance(first,bool) or not isinstance(last,int) or isinstance(last,bool) or first<1 or last<first:raise ValueError('Plage invalide')
     def writer(tmp):
         with fitz.open(src) as doc:
@@ -66,11 +87,15 @@ def extract(source,destination,first,last):
             with fitz.open() as out:
                 out.insert_pdf(doc,from_page=first-1,to_page=last-1)
                 out.save(tmp,garbage=3,deflate=True)
-    p,n,h=_publish(dest,writer)
+    def verify_source():
+        if _source_identity(src)!=identity:
+            raise RuntimeError('Source modifiée pendant extraction : sortie rejetée')
+    p,n,h=_publish(dest,writer,expected_pages=last-first+1,pre_publish=verify_source)
     return PageReceipt('extract',(p,),(n,),(h,))
 
 def reorder(source,destination,indices):
     src=_source(source);dest=_target(destination,{src})
+    identity=_source_identity(src)
     if not isinstance(indices,(list,tuple)) or not indices or any(not isinstance(i,int) or isinstance(i,bool) for i in indices):raise ValueError('Ordre invalide')
     def writer(tmp):
         with fitz.open(src) as doc:
@@ -78,7 +103,10 @@ def reorder(source,destination,indices):
             with fitz.open() as out:
                 for i in indices:out.insert_pdf(doc,from_page=i-1,to_page=i-1)
                 out.save(tmp,garbage=3,deflate=True)
-    p,n,h=_publish(dest,writer)
+    def verify_source():
+        if _source_identity(src)!=identity:
+            raise RuntimeError('Source modifiée pendant réorganisation : sortie rejetée')
+    p,n,h=_publish(dest,writer,expected_pages=len(indices),pre_publish=verify_source)
     return PageReceipt('reorder',(p,),(n,),(h,))
 
 def split(source,folder,chunk_size=1):
@@ -97,7 +125,14 @@ def split(source,folder,chunk_size=1):
             receipt=extract(src,target,i+1,min(i+chunk_size,n))
             published.append(receipt)
     except BaseException:
+        # Rollback is best effort: a matching digest reduces accidental removal,
+        # but cannot prevent a concurrent replacement between hash and unlink.
         for receipt in published:
-            Path(receipt.outputs[0]).unlink(missing_ok=True)
+            output = Path(receipt.outputs[0])
+            try:
+                if output.is_file() and _digest(output) == receipt.sha256[0]:
+                    output.unlink()
+            except OSError:
+                pass
         raise
     return PageReceipt('split',tuple(x.outputs[0] for x in published),tuple(x.page_counts[0] for x in published),tuple(x.sha256[0] for x in published))

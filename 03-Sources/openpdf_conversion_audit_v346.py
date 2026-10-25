@@ -38,6 +38,12 @@ def audit_conversion(source,destination):
         raise ValueError('Fichier Office non valide (conteneur ZIP absent)')
     marker={'.docx':'word/document.xml','.xlsx':'xl/workbook.xml','.pptx':'ppt/presentation.xml'}[ext]
     with zipfile.ZipFile(destination) as z:
+        members=z.infolist()
+        # Refuse pathological Office archives before decompressing any entry.
+        if len(members)>10000 or sum(m.file_size for m in members)>512*1024*1024:
+            raise ValueError('Archive Office anormalement volumineuse')
+        if any(m.file_size>128*1024*1024 for m in members):
+            raise ValueError('Entrée Office anormalement volumineuse')
         if z.testzip() is not None or marker not in z.namelist():
             raise ValueError('Structure Office corrompue ou incomplète')
     warnings=['Structure valide, mais fidélité de mise en page non mesurée']

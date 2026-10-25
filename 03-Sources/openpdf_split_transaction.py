@@ -8,7 +8,7 @@ import json
 import os
 import shutil
 import tempfile
-from openpdf_page_service_v345 import split as legacy_split
+from openpdf_page_service_v345 import split as legacy_split, _source_identity, _source
 
 PREFIX = ".openpdf-stage-"
 JOURNAL = "transaction.json"
@@ -29,7 +29,7 @@ def _journal(stage, names):
     _sync_dir(stage)
 
 def _safe_names(names):
-    return isinstance(names,list) and len(names)==len(set(names)) and all(
+    return isinstance(names,list) and bool(names) and len(names)==len(set(names)) and all(
         isinstance(n,str) and n not in ("", ".", "..") and Path(n).name == n
         and not n.startswith(".") for n in names)
 
@@ -44,15 +44,23 @@ def recover_transactions(folder):
     for stage in sorted(dest.glob(PREFIX+"*")):
         if not stage.is_dir() or stage.is_symlink(): continue
         journal=stage/JOURNAL
+        if journal.is_symlink():
+            report.append({"stage":stage.name,"status":"manual_review_invalid_journal"})
+            continue
         if not journal.is_file():
             report.append({"stage":stage.name,"status":"manual_review_missing_journal"})
             continue
         try:
             data=json.loads(journal.read_text(encoding="utf-8"))
             names=data["names"]
-            if data.get("schema") != 1 or not _safe_names(names): raise ValueError("invalid journal")
+            if data.get("schema") != 1 or data.get("state") != "prepared" or not _safe_names(names): raise ValueError("invalid journal")
         except (ValueError,KeyError,TypeError,OSError):
             report.append({"stage":stage.name,"status":"manual_review_invalid_journal"})
+            continue
+        # A valid journal is not sufficient: every declared staged file must
+        # still exist as a regular file before any published output is removed.
+        if any(not (stage/name).is_file() or (stage/name).is_symlink() for name in names):
+            report.append({"stage":stage.name,"status":"manual_review_missing_staged_output"})
             continue
         conflict=False
         for name in names:
@@ -77,6 +85,8 @@ def recover_transactions(folder):
     return report
 
 def split_transaction(source,folder,chunk_size=1):
+    src=_source(source)
+    identity=_source_identity(src)
     dest=Path(folder).resolve()
     if not dest.is_dir(): raise ValueError("Dossier de destination inexistant")
     # Never silently proceed over a crash residue: caller must recover explicitly.
@@ -85,16 +95,18 @@ def split_transaction(source,folder,chunk_size=1):
     stage=Path(tempfile.mkdtemp(prefix=PREFIX,dir=dest))
     published=[]
     try:
-        receipt=legacy_split(source,stage,chunk_size)
+        receipt=legacy_split(src,stage,chunk_size)
         outputs=[Path(p) for p in receipt.outputs]
         names=[p.name for p in outputs]
         if not _safe_names(names): raise ValueError("Noms de sortie non valides")
         targets=[dest/name for name in names]
         if any(p.exists() or p.is_symlink() for p in targets): raise FileExistsError("Collision")
         for p in outputs:
-            with p.open("rb") as f: os.fsync(f.fileno())
+            with p.open("r+b") as f: os.fsync(f.fileno())
         _sync_dir(stage)
         _journal(stage,names)
+        if _source_identity(src)!=identity:
+            raise RuntimeError('Source modifiée pendant le découpage : sortie rejetée')
         for staged,target in zip(outputs,targets):
             os.link(staged,target)
             published.append(target)

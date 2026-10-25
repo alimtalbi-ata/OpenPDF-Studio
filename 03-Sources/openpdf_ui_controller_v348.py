@@ -3,8 +3,9 @@ from pathlib import Path
 from openpdf_page_service_v345 import merge, extract, reorder, split
 from openpdf_compression_service_v344 import compress_with_receipt
 from openpdf_ocr_service_v347 import searchable_pdf
+from openpdf_rotation_v446 import rotate_pdf
 
-OPERATIONS = ('compression', 'fusion', 'extraction', 'decoupage', 'reorganisation', 'ocr', 'docx', 'xlsx', 'pptx')
+OPERATIONS = ('compression', 'fusion', 'extraction', 'decoupage', 'reorganisation', 'rotation', 'ocr', 'docx', 'xlsx', 'pptx')
 def run_operation(operation, sources, destination, *, profile='smaller_only', first=1, last=1, chunk=1, order='', language='fra+eng'):
     if operation not in OPERATIONS: raise ValueError('Opération inconnue')
     paths = [str(Path(p)) for p in sources if str(p).strip()]
@@ -17,6 +18,7 @@ def run_operation(operation, sources, destination, *, profile='smaller_only', fi
         return convert_office(paths[0], destination, output_format=operation)
     if len(paths) != 1: raise ValueError('Cette opération nécessite exactement un fichier source')
     src = paths[0]
+    if operation == 'rotation': return rotate_pdf(src,destination,int(order))
     if operation == 'compression': return compress_with_receipt(src, destination, profile)
     if operation == 'extraction': return extract(src, destination, int(first), int(last))
     if operation == 'decoupage': return split(src, destination, int(chunk))

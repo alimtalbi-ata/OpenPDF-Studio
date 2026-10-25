@@ -4,12 +4,15 @@ import os
 from pathlib import Path
 
 def main():
-    if ('--functional-self-test' in sys.argv or '--self-test' in sys.argv) and os.environ.get('OPENPDF_SMOKE_OUTPUT'):
+    if ('--functional-self-test' in sys.argv or '--self-test' in sys.argv or '--ocr-self-test' in sys.argv) and os.environ.get('OPENPDF_SMOKE_OUTPUT'):
         output = Path(os.environ['OPENPDF_SMOKE_OUTPUT'])
         output.parent.mkdir(parents=True, exist_ok=True)
         stream = output.open('w', encoding='utf-8')
         sys.stdout = stream
         sys.stderr = stream
+    if '--ocr-self-test' in sys.argv:
+        from openpdf_ocr_binary_smoke import run
+        return run()
     if '--functional-self-test' in sys.argv:
         from openpdf_functional_smoke import run
         return run()

@@ -86,9 +86,12 @@ def _file(root: Path, name: str):
 
 def _thresholds(value):
     required = {'max_cer', 'max_wer', 'max_case_cer', 'max_case_wer', 'min_human_reviewed'}
-    if not isinstance(value, dict) or set(value) != required:
+    # V540: optional per-page floors are paired and opt-in; old manifests stay valid.
+    page_keys = {'max_page_cer', 'max_page_wer'}
+    if (not isinstance(value, dict) or not required <= set(value) or
+            set(value) not in (required, required | page_keys)):
         raise ValueError('Incomplete OCR thresholds')
-    for name in required - {'min_human_reviewed'}:
+    for name in (required | (page_keys if page_keys <= set(value) else set())) - {'min_human_reviewed'}:
         number = value[name]
         if type(number) not in (int, float) or not 0 <= number <= 1:
             raise ValueError('Invalid OCR error threshold')
@@ -131,8 +134,9 @@ def evaluate_ocr_reference_corpus(manifest):
     root = manifest.parent
     ids, seen_sources, seen_outputs = set(), set(), set()
     chars = words = char_errors = word_errors = pages = humans = work_total = 0
-    case_failures = 0
-    worst_cer = worst_wer = 0.0
+    case_failures = page_failures = 0
+    worst_cer = worst_wer = worst_page_cer = worst_page_wer = 0.0
+    page_floors = 'max_page_cer' in thresholds
     bound_hashes = []
     manifest_hash = _digest(manifest, MAX_MANIFEST_BYTES)
     for case in cases:
@@ -181,6 +185,15 @@ def evaluate_ocr_reference_corpus(manifest):
                     raise ValueError('Corpus exceeds edit-distance work budget')
                 case_chars += c; case_words += w
                 case_char_errors += ce; case_word_errors += we
+                # Empty page references cannot support per-page accuracy claims.
+                if page_floors:
+                    if not c or not w:
+                        raise ValueError('Per-page OCR floor requires nonempty page reference')
+                    page_cer, page_wer = ce / c, we / w
+                    worst_page_cer = max(worst_page_cer, page_cer)
+                    worst_page_wer = max(worst_page_wer, page_wer)
+                    page_failures += (page_cer > thresholds['max_page_cer'] or
+                                      page_wer > thresholds['max_page_wer'])
         if not case_chars or not case_words:
             raise ValueError('OCR case has no measurable reference text')
         cer, wer = case_char_errors / case_chars, case_word_errors / case_words
@@ -201,6 +214,8 @@ def evaluate_ocr_reference_corpus(manifest):
         failed.append('max_wer')
     if case_failures:
         failed.append('case_quality_floors')
+    if page_failures:
+        failed.append('page_quality_floors')
     if humans < thresholds['min_human_reviewed']:
         failed.append('min_human_reviewed')
     return {
@@ -211,6 +226,10 @@ def evaluate_ocr_reference_corpus(manifest):
         'evidence_set_sha256': hashlib.sha256('\n'.join(sorted(bound_hashes)).encode('ascii')).hexdigest(),
         'cases': len(cases), 'pages': pages, 'human_reviewed_cases': humans,
         'synthetic_cases': len(cases) - humans, 'cases_below_quality_floors': case_failures,
+        'page_quality_floors_enabled': page_floors,
+        'pages_below_quality_floors': page_failures,
+        'worst_page_cer': round(worst_page_cer, 6) if page_floors else None,
+        'worst_page_wer': round(worst_page_wer, 6) if page_floors else None,
         'reference_characters': chars, 'reference_words': words,
         'character_errors': char_errors, 'word_errors': word_errors,
         'cer': round(cer, 6), 'wer': round(wer, 6),

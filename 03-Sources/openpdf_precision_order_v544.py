@@ -1,11 +1,11 @@
 """Bounded token precision and extraction-order metrics for editable Office outputs.
-The order score is a subsequence match against annotated phrase order; it is not
-visual reading-order or layout validation. Author: Abdelhalim Talbi.
+The order score is an exact longest-common-subsequence (LCS) comparison against
+annotated phrase order; it is not visual reading-order or layout validation.
+Author: Abdelhalim Talbi.
 """
 from __future__ import annotations
 
-from bisect import bisect_right
-from collections import Counter, defaultdict
+from collections import Counter
 from typing import Sequence
 
 MAX_TOKENS_PER_CASE = 5000
@@ -17,9 +17,9 @@ def measure_precision_order(expected_tokens: Sequence[str],
 
     The expected sequence is formed by concatenating annotation phrases in their
     declared order. The actual sequence follows OOXML paragraph/cell/shape
-    traversal order. Each expected occurrence is matched at most once. An
-    earliest-next-occurrence scan gives a deterministic longest common
-    subsequence length without quadratic dynamic-programming memory.
+    traversal order. Each expected occurrence is matched at most once. A
+    bit-parallel LCS recurrence computes the exact ordered match count with
+    bounded integer bitsets instead of quadratic dynamic-programming memory.
     """
     if not isinstance(expected_tokens, (list, tuple)) or not expected_tokens:
         raise ValueError("At least one expected token is required")
@@ -42,19 +42,18 @@ def measure_precision_order(expected_tokens: Sequence[str],
     recall = matched / expected_total
     f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
 
-    positions = defaultdict(list)
+    # Bit-parallel LCS: bit i marks occurrences of an actual token at position i.
+    # This is exact for reordered sequences such as expected A,B,C / actual B,C,A,
+    # where a greedy forward scan would incorrectly report only one ordered match.
+    actual_position_masks = {}
     for index, token in enumerate(actual_tokens):
-        positions[token].append(index)
-    cursor = -1
-    ordered_matches = 0
+        actual_position_masks[token] = actual_position_masks.get(token, 0) | (1 << index)
+    state = 0
     for token in expected_tokens:
-        occurrences = positions.get(token)
-        if not occurrences:
-            continue
-        candidate = bisect_right(occurrences, cursor)
-        if candidate < len(occurrences):
-            cursor = occurrences[candidate]
-            ordered_matches += 1
+        x = state | actual_position_masks.get(token, 0)
+        y = (state << 1) | 1
+        state = x & ~(x - y)
+    ordered_matches = state.bit_count()
     ordered_recall = ordered_matches / expected_total
     return {
         "actual_tokens": actual_total,

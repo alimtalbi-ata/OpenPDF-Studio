@@ -187,7 +187,7 @@ jobs:
     timeout-minutes: 20
     env:
       OPENPDF_REPOSITORY: ${{ github.repository }}
-      OPENPDF_HEAD_SHA: ${{ github.sha }}
+      OPENPDF_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       OPENPDF_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       OPENPDF_HEAD_BRANCH: ${{ github.head_ref || github.ref_name }}
       OPENPDF_PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number || '' }}

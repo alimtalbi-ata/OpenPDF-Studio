@@ -84,7 +84,8 @@ class OpenPDFStudio(tk.Tk):
         header=ttk.Frame(self,padding=16);header.pack(fill='x')
         ttk.Label(header,text='OpenPDF Studio',font=('Segoe UI',19,'bold')).pack(side='left')
         ttk.Label(header,text=f'V{APP_VERSION}  •  Espace de travail',font=('Segoe UI',10)).pack(side='right')
-        self.ocr_quality_button=ttk.Button(header,text='Qualité OCR',command=self._ocr_quality_dialog);self.ocr_quality_button.pack(side='right',padx=12)
+        self.ocr_quality_button=ttk.Button(header,text='Qualité OCR',command=self._ocr_quality_dialog);self.ocr_quality_button.pack(side='right',padx=5)
+        self.office_quality_button=ttk.Button(header,text='Qualité Office',command=self._office_quality_dialog);self.office_quality_button.pack(side='right',padx=5)
         self.audit_button=ttk.Button(header,text='Audit',command=self._audit_dialog);self.audit_button.pack(side='right',padx=5)
         body=ttk.Panedwindow(self,orient='horizontal');body.pack(fill='both',expand=True,padx=14,pady=6)
         left_host=ttk.Frame(body);right=ttk.Frame(body,padding=10)
@@ -190,7 +191,7 @@ class OpenPDFStudio(tk.Tk):
     def _set_busy(self, busy):
         self.busy=busy
         state='disabled' if busy else 'normal'
-        for widget in (self.go,self.add_button,self.remove_button,self.browse_button,self.recover_button,self.audit_button,self.ocr_quality_button,self.destination_shortcut,self.ocr_office_check,self.xlsx_tables_check,*self.operation_buttons):
+        for widget in (self.go,self.add_button,self.remove_button,self.browse_button,self.recover_button,self.audit_button,self.ocr_quality_button,self.office_quality_button,self.destination_shortcut,self.ocr_office_check,self.xlsx_tables_check,*self.operation_buttons):
             widget.configure(state=state)
         self.files.configure(state=state)
 
@@ -335,6 +336,107 @@ class OpenPDFStudio(tk.Tk):
                     result = safe_receipt(evaluate_ocr_reference_corpus(selected))
                     replies.put(('success', result))
                 except (ValueError, OSError, RuntimeError, TypeError, ImportError):
+                    replies.put(('error', None))
+            threading.Thread(target=worker, daemon=True).start()
+            window.after(100, poll)
+        run_button = ttk.Button(actions, text='Analyser', command=run)
+        run_button.pack(side='left')
+
+    def _office_quality_dialog(self):
+        """V543: opt-in, asynchronous, privacy-preserving editable Office audit."""
+        if self.busy:
+            return
+        from openpdf_office_quality_ui_v543 import (
+            safe_office_receipt, format_office_quality_summary,
+            serialize_office_quality_receipt)
+        window = tk.Toplevel(self)
+        window.title('Qualité Office — références indépendantes')
+        window.geometry('650x500')
+        window.transient(self)
+        frame = ttk.Frame(window, padding=16)
+        frame.pack(fill='both', expand=True)
+        ttk.Label(frame, text='Qualification Word / Excel / PowerPoint éditables',
+                  font=('Segoe UI', 13, 'bold')).pack(anchor='w')
+        ttk.Label(frame, text=('Compare les objets éditables DOCX, XLSX et PPTX à un corpus '
+                  'annoté. Ne mesure ni la géométrie, ni les styles, ni la fidélité visuelle.'),
+                  wraplength=600).pack(anchor='w', pady=8)
+        manifest = tk.StringVar()
+        selection = ttk.Frame(frame); selection.pack(fill='x', pady=6)
+        entry = ttk.Entry(selection, textvariable=manifest)
+        entry.pack(side='left', fill='x', expand=True)
+        def browse():
+            selected = filedialog.askopenfilename(parent=window,
+                title='Manifeste du corpus Office', filetypes=[('JSON', '*.json')])
+            if selected:
+                manifest.set(selected)
+        browse_button = ttk.Button(selection, text='Manifeste…', command=browse)
+        browse_button.pack(side='left', padx=6)
+        output = tk.Text(frame, height=13, wrap='word', state='disabled')
+        output.pack(fill='both', expand=True, pady=8)
+        actions = ttk.Frame(frame); actions.pack(fill='x')
+        result_holder = {'report': None}
+        replies = queue.Queue()
+        def show(message):
+            output.configure(state='normal')
+            output.delete('1.0', 'end')
+            output.insert('end', message)
+            output.configure(state='disabled')
+        def export():
+            report = result_holder['report']
+            if report is None:
+                return
+            destination = filedialog.asksaveasfilename(parent=window,
+                title='Exporter le reçu Office', defaultextension='.json',
+                filetypes=[('JSON', '*.json')])
+            if not destination:
+                return
+            try:
+                # Exclusive create: never overwrite files or symlinks.
+                with Path(destination).open('x', encoding='utf-8') as stream:
+                    stream.write(serialize_office_quality_receipt(report))
+                messagebox.showinfo('Qualité Office', 'Reçu privé exporté.', parent=window)
+            except (ValueError, OSError):
+                messagebox.showerror('Export refusé',
+                    'Destination déjà existante ou non accessible.', parent=window)
+        export_button = ttk.Button(actions, text='Exporter le reçu', command=export,
+                                   state='disabled')
+        export_button.pack(side='right')
+        def poll():
+            if not window.winfo_exists():
+                return
+            try:
+                status, payload = replies.get_nowait()
+            except queue.Empty:
+                window.after(100, poll)
+                return
+            browse_button.configure(state='normal')
+            run_button.configure(state='normal')
+            entry.configure(state='normal')
+            if status == 'success':
+                result_holder['report'] = payload
+                show(format_office_quality_summary(payload))
+                export_button.configure(state='normal')
+            else:
+                show('Qualification impossible : preuve invalide ou incomplète. '
+                     'Aucun texte, nom de fichier ou chemin du corpus n’est affiché.')
+        def run():
+            selected = manifest.get().strip()
+            if not selected:
+                messagebox.showwarning('Qualité Office', 'Choisissez un manifeste JSON.', parent=window)
+                return
+            result_holder['report'] = None
+            export_button.configure(state='disabled')
+            run_button.configure(state='disabled')
+            browse_button.configure(state='disabled')
+            entry.configure(state='disabled')
+            show('Qualification locale en cours…')
+            def worker():
+                try:
+                    from openpdf_office_reference_v542 import evaluate_office_reference_corpus
+                    result = safe_office_receipt(evaluate_office_reference_corpus(selected))
+                    replies.put(('success', result))
+                except Exception:
+                    # Avoid leaking paths/text from library exception messages.
                     replies.put(('error', None))
             threading.Thread(target=worker, daemon=True).start()
             window.after(100, poll)

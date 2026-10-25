@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="340" viewBox="0 0 1080 340" role="img" aria-labelledby="title desc">
+<title id="title">OpenPDF Studio V545 — prévalidation de sécurité OOXML</title>
+<desc id="desc">Les limites de ressources et contrôles de noms précèdent une lecture CRC de chaque membre, puis les contrôles de relations, le refus ou l'analyse des objets Office éditables.</desc>
+<rect width="1080" height="340" rx="18" fill="#f7f9fc"/>
+<text x="30" y="38" font-family="Segoe UI,Arial" font-size="22" font-weight="700" fill="#15304b">V545 — chaîne de confiance du paquet Office</text>
+<g font-family="Segoe UI,Arial" font-size="14" fill="#15304b" stroke="#426782" stroke-width="1.5">
+  <rect x="30" y="84" width="205" height="82" rx="10" fill="#e6f2ff"/>
+  <text x="132" y="111" text-anchor="middle" stroke="none" font-weight="700">Archive OOXML</text>
+  <text x="132" y="136" text-anchor="middle" stroke="none">Budget taille / ratio</text>
+  <rect x="285" y="84" width="225" height="82" rx="10" fill="#fff3d9"/>
+  <text x="397" y="111" text-anchor="middle" stroke="none" font-weight="700">Chemins normalisés</text>
+  <text x="397" y="136" text-anchor="middle" stroke="none">NFKC • casefold • Windows</text>
+  <rect x="560" y="84" width="205" height="82" rx="10" fill="#e7f7ef"/>
+  <text x="662" y="111" text-anchor="middle" stroke="none" font-weight="700">CRC de tous les membres</text>
+  <text x="662" y="136" text-anchor="middle" stroke="none">Même les parties inutilisées</text>
+  <rect x="815" y="84" width="235" height="82" rx="10" fill="#ece8ff"/>
+  <text x="932" y="111" text-anchor="middle" stroke="none" font-weight="700">Contrôles OOXML</text>
+  <text x="932" y="136" text-anchor="middle" stroke="none">Relations / contenu actif</text>
+  <rect x="290" y="224" width="220" height="64" rx="10" fill="#fbe5e5"/>
+  <text x="400" y="249" text-anchor="middle" stroke="none" font-weight="700">Refus fermé</text>
+  <text x="400" y="270" text-anchor="middle" stroke="none">Erreur sans nom de fichier</text>
+  <rect x="620" y="224" width="250" height="64" rx="10" fill="#e7f7ef"/>
+  <text x="745" y="249" text-anchor="middle" stroke="none" font-weight="700">Mesure éditable V542+</text>
+  <text x="745" y="270" text-anchor="middle" stroke="none">Aucune fidélité visuelle garantie</text>
+</g>
+<g stroke="#426782" stroke-width="2" fill="none" stroke-linecap="round">
+  <path d="M235 125 H285"/><path d="M510 125 H560"/><path d="M765 125 H815"/>
+  <path d="M397 166 V198 H400 V224"/><path d="M662 166 V198 H745 V224"/>
+  <path d="M276 116 l9 9 -9 9"/><path d="M551 116 l9 9 -9 9"/><path d="M806 116 l9 9 -9 9"/>
+</g>
+<text x="30" y="319" font-family="Segoe UI,Arial" font-size="12" fill="#5b6875">CRC prouve la cohérence ZIP, pas l'authenticité, l'absence de malware ou la fidélité du contenu.</text>
+</svg>

@@ -7,3 +7,5 @@
 - **Sécurité :** liste blanche du reçu, contrôles d’intégrité hérités V542 et budgets de tokens.
 - **Qualification :** workflow V544 ajouté pour Ubuntu/Windows et GUI Linux Xvfb. Les résultats CI doivent être lus depuis GitHub Actions avant de déclarer une campagne verte.
 - **Limites :** l’ordre mesuré est l’ordre d’extraction des objets OOXML, pas l’ordre de lecture visuel. Corpus métier indépendant et qualification graphique humaine Windows à réaliser.
+
+- **Correctif V544.1 :** remplacement du balayage glouton non exact par une LCS bit-parallèle ; cas `A B C` / `B C A` et oracle exhaustif (930 comparaisons) ajoutés. Aucun changement de contrat de reçu ou de seuils.

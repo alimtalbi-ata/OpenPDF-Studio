@@ -22,8 +22,16 @@ def _digest(path):
     return h.hexdigest()
 
 def _source(path):
-    p=Path(path).resolve(strict=True)
-    if not p.is_file() or p.suffix.lower()!='.pdf':raise ValueError('Source PDF invalide')
+    """Reject a final-component symlink before resolving it to its target."""
+    candidate = Path(path).expanduser()
+    if candidate.is_symlink():
+        raise ValueError('Source PDF via lien symbolique interdit')
+    p = candidate.resolve(strict=True)
+    # Recheck the lexical path to catch a link introduced during resolution.
+    if candidate.is_symlink():
+        raise ValueError('Source PDF via lien symbolique interdit')
+    if not p.is_file() or p.suffix.lower() != '.pdf':
+        raise ValueError('Source PDF invalide')
     return p
 
 def _target(path,sources):

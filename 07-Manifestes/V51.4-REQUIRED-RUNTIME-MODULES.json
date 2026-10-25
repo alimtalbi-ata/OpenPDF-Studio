@@ -93,6 +93,7 @@
     "openpdf_render_quality_v425",
     "openpdf_reservation",
     "openpdf_source_integrity_v430",
+    "openpdf_source_path_guard_v548",
     "openpdf_split_integrity_v449",
     "openpdf_split_transaction",
     "openpdf_structure_guard_v439",

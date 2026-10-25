@@ -7,6 +7,7 @@ import argparse
 from dataclasses import asdict, dataclass
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import shutil
@@ -150,24 +151,101 @@ def auto_compress(source, destination, policy=AutoCompressionPolicy()):
                 os.unlink(temp_name)
 
 
+def _size_text(value):
+    """Format a non-negative byte count without exposing any filesystem path."""
+    if type(value) is not int or value < 0:
+        return "taille indisponible"
+    return f"{value:,}".replace(",", " ") + " octets"
+
+
+_PROFILE_LABELS = {
+    "smaller_only": "Réduction sûre",
+    "standard": "Standard",
+    "images_balanced": "Images équilibré",
+    "images_adaptive": "Images adaptatif",
+}
+
+
+def _comparison_lines(report):
+    """Summarize each candidate without copying raw errors or private paths to the UI."""
+    source_bytes = report.get("source_bytes")
+    if type(source_bytes) is not int or source_bytes <= 0:
+        source_bytes = 0
+    selected = report.get("selected_profile")
+    lines = []
+    cases = report.get("cases")
+    if not isinstance(cases, list):
+        return ["- Détails des essais indisponibles."]
+    for case in cases[:len(_ALLOWED)]:
+        if not isinstance(case, dict):
+            continue
+        profile = case.get("profile")
+        label = _PROFILE_LABELS.get(profile, "Profil non reconnu")
+        elapsed = case.get("elapsed_ms")
+        if type(elapsed) in (int, float) and math.isfinite(elapsed) and elapsed >= 0:
+            duration = f"{elapsed:.2f} ms"
+        else:
+            duration = "durée indisponible"
+        status = case.get("status")
+        if status == "accepted":
+            size = case.get("bytes")
+            saving = case.get("saving_percent")
+            quality = case.get("quality")
+            if not isinstance(quality, dict):
+                quality = {}
+            mae = quality.get("max_page_mae")
+            changed = quality.get("max_page_changed_fraction")
+            mae_text = (f"{mae:.3f}/255" if type(mae) in (int, float)
+                        and math.isfinite(mae) and mae >= 0 else "n/d")
+            changed_text = (f"{changed:.2%}" if type(changed) in (int, float)
+                            and math.isfinite(changed) and 0 <= changed <= 1 else "n/d")
+            if type(saving) not in (int, float) or not math.isfinite(saving):
+                saving = 100.0 * (source_bytes - size) / source_bytes if (
+                    type(size) is int and source_bytes > 0) else 0.0
+            disposition = "retenu" if profile == selected else "conforme, non retenu"
+            lines.append(
+                f"- {label} — {disposition} : {_size_text(size)} ; "
+                f"gain {saving:.2f} % ; MAE max {mae_text} ; "
+                f"pixels modifiés {changed_text} ; {duration}."
+            )
+        elif status == "no_gain":
+            lines.append(f"- {label} — aucun gain de taille ; {duration}.")
+        elif status == "rejected":
+            error_type = case.get("error_type")
+            if (type(error_type) is not str or not error_type
+                    or len(error_type) > 60
+                    or not error_type[0].isalpha()
+                    or not all(char.isalnum() or char == "_" for char in error_type)):
+                error_type = "contrôle qualité/intégrité"
+            lines.append(f"- {label} — rejeté par un contrôle ({error_type}) ; {duration}.")
+        else:
+            lines.append(f"- {label} — résultat indisponible ; {duration}.")
+    return lines or ["- Aucun détail d’essai disponible."]
+
+
+def _comparison_text(report):
+    return "Essais comparés :\\n" + "\\n".join(_comparison_lines(report))
+
+
 def auto_compress_gui(source, destination):
-    """GUI worker: report exact bytes and bounded RGB/alpha/structure evidence."""
+    """GUI worker: report output metrics and a privacy-filtered comparison of candidates."""
     report = auto_compress(source, destination, AutoCompressionPolicy(
         profiles=('smaller_only', 'images_balanced', 'images_adaptive')))
+    comparison = _comparison_text(report)
     if report['status'] != 'published':
-        return 'Aucun gain conforme aux seuils de qualité. Aucun fichier de sortie modifié.'
-
-    def size_text(value):
-        return f"{value:,}".replace(",", " ") + " octets"
+        # Preserve this prefix: the dispatcher maps it to the audited no_output state.
+        return ("Aucun gain conforme aux seuils de qualité. Aucun fichier de sortie modifié.\\n"
+                + comparison)
 
     quality = report.get('selected_quality') or {}
     structure = quality.get('structure') or {}
+    source_bytes = report['source_bytes']
+    output_bytes = report['output_bytes']
     return (
-        f"Compression automatique publiée : {Path(destination).name}\n"
-        f"Taille mesurée : {size_text(report['source_bytes'])} → "
-        f"{size_text(report['output_bytes'])} ; gain : "
-        f"{size_text(report['source_bytes'] - report['output_bytes'])} "
-        f"({report['saving_percent']:.2f} %).\n"
+        f"Compression automatique publiée : {Path(destination).name}\\n"
+        f"Taille mesurée : {_size_text(source_bytes)} → {_size_text(output_bytes)} ; gain : "
+        f"{_size_text(source_bytes - output_bytes)} "
+        f"({report['saving_percent']:.2f} %).\\n"
         f"Profil retenu : {report['selected_profile']}. "
         f"Contrôle RGB : {quality.get('pages_compared', 0)} page(s), "
         f"{quality.get('pixels_compared', 0):,} pixels à l’échelle "
@@ -179,9 +257,9 @@ def auto_compress_gui(source, destination):
         f"{structure.get('annotations_verified', 0)} annotation(s), "
         f"{structure.get('attachments_verified', 0)} pièce(s) jointe(s). "
         "Couverture de transparence contrôlée. Mesure raster à échelle bornée ; "
-        "ce n’est pas une certification PDF/A, impression, OCR ou accessibilité."
+        "ce n’est pas une certification PDF/A, impression, OCR ou accessibilité.\\n"
+        + comparison
     )
-
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Select smallest quality-verified PDF')

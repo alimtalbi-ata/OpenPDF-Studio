@@ -1,16 +1,17 @@
 {
   "author": "Abdelhalim Talbi",
-  "note": "V545: verify every OOXML ZIP member CRC and reject ambiguous Windows-normalized paths; source hash updated. Earlier baselines preserved.",
+  "note": "V546.1: per-profile size/quality/timing diagnostics without raw exception text or private paths; correctly rendered line breaks; source hash pinned.",
   "schema": "openpdf-v51.4-source-hash-overrides-v1",
   "sha256": {
+    "03-Sources/openpdf_auto_compression_v505.py": "198c529dbf4a97c9bbf0ccd43ea5e3c7b06aec52e5f5ad6efa90565ce358134a",
     "03-Sources/openpdf_compression_acceptance_v489.py": "f83890cdccefe28791b6a27030f2a7c048d97798307b11417a1c292b75d0f468",
     "03-Sources/openpdf_conversion_service_v351.py": "1c2542db57e28f8ef4142d3a59cbf42a4a6dce795fd3cddd74ad9aae72a26271",
-    "03-Sources/openpdf_desktop.py": "7573d09898344297675bd44d76f85ba76bd3aa77a0eeff29b50dff7e0a9ef1b4",
+    "03-Sources/openpdf_desktop.py": "8f3aced132c854932db4e66f9b3499f6940a67fdb7e71a4d00d4e8dbd8d8b5b4",
     "03-Sources/openpdf_ocr_service_v347.py": "5615270991cf741ea330bdb698fc3f40a2fc52f7ab8a6ceb3447a66817fc81a8",
     "03-Sources/openpdf_office_precision_order_ui_v544.py": "c6139b0c5318aa1dfc97ebee9a70cafc0e374be2119da8c2e21393c1974bf3dd",
     "03-Sources/openpdf_office_reference_v542.py": "480fc4421bcc8970d9473fa801b00c0dc9e0029966db2d61386818a9f5057bba",
     "03-Sources/openpdf_office_roundtrip_v459.py": "1cd3305f151e9367c9113ccb7844e737e821eee36e068d990958f4c425a9f96e",
-    "03-Sources/openpdf_operations.py": "1746477f561ee35e57afabcc7fddb62305bb32b389533cafd7e3507e8594f5d8",
+    "03-Sources/openpdf_operations.py": "96837a66e0d33de7a6936ee5f02971157c52229628d427fa66fac17d037cc352",
     "03-Sources/openpdf_precision_order_v544.py": "b5e77815f31a46734bc8e600b2639c1e87706254b9bbd1360780783812c824e5"
   }
 }

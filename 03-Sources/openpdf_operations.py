@@ -63,6 +63,11 @@ def run_operation(operation, sources, destination, **kwargs):
                 if len(inputs) != 1:
                     raise ValueError("Le découpage exige une seule source")
                 result=split_transaction(inputs[0], output, int(kwargs.get("chunk", 1)))
+            elif operation == "compression" and kwargs.get("profile") == "auto_quality":
+                if len(inputs) != 1:
+                    raise ValueError("La compression automatique exige un seul PDF source")
+                from openpdf_auto_compression_v505 import auto_compress_gui
+                result = auto_compress_gui(str(inputs[0]), str(output))
             elif operation in ("docx", "xlsx", "pptx") and kwargs.get("ocr_before_office", False):
                 # OCR is explicitly selected; for XLSX the independent table
                 # opt-in is passed through to the verified OCR Office pipeline.
@@ -88,7 +93,10 @@ def run_operation(operation, sources, destination, **kwargs):
                 result=_legacy_run_operation(operation, sources, destination, **kwargs)
             # Compression 'smaller_only' can legitimately yield no new output.
             # Audit must distinguish that outcome from a published document.
-            if operation == 'compression' and getattr(result,'published',True) is False:
+            if operation == 'compression' and (
+                    getattr(result, 'published', True) is False
+                    or (isinstance(result, str) and result.startswith(
+                        'Aucun gain conforme aux seuils de qualité.'))):
                 status='no_output'
             else:
                 status='success'

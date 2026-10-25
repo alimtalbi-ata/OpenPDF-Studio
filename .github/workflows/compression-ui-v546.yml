@@ -1,0 +1,66 @@
+name: V546 Controlled compression UI and evidence
+on:
+  push:
+    branches:
+      - 'feature/v51.4-controlled-compression-ui-v546-20261025'
+    paths:
+      - '03-Sources/openpdf_desktop.py'
+      - '03-Sources/openpdf_operations.py'
+      - '03-Sources/openpdf_auto_compression_v505.py'
+      - '04-Tests-et-Qualification/test_compression_profile_ui_v546.py'
+      - '04-Tests-et-Qualification/test_auto_compression_v505.py'
+      - '04-Tests-et-Qualification/test_compression_semantics_v538.py'
+      - '04-Tests-et-Qualification/test_compression_coverage_v507.py'
+      - '04-Tests-et-Qualification/test_compression_alpha_v508.py'
+      - '07-Manifestes/V51.4-SOURCE-HASH-OVERRIDES.json'
+      - '02-Compilation/package_cumulative_v434.py'
+      - '04-Tests-et-Qualification/test_package_smoke_receipts_v5461.py'
+      - '.github/workflows/compression-ui-v546.yml'
+  pull_request:
+    paths:
+      - '03-Sources/openpdf_desktop.py'
+      - '03-Sources/openpdf_operations.py'
+      - '03-Sources/openpdf_auto_compression_v505.py'
+      - '04-Tests-et-Qualification/test_compression_profile_ui_v546.py'
+      - '04-Tests-et-Qualification/test_auto_compression_v505.py'
+      - '04-Tests-et-Qualification/test_compression_semantics_v538.py'
+      - '04-Tests-et-Qualification/test_compression_coverage_v507.py'
+      - '04-Tests-et-Qualification/test_compression_alpha_v508.py'
+      - '07-Manifestes/V51.4-SOURCE-HASH-OVERRIDES.json'
+      - '02-Compilation/package_cumulative_v434.py'
+      - '04-Tests-et-Qualification/test_package_smoke_receipts_v5461.py'
+      - '.github/workflows/compression-ui-v546.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  controlled-compression:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install PDF engine
+        run: python -m pip install "pymupdf>=1.24,<2"
+      - name: Compile modified production and test modules
+        run: python -m compileall -q 03-Sources/openpdf_desktop.py 03-Sources/openpdf_operations.py 03-Sources/openpdf_auto_compression_v505.py 04-Tests-et-Qualification/test_compression_profile_ui_v546.py
+      - name: V546 profile labels, consent and real automatic compression
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_compression_profile_ui_v546.py -v
+      - name: V505 automatic compression regression
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_auto_compression_v505.py -v
+      - name: V538 semantic preservation regression
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_compression_semantics_v538.py -v
+      - name: V507 complete-page and pixel coverage regression
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_compression_coverage_v507.py -v
+      - name: V508 alpha-channel fidelity regression
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_compression_alpha_v508.py -v
+      - name: V546.1 cumulative-package smoke receipt contract
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_package_smoke_receipts_v5461.py -v
+      - name: Static dependency closure (not native binary qualification)
+        run: python 03-Sources/openpdf_source_closure_v502.py --root . --entry openpdf_studio --entry openpdf_auto_compression_v505 --required-manifest 07-Manifestes/V51.4-REQUIRED-RUNTIME-MODULES.json

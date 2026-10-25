@@ -56,6 +56,8 @@ def load_current_ci_report(root=ROOT, expected_head_sha=None):
         return None
     try:
         data = json.loads(path.read_text(encoding="utf-8-sig"))
+        if not isinstance(data, dict):
+            return None
         if data.get("schema") != CI_SCHEMA or data.get("version") != "51.4":
             return None
         if data.get("qualified") is not True or not data.get("commit_sha"):
@@ -65,26 +67,58 @@ def load_current_ci_report(root=ROOT, expected_head_sha=None):
             return None
         if data.get("module_count") != required_module_count(root):
             return None
-        page = data["page_order"]
-        if page.get("status") != "completed" or page.get("conclusion") != "success":
+
+        page = data.get("page_order")
+        if not isinstance(page, dict):
+            return None
+        if (page.get("head_sha") != data.get("commit_sha") or
+                page.get("status") != "completed" or
+                page.get("conclusion") != "success"):
+            return None
+        jobs = page.get("jobs")
+        tests = page.get("tests")
+        if not isinstance(jobs, dict) or not isinstance(tests, dict):
             return None
         for platform in ("ubuntu", "windows"):
-            item = page["tests"][platform]
-            if (item.get("failed") != 0 or
-                    item.get("passed", 0) + item.get("skipped", 0) != item.get("expected") or
+            job = jobs.get(platform)
+            item = tests.get(platform)
+            if not isinstance(job, dict) or not isinstance(item, dict):
+                return None
+            if job.get("status") != "completed" or job.get("conclusion") != "success":
+                return None
+            expected = item.get("expected")
+            passed = item.get("passed")
+            skipped = item.get("skipped")
+            failed = item.get("failed")
+            numbers = (expected, passed, skipped, failed)
+            if any(type(value) is not int or value < 0 for value in numbers):
+                return None
+            if (expected <= 0 or failed != 0 or skipped != 0 or passed != expected or
                     item.get("conclusion") != "success"):
                 return None
-        native = data["source_closure"]["native_windows"]
+
+        source = data.get("source_closure")
+        if not isinstance(source, dict):
+            return None
+        prerequisites = source.get("prerequisite_jobs")
+        native = source.get("native_windows")
+        if not isinstance(prerequisites, dict) or not prerequisites:
+            return None
+        if not isinstance(native, dict):
+            return None
+        for key in ("portable", "installer", "installation"):
+            if not isinstance(native.get(key), dict):
+                return None
         if (native["portable"].get("smoke_passed") is not True or
                 native["installer"].get("smoke_passed") is not True or
                 native["installation"].get("passed") is not True):
             return None
-        if data["source_closure"]["prerequisite_jobs"] is None:
-            return None
+        for job in prerequisites.values():
+            if not isinstance(job, dict) or job.get("status") != "completed" or job.get("conclusion") != "success":
+                return None
         return data
-    except (KeyError, OSError, TypeError, ValueError):
+    except (AttributeError, KeyError, OSError, TypeError, ValueError):
         return None
-
 
 def _ci_summary(report):
     if report is None:

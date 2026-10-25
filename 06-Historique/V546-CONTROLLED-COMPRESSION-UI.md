@@ -8,3 +8,4 @@
 - **Qualification** — Workflow Ubuntu/Windows dédié ajouté ; résultats finaux à confirmer à partir des runs associés au commit final de la PR. Aucun résultat non observé n’est anticipé.
 - **Gouvernance** — `main` préservée, aucun merge automatique. Auteur : Abdelhalim Talbi.
 - **25/10/2026 — V546.1** — Résultat de compression enrichi avec mesures comparatives par candidat (taille/gain, MAE, pixels modifiés, durée) et motifs de rejet typés ; aucun texte d’exception brut ni chemin absolu n’est réaffiché. Tests ciblés étendus.
+- **25/10/2026 - V546.1 packaging** - Correction d'un contrat obsolète dans le packager cumulatif : validation exacte des trois contrôles natifs (démarrage, fonctionnel, runtime OCR), identités et SHA liés au reçu. Ajout de dix tests négatifs/positifs et activation dans la CI Ubuntu/Windows.

@@ -84,6 +84,10 @@ def validate_page_options(operation, *, first='1', last='1', chunk='1', order='1
         except (TypeError,ValueError):
             raise ValueError('Découpage : indiquez un nombre entier de pages par fichier.')
         if count < 1:raise ValueError('Découpage : au moins une page par fichier.')
+    elif operation == 'rotation':
+        angle=str(order).strip()
+        if angle not in ('90','180','270'):
+            raise ValueError('Rotation : choisissez 90, 180 ou 270 degrés.')
     elif operation == 'reorganisation':
         parts=[item.strip() for item in str(order).split(',')]
         if not parts or any(not part or not part.isdecimal() for part in parts):

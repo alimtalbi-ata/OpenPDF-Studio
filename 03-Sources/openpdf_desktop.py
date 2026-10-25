@@ -529,7 +529,7 @@ class OpenPDFStudio(tk.Tk):
         key=self.operation.get();show={'compression':('Profil','Contrôle qualité','Audit RGB intégral'),'extraction':('Début','Fin','Pages à extraire'),'decoupage':('Pages par fichier',),'reorganisation':('Ordre des pages',),'ocr':('Langue OCR','Mode OCR'),'docx':('Langue OCR','OCR avant conversion'),'xlsx':('Langue OCR','OCR avant conversion','Tableaux Excel éditables'),'pptx':('Langue OCR','OCR avant conversion')}.get(key,())
         if key == 'compression':
             show = compression_profile_option_names(self.profile.get())
-            if self.profile.get() == 'Automatique contrôlé — comparer et vérifier':
+            if compression_profile_id(self.profile.get()) == 'auto_quality':
                 self.auto_compression_info.pack(fill='x',pady=(4,6))
             else:
                 self.auto_compression_info.pack_forget()

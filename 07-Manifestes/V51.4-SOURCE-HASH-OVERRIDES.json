@@ -1,13 +1,16 @@
 {
   "author": "Abdelhalim Talbi",
-  "note": "V543: Office quality GUI integrated; desktop SHA-256 refreshed after Linux Xvfb qualification. Historical source baselines retained.",
+  "note": "V544.1: exact bit-parallel LCS fix for Office extraction-order metric; source hash updated. Historical baselines preserved.",
   "schema": "openpdf-v51.4-source-hash-overrides-v1",
   "sha256": {
     "03-Sources/openpdf_compression_acceptance_v489.py": "f83890cdccefe28791b6a27030f2a7c048d97798307b11417a1c292b75d0f468",
     "03-Sources/openpdf_conversion_service_v351.py": "1c2542db57e28f8ef4142d3a59cbf42a4a6dce795fd3cddd74ad9aae72a26271",
-    "03-Sources/openpdf_desktop.py": "f8d21f02b044c3dc832f83d724a35e0c0d4edf798334f7561bfb2af7ddc5d811",
+    "03-Sources/openpdf_desktop.py": "7573d09898344297675bd44d76f85ba76bd3aa77a0eeff29b50dff7e0a9ef1b4",
     "03-Sources/openpdf_ocr_service_v347.py": "5615270991cf741ea330bdb698fc3f40a2fc52f7ab8a6ceb3447a66817fc81a8",
+    "03-Sources/openpdf_office_precision_order_ui_v544.py": "c6139b0c5318aa1dfc97ebee9a70cafc0e374be2119da8c2e21393c1974bf3dd",
+    "03-Sources/openpdf_office_reference_v542.py": "2f68fadc50d9412ebe1bc46cfe5218c7c81a4db7327284be1b1e0b4b5f4986fc",
     "03-Sources/openpdf_office_roundtrip_v459.py": "1cd3305f151e9367c9113ccb7844e737e821eee36e068d990958f4c425a9f96e",
-    "03-Sources/openpdf_operations.py": "1746477f561ee35e57afabcc7fddb62305bb32b389533cafd7e3507e8594f5d8"
+    "03-Sources/openpdf_operations.py": "1746477f561ee35e57afabcc7fddb62305bb32b389533cafd7e3507e8594f5d8",
+    "03-Sources/openpdf_precision_order_v544.py": "b5e77815f31a46734bc8e600b2639c1e87706254b9bbd1360780783812c824e5"
   }
 }

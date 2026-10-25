@@ -346,7 +346,7 @@ class OpenPDFStudio(tk.Tk):
         """V543: opt-in, asynchronous, privacy-preserving editable Office audit."""
         if self.busy:
             return
-        from openpdf_office_quality_ui_v543 import (
+        from openpdf_office_precision_order_ui_v544 import (
             safe_office_receipt, format_office_quality_summary,
             serialize_office_quality_receipt)
         window = tk.Toplevel(self)
@@ -357,8 +357,9 @@ class OpenPDFStudio(tk.Tk):
         frame.pack(fill='both', expand=True)
         ttk.Label(frame, text='Qualification Word / Excel / PowerPoint éditables',
                   font=('Segoe UI', 13, 'bold')).pack(anchor='w')
-        ttk.Label(frame, text=('Compare les objets éditables DOCX, XLSX et PPTX à un corpus '
-                  'annoté. Ne mesure ni la géométrie, ni les styles, ni la fidélité visuelle.'),
+        ttk.Label(frame, text=('Compare les objets éditables DOCX, XLSX et PPTX à un corpus annoté. '
+                  'Avec les seuils V544, mesure aussi la précision et l’ordre d’extraction des tokens. '
+                  'Cela ne prouve pas l’ordre de lecture visuel ni la fidélité graphique.'),
                   wraplength=600).pack(anchor='w', pady=8)
         manifest = tk.StringVar()
         selection = ttk.Frame(frame); selection.pack(fill='x', pady=6)

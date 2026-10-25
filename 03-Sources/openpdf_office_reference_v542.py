@@ -19,6 +19,11 @@ from openpdf_ocr_reference_corpus_v539 import _digest, _file, _json, ID_RE
 SCHEMA = 'openpdf.office.reference.corpus.v1'
 ANNOTATION_SCHEMA = 'openpdf.office.reference.v1'
 REPORT_SCHEMA = 'openpdf.office.reference.report.v1'
+REPORT_SCHEMA_V2 = 'openpdf.office.reference.report.v2'
+PRECISION_ORDER_THRESHOLDS = frozenset({
+    'min_token_precision', 'min_case_token_precision', 'min_case_ordered_token_recall'
+})
+MAX_TOTAL_ACTUAL_TOKENS = 50000
 FORMATS = {'.docx', '.xlsx', '.pptx'}
 MAX_CASES = 32
 MAX_CASE_TOKENS = 5000
@@ -82,8 +87,8 @@ def _office_preflight(path):
         if '[Content_Types].xml' not in names:
             raise ValueError('Office content types missing')
 
-def _editable_text(path):
-    """Count native editable elements, never embedded images."""
+def _editable_text(path, *, with_order=False):
+    """Count native editable elements; optionally return OOXML traversal order."""
     suffix = path.suffix.lower()
     values = []
     elements = 0
@@ -138,17 +143,27 @@ def _editable_text(path):
             workbook.close()
     else:
         raise ValueError('Unsupported Office format')
-    return Counter(token for value in values for token in _tokens(value)), elements
+    tokens = [token for value in values for token in _tokens(value)]
+    if with_order:
+        if len(tokens) > MAX_CASE_TOKENS:
+            raise ValueError('Office precision/order token budget exceeded')
+        return Counter(tokens), elements, tokens
+    return Counter(tokens), elements
 
 def _thresholds(value):
     required = {'min_token_recall', 'min_case_token_recall', 'min_human_reviewed',
                 'min_editable_elements_per_case'}
-    if not isinstance(value, dict) or set(value) != required:
+    keys = set(value) if isinstance(value, dict) else set()
+    extended_keys = required | PRECISION_ORDER_THRESHOLDS
+    if keys != required and keys != extended_keys:
         raise ValueError('Invalid Office reference thresholds')
-    for name in ('min_token_recall', 'min_case_token_recall'):
+    rate_names = ['min_token_recall', 'min_case_token_recall']
+    if keys == extended_keys:
+        rate_names.extend(sorted(PRECISION_ORDER_THRESHOLDS))
+    for name in rate_names:
         x = value[name]
         if type(x) not in (int, float) or not math.isfinite(x) or not 0 <= x <= 1:
-            raise ValueError('Invalid Office recall threshold')
+            raise ValueError('Invalid Office quality threshold')
     for name, upper in (('min_human_reviewed', MAX_CASES),
                         ('min_editable_elements_per_case', MAX_EDITABLE_ELEMENTS)):
         x = value[name]
@@ -166,12 +181,26 @@ def evaluate_office_reference_corpus(manifest):
     if not isinstance(cases, list) or not 2 <= len(cases) <= MAX_CASES:
         raise ValueError('Office corpus requires 2 to 32 cases')
     thresholds = _thresholds(data['thresholds'])
+    extended = PRECISION_ORDER_THRESHOLDS.issubset(thresholds)
+    if extended:
+        from openpdf_precision_order_v544 import measure_precision_order
     if thresholds['min_human_reviewed'] > len(cases):
         raise ValueError('Impossible human review threshold')
     manifest_hash = _digest(manifest, 128 * 1024)
     ids, source_hashes, office_hashes, evidence_hashes = set(), set(), set(), []
     total = matched = humans = failed_cases = missing_elements = editable_elements = 0
     worst_case_recall = 1.0
+    actual_tokens_total = unexpected_tokens_total = 0
+    precision_case_failures = order_case_failures = 0
+    worst_case_precision = 1.0
+    worst_case_ordered_recall = 1.0
+    precision_formats = {
+        fmt[1:]: {
+            'cases': 0, 'actual_tokens': 0, 'unexpected_tokens': 0, 'matched_tokens': 0,
+            'cases_below_precision_floor': 0, 'cases_below_order_floor': 0,
+            'worst_case_token_precision': None, 'worst_case_ordered_token_recall': None,
+        } for fmt in sorted(FORMATS)
+    }
     formats = {fmt[1:]: {'cases': 0, 'reference_tokens': 0, 'matched_tokens': 0}
                for fmt in sorted(FORMATS)}
     for case in cases:
@@ -206,18 +235,47 @@ def evaluate_office_reference_corpus(manifest):
         if (not isinstance(phrases, list) or not 1 <= len(phrases) <= 1000 or
                 any(type(p) is not str or not p.strip() or len(p) > 5000 for p in phrases)):
             raise ValueError('Invalid Office reference phrases')
-        expected = Counter(token for phrase in phrases for token in _tokens(phrase))
+        expected_sequence = [token for phrase in phrases for token in _tokens(phrase)]
+        expected = Counter(expected_sequence)
         expected_total = sum(expected.values())
         if not 1 <= expected_total <= MAX_CASE_TOKENS or total + expected_total > MAX_TOTAL_TOKENS:
             raise ValueError('Office reference token budget exceeded')
         _office_preflight(office)
-        actual, elements = _editable_text(office)
+        if extended:
+            actual, elements, actual_sequence = _editable_text(office, with_order=True)
+        else:
+            actual, elements = _editable_text(office)
         if _digest(source, 32 * 1024 * 1024) != source_sha or _digest(office, MAX_ZIP_BYTES) != office_sha:
             raise ValueError('Office evidence modified during evaluation')
         if _digest(annotation_path, 256 * 1024) != annotation_sha:
             raise ValueError('Office annotations modified during evaluation')
         found = sum(min(count, actual[token]) for token, count in expected.items())
         recall = found / expected_total
+        if extended:
+            metrics = measure_precision_order(expected_sequence, actual_sequence)
+            if metrics['matched_tokens'] != found:
+                raise ValueError('Office token metric reconciliation failed')
+            if actual_tokens_total + metrics['actual_tokens'] > MAX_TOTAL_ACTUAL_TOKENS:
+                raise ValueError('Office total precision/order token budget exceeded')
+            case_precision = metrics['token_precision']
+            case_order = metrics['ordered_token_recall']
+            actual_tokens_total += metrics['actual_tokens']
+            unexpected_tokens_total += metrics['unexpected_tokens']
+            precision_case_failures += case_precision < thresholds['min_case_token_precision']
+            order_case_failures += case_order < thresholds['min_case_ordered_token_recall']
+            worst_case_precision = min(worst_case_precision, case_precision)
+            worst_case_ordered_recall = min(worst_case_ordered_recall, case_order)
+            precision_slot = precision_formats[office.suffix.lower()[1:]]
+            precision_slot['cases'] += 1
+            precision_slot['actual_tokens'] += metrics['actual_tokens']
+            precision_slot['unexpected_tokens'] += metrics['unexpected_tokens']
+            precision_slot['matched_tokens'] += metrics['matched_tokens']
+            precision_slot['cases_below_precision_floor'] += int(case_precision < thresholds['min_case_token_precision'])
+            precision_slot['cases_below_order_floor'] += int(case_order < thresholds['min_case_ordered_token_recall'])
+            prior_precision = precision_slot['worst_case_token_precision']
+            prior_order = precision_slot['worst_case_ordered_token_recall']
+            precision_slot['worst_case_token_precision'] = case_precision if prior_precision is None else min(prior_precision, case_precision)
+            precision_slot['worst_case_ordered_token_recall'] = case_order if prior_order is None else min(prior_order, case_order)
         worst_case_recall = min(worst_case_recall, recall)
         failed_cases += recall < thresholds['min_case_token_recall']
         missing_elements += elements < thresholds['min_editable_elements_per_case']
@@ -238,11 +296,26 @@ def evaluate_office_reference_corpus(manifest):
         failed.append('min_editable_elements_per_case')
     if humans < thresholds['min_human_reviewed']:
         failed.append('min_human_reviewed')
-    return {
-        'schema': REPORT_SCHEMA, 'status': 'FAIL' if failed else 'PASS',
-        'scope': 'editable_ooxml_text_token_multiset_recall_against_separate_reference',
-        'visual_fidelity': 'not_assessed', 'reading_order': 'not_assessed',
-        'token_precision': 'not_assessed',
+    overall_precision = matched / actual_tokens_total if actual_tokens_total else 0.0
+    overall_recall = matched / total
+    overall_f1 = (2 * overall_precision * overall_recall / (overall_precision + overall_recall)
+                   if overall_precision + overall_recall else 0.0)
+    if extended:
+        if overall_precision < thresholds['min_token_precision']:
+            failed.append('min_token_precision')
+        if precision_case_failures:
+            failed.append('min_case_token_precision')
+        if order_case_failures:
+            failed.append('min_case_ordered_token_recall')
+    report = {
+        'schema': REPORT_SCHEMA_V2 if extended else REPORT_SCHEMA,
+        'status': 'FAIL' if failed else 'PASS',
+        'scope': ('editable_ooxml_token_precision_recall_and_ordered_sequence_coverage'
+                  if extended else 'editable_ooxml_text_token_multiset_recall_against_separate_reference'),
+        'visual_fidelity': 'not_assessed',
+        'reading_order': ('editable_object_extraction_sequence_only_not_visual_reading_order'
+                          if extended else 'not_assessed'),
+        'token_precision': round(overall_precision, 6) if extended else 'not_assessed',
         'annotation_provenance': 'declared_not_independently_attested',
         'manifest_sha256': manifest_hash,
         'evidence_set_sha256': hashlib.sha256('\n'.join(sorted(evidence_hashes)).encode('ascii')).hexdigest(),
@@ -255,8 +328,42 @@ def evaluate_office_reference_corpus(manifest):
         'worst_case_token_recall': round(worst_case_recall, 6),
         'by_format': {k: {**v, 'token_recall': round(v['matched_tokens'] / v['reference_tokens'], 6)
                             if v['reference_tokens'] else None} for k, v in formats.items()},
-        'thresholds': thresholds, 'failed_thresholds': failed,
+        'thresholds': {key: thresholds[key] for key in (
+            'min_token_recall', 'min_case_token_recall', 'min_human_reviewed',
+            'min_editable_elements_per_case')},
+        'failed_thresholds': failed,
     }
+    if extended:
+        precision_by_format = {}
+        for name, slot in precision_formats.items():
+            if slot['cases']:
+                precision = slot['matched_tokens'] / slot['actual_tokens'] if slot['actual_tokens'] else 0.0
+                format_recall = formats[name]['matched_tokens'] / formats[name]['reference_tokens']
+                f1 = 2 * precision * format_recall / (precision + format_recall) if precision + format_recall else 0.0
+                precision_by_format[name] = {
+                    **slot, 'token_precision': round(precision, 6), 'token_f1': round(f1, 6),
+                    'worst_case_token_precision': round(slot['worst_case_token_precision'], 6),
+                    'worst_case_ordered_token_recall': round(slot['worst_case_ordered_token_recall'], 6),
+                }
+            else:
+                precision_by_format[name] = {
+                    **slot, 'token_precision': None, 'token_f1': None,
+                    'worst_case_token_precision': None, 'worst_case_ordered_token_recall': None,
+                }
+        report['precision_order'] = {
+            'actual_tokens': actual_tokens_total,
+            'matched_tokens': matched,
+            'unexpected_tokens': unexpected_tokens_total,
+            'token_precision': round(overall_precision, 6),
+            'token_f1': round(overall_f1, 6),
+            'worst_case_token_precision': round(worst_case_precision, 6),
+            'worst_case_ordered_token_recall': round(worst_case_ordered_recall, 6),
+            'cases_below_precision_floor': precision_case_failures,
+            'cases_below_order_floor': order_case_failures,
+            'thresholds': {key: thresholds[key] for key in sorted(PRECISION_ORDER_THRESHOLDS)},
+            'by_format': precision_by_format,
+        }
+    return report
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Independent editable Office token-recall qualification')

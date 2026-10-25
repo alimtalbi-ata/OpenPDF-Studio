@@ -110,7 +110,7 @@ class OfficeUiV543Tests(unittest.TestCase):
         self.assertIn("ttk.Button(header,text='Qualité Office'", source)
         self.assertIn('self.office_quality_button', source)
         self.assertIn('openpdf_office_reference_v542', source)
-        self.assertIn('openpdf_office_quality_ui_v543', source)
+        self.assertIn('openpdf_office_precision_order_ui_v544', source)
 
 
 @unittest.skipUnless(os.environ.get('OPENPDF_RUN_GUI_TEST') == '1', 'Explicit GUI qualification not requested')

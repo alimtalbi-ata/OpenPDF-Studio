@@ -11,6 +11,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "02-Compilation"))
@@ -80,7 +81,7 @@ class V548QualificationLogTests(unittest.TestCase):
                 "id": 123,
             }]
         }
-        with unittest.mock.patch.object(qualification, "_request_json", return_value=stale):
+        with mock.patch.object(qualification, "_request_json", return_value=stale):
             with self.assertRaisesRegex(qualification.QualificationError, "exact source revision"):
                 qualification._candidate_page_order_run(
                     "alimtalbi-ata/OpenPDF-Studio", "test-token", self.head

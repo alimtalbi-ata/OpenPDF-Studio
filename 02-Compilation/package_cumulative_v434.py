@@ -68,6 +68,50 @@ def forbidden_member(name, version):
     return False
 
 
+
+SMOKE_ARGUMENTS = (
+    '--self-test',
+    '--functional-self-test',
+    '--ocr-runtime-self-test',
+)
+
+
+def validate_smoke_receipt(smoke, *, version, mode, filename, sha256):
+    """Validate the exact native smoke contract required by this release.
+
+    V51.4 builds execute the OCR runtime smoke in addition to the startup and
+    functional checks. A two-check receipt is stale and must not qualify the
+    cumulative package. Only bounded metadata is examined here; stdout/stderr
+    remain archived as evidence, never rendered into user-facing diagnostics.
+    """
+    if (type(smoke) is not dict
+            or str(smoke.get('version')) != version
+            or smoke.get('mode') != mode
+            or smoke.get('passed') is not True
+            or smoke.get('artifact_name') != filename
+            or smoke.get('artifact_sha256') != sha256):
+        raise ValueError('Unbound Windows smoke: ' + mode)
+    checks = smoke.get('checks')
+    if type(checks) is not list or len(checks) != len(SMOKE_ARGUMENTS):
+        raise ValueError('Incomplete Windows smoke checks: ' + mode)
+    observed = []
+    for check in checks:
+        if type(check) is not dict:
+            raise ValueError('Malformed Windows smoke check: ' + mode)
+        argument = check.get('argument')
+        if type(argument) is not str or argument not in SMOKE_ARGUMENTS or argument in observed:
+            raise ValueError('Unexpected or duplicated Windows smoke check: ' + mode)
+        if (type(check.get('exit_code')) is not int or check.get('exit_code') != 0
+                or check.get('passed') is not True or check.get('timed_out') is not False
+                or type(check.get('stdout')) is not str
+                or type(check.get('stderr')) is not str):
+            raise ValueError('Failed Windows smoke check: ' + mode)
+        observed.append(argument)
+    if set(observed) != set(SMOKE_ARGUMENTS):
+        raise ValueError('Missing required Windows smoke check: ' + mode)
+    return True
+
+
 def evidence(version, read, size):
     prefix = '01-Application/binary/'
     required = [prefix + x for x in names(version)]
@@ -90,9 +134,8 @@ def evidence(version, read, size):
         if len(entries) != 1 or entries[0].get('sha256') != sha or entries[0].get('size_bytes') != size(path) or entries[0].get('pe_mz_header') is not True:
             raise ValueError('Unbound binary manifest: ' + filename)
         smoke = json.loads(read(prefix + f'windows-smoke-{mode}.json').decode('utf-8-sig'))
-        checks = smoke.get('checks')
-        if (str(smoke.get('version')) != version or smoke.get('mode') != mode or smoke.get('passed') is not True or smoke.get('artifact_name') != filename or smoke.get('artifact_sha256') != sha or not isinstance(checks, list) or len(checks) != 2 or any(not isinstance(c, dict) or c.get('passed') is not True for c in checks)):
-            raise ValueError('Unbound Windows smoke: ' + mode)
+        validate_smoke_receipt(smoke, version=version, mode=mode,
+                               filename=filename, sha256=sha)
     installation = json.loads(read(required[3]).decode('utf-8-sig'))
     if (str(installation.get('version')) != version or installation.get('passed') is not True or installation.get('artifact_name') != names(version)[0] or installation.get('artifact_sha256') != hashlib.sha256(read(required[0])).hexdigest() or not isinstance(installation.get('steps'), list) or not {'silent_install_pass', 'installed_launch_pass', 'silent_uninstall_pass'}.issubset(set(installation['steps']))):
         raise ValueError('Unbound Windows installation evidence')

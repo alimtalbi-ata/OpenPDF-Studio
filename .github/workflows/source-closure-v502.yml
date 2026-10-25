@@ -223,7 +223,7 @@ jobs:
         run: |
           py -3.12 03-Sources/openpdf_binary_manifest.py 01-Application/binary
           if ($LASTEXITCODE -ne 0) { throw 'Combined binary manifest generation failed' }
-          py -3.12 -m pip install "python-docx>=1.1,<2" "reportlab>=4,<5" "pypdf>=5,<7"
+          py -3.12 -m pip install "python-docx>=1.1,<2" "reportlab>=4,<5" "pypdf>=5,<7" "Pillow>=10,<13"
           if ($LASTEXITCODE -ne 0) { throw 'Documentation dependencies failed to install' }
           py -3.12 02-Compilation/generate_release_docs.py
           if ($LASTEXITCODE -ne 0) { throw 'Versioned Word/PDF generation failed' }

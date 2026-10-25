@@ -121,6 +121,7 @@ class SourceReconciliationV503Tests(unittest.TestCase):
             "package_cumulative_v434.py --verify",
             "Get-FileHash -LiteralPath $zip -Algorithm SHA256",
             "OpenPDF-Studio-V",
+            "Pillow>=10,<13",
             "actions/upload-artifact@v4",
         ):
             with self.subTest(contract=contract):

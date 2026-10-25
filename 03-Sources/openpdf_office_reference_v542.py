@@ -14,6 +14,7 @@ import re
 import stat
 import unicodedata
 import zipfile
+import zlib
 from openpdf_ocr_reference_corpus_v539 import _digest, _file, _json, ID_RE
 
 SCHEMA = 'openpdf.office.reference.corpus.v1'
@@ -33,6 +34,8 @@ MAX_ZIP_BYTES = 32 * 1024 * 1024
 MAX_ZIP_ENTRIES = 2048
 MAX_MEMBER_BYTES = 8 * 1024 * 1024
 MAX_UNPACKED_BYTES = 64 * 1024 * 1024
+WINDOWS_RESERVED_NAMES = frozenset({'CON', 'PRN', 'AUX', 'NUL'} |
+    {f'COM{i}' for i in range(1, 10)} | {f'LPT{i}' for i in range(1, 10)})
 TOKEN_RE = re.compile(r'\w+', re.UNICODE)
 
 def _tokens(text):
@@ -56,13 +59,30 @@ def _office_preflight(path):
         if not 1 <= len(members) <= MAX_ZIP_ENTRIES:
             raise ValueError('Invalid Office package entry count')
         names = set()
+        canonical_names = set()
         total = 0
         for member in members:
             name = member.filename
+            normalized_name = unicodedata.normalize('NFKC', name)
+            normalized_parts = normalized_name.split('/')
             if (name in names or not name or name.startswith('/') or '\\' in name or
                     ':' in name or any(part in ('', '.', '..') for part in name.split('/'))):
                 raise ValueError('Unsafe or duplicate Office member')
+            # Reject paths that another consumer could normalize differently on Windows.
+            if (len(normalized_parts) != len(name.split('/')) or
+                    normalized_name.startswith('/') or '\\' in normalized_name or
+                    ':' in normalized_name or
+                    any(part in ('', '.', '..') or part.endswith((' ', '.'))
+                        for part in normalized_parts)):
+                raise ValueError('Ambiguous or unsafe Windows Office member')
+            if any(part.split('.', 1)[0].rstrip(' .').upper() in WINDOWS_RESERVED_NAMES
+                   for part in normalized_parts):
+                raise ValueError('Reserved Windows Office member name')
+            canonical_key = normalized_name.casefold()
+            if canonical_key in canonical_names:
+                raise ValueError('Ambiguous case-insensitive Office member')
             names.add(name)
+            canonical_names.add(canonical_key)
             if member.flag_bits & 1 or stat.S_ISLNK(member.external_attr >> 16):
                 raise ValueError('Encrypted or linked Office member')
             total += member.file_size
@@ -86,6 +106,16 @@ def _office_preflight(path):
                     raise ValueError('External Office relationships refused')
         if '[Content_Types].xml' not in names:
             raise ValueError('Office content types missing')
+        # Size/ratio checks above bound the work; verify every payload, including
+        # unused custom parts that high-level Office parsers may never open.
+        try:
+            corrupt_member = package.testzip()
+        except (zipfile.BadZipFile, RuntimeError, EOFError, OSError,
+                NotImplementedError, zlib.error) as exc:
+            raise ValueError('Office archive integrity check failed') from exc
+        if corrupt_member is not None:
+            # Do not echo archive member names in diagnostics.
+            raise ValueError('Office archive integrity check failed')
 
 def _editable_text(path, *, with_order=False):
     """Count native editable elements; optionally return OOXML traversal order."""

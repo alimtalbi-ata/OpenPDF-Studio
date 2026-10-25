@@ -3,9 +3,12 @@ on:
   pull_request:
     paths:
       - '03-Sources/openpdf_auto_compression_v505.py'
-      - '03-Sources/openpdf_compression_evidence_v506.py'
       - '03-Sources/openpdf_compression_coverage_v507.py'
       - '03-Sources/openpdf_compression_alpha_v508.py'
+      - '03-Sources/openpdf_compression_acceptance_v489.py'
+      - '03-Sources/openpdf_compression_evidence_v506.py'
+      - '03-Sources/openpdf_structure_guard_v439.py'
+      - '04-Tests-et-Qualification/test_compression_semantics_v538.py'
       - '02-Compilation/package_cumulative_v434.py'
       - '04-Tests-et-Qualification/test_zip_determinism_v507.py'
       - '03-Sources/openpdf_compression_v327.py'
@@ -35,11 +38,13 @@ jobs:
       - name: Install production PDF engine
         run: python -m pip install "pymupdf>=1.24,<2"
       - name: Compile production and test modules
-        run: python -m compileall -q 03-Sources/openpdf_auto_compression_v505.py 03-Sources/openpdf_compression_evidence_v506.py 03-Sources/openpdf_compression_coverage_v507.py 03-Sources/openpdf_compression_alpha_v508.py 03-Sources/openpdf_compression_v327.py 04-Tests-et-Qualification/test_auto_compression_v505.py 04-Tests-et-Qualification/test_compression_alpha_v508.py
+        run: python -m compileall -q 03-Sources/openpdf_auto_compression_v505.py 03-Sources/openpdf_compression_evidence_v506.py 03-Sources/openpdf_compression_coverage_v507.py 03-Sources/openpdf_compression_alpha_v508.py 03-Sources/openpdf_compression_acceptance_v489.py 03-Sources/openpdf_compression_evidence_v506.py 03-Sources/openpdf_structure_guard_v439.py 03-Sources/openpdf_compression_v327.py 04-Tests-et-Qualification/test_auto_compression_v505.py 04-Tests-et-Qualification/test_compression_alpha_v508.py 04-Tests-et-Qualification/test_compression_semantics_v538.py
       - name: Real-PDF automatic selection and safety tests
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_auto_compression_v505.py -v
       - name: Measured receipt integrity and real-PDF regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_compression_evidence_v506.py -v
+      - name: V538 semantic preservation - links bookmarks annotations metadata and receipts
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_compression_semantics_v538.py -v
       - name: Independent complete-page and pixel coverage regression
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_compression_coverage_v507.py -v
       - name: Independent alpha-channel transparency fidelity and rejection

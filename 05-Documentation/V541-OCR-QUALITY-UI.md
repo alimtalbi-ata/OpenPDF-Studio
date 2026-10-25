@@ -6,7 +6,7 @@
 
 Un bouton **Qualité OCR** ouvre un dialogue local dans l'application Windows. L'utilisateur choisit un manifeste JSON de corpus de référence V539/V540, déclenche une analyse asynchrone, puis peut exporter un reçu JSON. Le dialogue reste réactif pendant la lecture des PDF. Le moteur existant vérifie SHA-256, références et seuils CER/WER globaux, par document et facultativement par page.
 
-L'interface affiche **PASS/FAIL**, CER, WER, compteurs et seuils échoués, sans afficher de texte OCR, de nom de document ni de chemin. Le reçu exporté applique une liste blanche stricte : aucune clé arbitraire issue d'une preuve non fiable ne peut être exposée. La sortie est créée exclusivement (`x`) : aucun écrasement d'un fichier existant. Les erreurs d'évaluation sont affichées de façon générique pour éviter la divulgation de chemins.
+L'interface affiche **PASS/FAIL**, CER, WER, compteurs et seuils échoués, sans afficher de texte OCR, de nom de document ni de chemin dans le résultat ou le reçu (le chemin du manifeste choisi reste visible dans le champ de sélection). Le reçu exporté applique une liste blanche stricte : aucune clé arbitraire issue d'une preuve non fiable ne peut être exposée. La sortie est créée exclusivement (`x`) : aucun écrasement d'un fichier existant. Les erreurs d'évaluation sont affichées de façon générique pour éviter la divulgation de chemins.
 
 ## Utilisation
 

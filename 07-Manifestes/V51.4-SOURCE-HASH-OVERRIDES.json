@@ -1,11 +1,11 @@
 {
   "author": "Abdelhalim Talbi",
-  "note": "V541: OCR reference quality UI integrated; pinned desktop SHA-256 updated after real Linux Xvfb review. Historical baselines preserved.",
+  "note": "V543: Office quality GUI integrated; desktop SHA-256 refreshed after Linux Xvfb qualification. Historical source baselines retained.",
   "schema": "openpdf-v51.4-source-hash-overrides-v1",
   "sha256": {
     "03-Sources/openpdf_compression_acceptance_v489.py": "f83890cdccefe28791b6a27030f2a7c048d97798307b11417a1c292b75d0f468",
     "03-Sources/openpdf_conversion_service_v351.py": "1c2542db57e28f8ef4142d3a59cbf42a4a6dce795fd3cddd74ad9aae72a26271",
-    "03-Sources/openpdf_desktop.py": "ac4bebb366b28a1d36164b6ce6fe1abcd91773f53ea2b06b5bb7ab98d97242b6",
+    "03-Sources/openpdf_desktop.py": "f8d21f02b044c3dc832f83d724a35e0c0d4edf798334f7561bfb2af7ddc5d811",
     "03-Sources/openpdf_ocr_service_v347.py": "5615270991cf741ea330bdb698fc3f40a2fc52f7ab8a6ceb3447a66817fc81a8",
     "03-Sources/openpdf_office_roundtrip_v459.py": "1cd3305f151e9367c9113ccb7844e737e821eee36e068d990958f4c425a9f96e",
     "03-Sources/openpdf_operations.py": "1746477f561ee35e57afabcc7fddb62305bb32b389533cafd7e3507e8594f5d8"

@@ -7,6 +7,7 @@ from openpdf_audit_v415 import write_event
 from openpdf_reservation import reserve
 from openpdf_split_transaction import split_transaction, recover_transactions
 from openpdf_ui_controller_v348 import OPERATIONS, run_operation as _legacy_run_operation
+from openpdf_source_path_guard_v548 import guard_pdf_source_path
 
 def run_operation(operation, sources, destination, **kwargs):
     if operation not in OPERATIONS:
@@ -35,16 +36,9 @@ def run_operation(operation, sources, destination, **kwargs):
         raise ValueError("Destination obligatoire")
     if Path(destination).expanduser().is_symlink():
         raise FileExistsError("Destination lien symbolique interdite")
-    source_paths = [Path(p).expanduser() for p in sources if str(p).strip()]
-    # Check original lexical names before resolve(): canonicalization follows
-    # symlinks and would otherwise hide the caller-supplied alias from lower layers.
-    if operation in ("compression", "fusion", "extraction", "decoupage", "reorganisation"):
-        if any(path.is_symlink() for path in source_paths):
-            raise ValueError("Source PDF via lien symbolique interdit")
-    if operation in ("docx", "xlsx", "pptx") and kwargs.get("ocr_before_office", False):
-        if any(path.is_symlink() for path in source_paths):
-            raise ValueError("Source OCR Office : lien symbolique interdit")
-    inputs = [path.resolve() for path in source_paths]
+    # Validate every lexical component before any source canonicalization.
+    source_paths = [guard_pdf_source_path(p) for p in sources if str(p).strip()]
+    inputs = source_paths
     if not inputs:
         raise ValueError("Au moins une source est obligatoire")
     output = Path(destination).expanduser().resolve()
@@ -96,7 +90,7 @@ def run_operation(operation, sources, destination, **kwargs):
                 from openpdf_conversion_service_v351 import convert_office
                 result = convert_office(inputs[0], output, output_format='xlsx', table_mode=True)
             else:
-                result=_legacy_run_operation(operation, sources, destination, **kwargs)
+                result=_legacy_run_operation(operation, inputs, destination, **kwargs)
             # Compression 'smaller_only' can legitimately yield no new output.
             # Audit must distinguish that outcome from a published document.
             if operation == 'compression' and (

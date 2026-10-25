@@ -1,9 +1,9 @@
 {
   "author": "Abdelhalim Talbi",
-  "note": "V546.1: display per-profile size/quality/timing diagnostics without raw exception text or private paths; source hash pinned.",
+  "note": "V546.1: per-profile size/quality/timing diagnostics without raw exception text or private paths; correctly rendered line breaks; source hash pinned.",
   "schema": "openpdf-v51.4-source-hash-overrides-v1",
   "sha256": {
-    "03-Sources/openpdf_auto_compression_v505.py": "4709ce18c13cdbcc2ead090dca7de985adb24b951d1698bb38a89e5961c4148a",
+    "03-Sources/openpdf_auto_compression_v505.py": "198c529dbf4a97c9bbf0ccd43ea5e3c7b06aec52e5f5ad6efa90565ce358134a",
     "03-Sources/openpdf_compression_acceptance_v489.py": "f83890cdccefe28791b6a27030f2a7c048d97798307b11417a1c292b75d0f468",
     "03-Sources/openpdf_conversion_service_v351.py": "1c2542db57e28f8ef4142d3a59cbf42a4a6dce795fd3cddd74ad9aae72a26271",
     "03-Sources/openpdf_desktop.py": "8f3aced132c854932db4e66f9b3499f6940a67fdb7e71a4d00d4e8dbd8d8b5b4",

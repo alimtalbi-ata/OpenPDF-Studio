@@ -47,6 +47,7 @@ def run():
                 page=d.new_page()
                 page.insert_text((72,100),"FACTURE TEST CONVERSION",fontsize=16)
                 page.insert_text((72,140),"Ligne Excel controle")
+                page.insert_text((72,180),'=HYPERLINK("https://example.invalid","ouvrir")')
                 d.save(source)
             docx=root/"output.docx"; xlsx=root/"output.xlsx"; pptx=root/"output.pptx"
             assert pdf_to_docx(source,docx)==[docx]
@@ -57,6 +58,8 @@ def run():
             excel=load_workbook(xlsx,read_only=True)
             try:
                 assert any("FACTURE TEST CONVERSION" in str(row[2]) for row in excel.active.iter_rows(min_row=2,values_only=True))
+                values=[row[2] for row in excel.active.iter_rows(min_row=2,values_only=True)]
+                assert "'=HYPERLINK(\"https://example.invalid\",\"ouvrir\")" in values,repr(values)
             finally:
                 excel.close()
             slides=Presentation(pptx)

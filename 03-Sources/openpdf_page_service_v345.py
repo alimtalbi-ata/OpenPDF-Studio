@@ -7,6 +7,7 @@ import tempfile
 import fitz
 from openpdf_atomic_output import publish_exclusive
 from openpdf_page_source_integrity_v435 import snapshot_source, verify_source as verify_source_snapshot
+from openpdf_source_path_guard_v548 import guard_pdf_source_path
 
 @dataclass(frozen=True)
 class PageReceipt:
@@ -22,17 +23,8 @@ def _digest(path):
     return h.hexdigest()
 
 def _source(path):
-    """Reject a final-component symlink before resolving it to its target."""
-    candidate = Path(path).expanduser()
-    if candidate.is_symlink():
-        raise ValueError('Source PDF via lien symbolique interdit')
-    p = candidate.resolve(strict=True)
-    # Recheck the lexical path to catch a link introduced during resolution.
-    if candidate.is_symlink():
-        raise ValueError('Source PDF via lien symbolique interdit')
-    if not p.is_file() or p.suffix.lower() != '.pdf':
-        raise ValueError('Source PDF invalide')
-    return p
+    """Reject linked path components before PDF operations begin."""
+    return guard_pdf_source_path(path)
 
 def _target(path,sources):
     p=Path(path).resolve()

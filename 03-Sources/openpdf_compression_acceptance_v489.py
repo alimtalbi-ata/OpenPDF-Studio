@@ -1,6 +1,8 @@
 """Independent, read-only acceptance audit for PDF compression candidates.
 
 Every rendered RGB pixel is compared at a bounded scale (no grid sampling).
+V538 also enforces semantic fidelity of navigation, annotations, forms,
+metadata and attachments using the existing production structure guard.
 The report is evidence at the chosen scale, NOT archival, OCR or print fidelity.
 Author: Abdelhalim Talbi. OpenPDF Studio V48.9.
 """
@@ -129,6 +131,15 @@ def audit_compression_candidate(source, candidate, policy=AcceptancePolicy()):
                 planned += pixels
                 if planned > policy.max_total_pixels:
                     raise CompressionRejected('Total render budget exceeded')
+        # V538: a perfectly identical RGB rendering can still conceal lost
+        # hyperlinks, outlines, review annotations, forms or attachments.
+        # Reuse the *production* structure guard before expensive rendering;
+        # this independent audit must not certify a semantically broken PDF.
+        from openpdf_structure_guard_v439 import validate_structure_preserved
+        try:
+            structure = validate_structure_preserved(src, dst)
+        except (ValueError, RuntimeError, TypeError, KeyError) as exc:
+            raise CompressionRejected('PDF semantic structure mismatch: ' + str(exc)) from exc
         max_mae = max_changed = 0.0
         compared = 0
         for index in range(count):
@@ -157,6 +168,7 @@ def audit_compression_candidate(source, candidate, policy=AcceptancePolicy()):
         'max_page_changed_fraction': round(max_changed, 8),
         'source_sha256': src_hash,
         'candidate_sha256': dst_hash,
+        'structure': structure,
         'policy': asdict(policy),
         'evidence': 'full_rgb_pixels_at_bounded_scale_not_archival_or_print_certification',
     }

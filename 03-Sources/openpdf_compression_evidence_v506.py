@@ -48,6 +48,17 @@ def verified_evidence(receipt, *, source_sha256, source_bytes, candidate_sha256,
         if (type(value) not in (int, float) or not math.isfinite(value)
                 or not 0 <= value <= maximum + 1e-8):
             raise RuntimeError('RGB quality measurement missing or above threshold')
+    # V538: bind the structure audit to the accepted size/visual receipt.
+    # A missing or incomplete structure audit is never a verified gain.
+    structure = audit.get('structure')
+    required = ('pages_verified', 'links_verified', 'annotations_verified',
+                'widgets_verified', 'attachments_verified', 'bookmarks_verified',
+                'layers_verified')
+    if (not isinstance(structure, dict)
+            or any(type(structure.get(key)) is not int for key in required)
+            or structure['pages_verified'] != pages
+            or any(structure[key] < 0 for key in required[1:])):
+        raise RuntimeError('Missing or invalid PDF semantic structure evidence')
     saving = 100 * (source_bytes - candidate_bytes) / source_bytes
     reported = audit.get('saving_percent')
     if (type(reported) not in (int, float) or not math.isfinite(reported)
@@ -57,6 +68,7 @@ def verified_evidence(receipt, *, source_sha256, source_bytes, candidate_sha256,
     return {
         'pages_compared': pages,
         'pixels_compared': pixels,
+        'structure': {key: structure[key] for key in required},
         'max_page_mae': audit['max_page_mae'],
         'max_page_changed_fraction': audit['max_page_changed_fraction'],
         'render_scale': policy.render_scale,

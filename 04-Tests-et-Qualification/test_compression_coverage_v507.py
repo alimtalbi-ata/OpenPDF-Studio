@@ -67,7 +67,9 @@ class CoverageV507(unittest.TestCase):
 
     def test_forged_one_page_coverage_rejected(self):
         report = self._corrupt('pages_compared', 1)
-        self.assertIn('every PDF page', report['cases'][0]['error'])
+        self.assertTrue(
+            'every PDF page' in report['cases'][0]['error']
+            or 'semantic structure evidence' in report['cases'][0]['error'])
 
     def test_forged_partial_pixel_coverage_rejected(self):
         report = self._corrupt('pixels_compared', 1)

@@ -45,3 +45,11 @@ Les résultats définitifs sont consultables dans GitHub Actions pour le commit 
 Le résultat de compression affiche maintenant une ligne par profil réellement essayé : disposition (retenu / conforme mais non retenu / aucun gain / rejeté), taille et gain mesurés quand un candidat passe, MAE et fraction de pixels modifiés, ainsi que la durée de l’essai. En l’absence de résultat conforme, les motifs restent compréhensibles sans publier de sortie.
 
 Les détails d’exception bruts, chemins absolus et noms de fichiers internes ne sont pas recopiés dans ces lignes de diagnostic. Cette sortie UI reste un résumé : elle ne remplace ni le reçu technique complet en mémoire du moteur, ni une certification de fidélité métier.
+
+## Addendum V546.1 - Intégrité des reçus de packaging Windows
+
+Le contrôle de packaging cumulatif V43.4 supposait deux contrôles smoke par exécutable. La qualification native V51.4 en produit désormais trois : démarrage, test fonctionnel et test du runtime OCR. Cette divergence bloquait le paquet cumulatif même quand les trois contrôles natifs étaient réussis.
+
+Le validateur validate_smoke_receipt vérifie maintenant exactement les trois arguments attendus, leur unicité, exit_code=0, passed=true, timed_out=false, des sorties texte et la liaison du reçu à la version, au mode, au nom et au SHA-256 de l'exécutable. Les reçus de deux contrôles seulement sont refusés. Dix tests ciblés couvrent le chemin nominal, les omissions, les doublons, l'échec simulé, les délais dépassés et les identités divergentes.
+
+La modification du validateur ne constitue pas un nouveau résultat de test Windows : les tests du contrat de reçu sont exécutés sur Ubuntu et Windows via le workflow V546.1, et le package final doit encore passer son propre contrôle d'intégrité.

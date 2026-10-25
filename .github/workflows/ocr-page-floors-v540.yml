@@ -33,7 +33,5 @@ jobs:
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_page_floors_v540.py -v
       - name: Regression V539 independent corpus gate
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_reference_corpus_v539.py -v
-      - name: Regression V487 OCR CER/WER
-        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_quality_v487.py -v
-      - name: Regression V488 OCR acceptance policy
-        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_quality_gate_v488.py -v
+      # Historical V487/V488 tests are in the cumulative delivery, not in Git.
+      # The V539 corpus regression exercises the V487 edit-distance runtime.

@@ -190,12 +190,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: v514-windows-portable-build-evidence
-          path: ${{ runner.temp }}/v547-portable
+          path: ${{ runner.temp }}/v548-portable
       - name: Download installer Windows build evidence
         uses: actions/download-artifact@v4
         with:
           name: v514-windows-installer-build-evidence
-          path: ${{ runner.temp }}/v547-installer
+          path: ${{ runner.temp }}/v548-installer
       - name: Assemble exact binaries and their native receipts
         shell: pwsh
         run: |
@@ -205,8 +205,8 @@ jobs:
           $binary = Join-Path $env:GITHUB_WORKSPACE '01-Application/binary'
           if (Test-Path -LiteralPath $binary) { Remove-Item -LiteralPath $binary -Recurse -Force }
           New-Item -ItemType Directory -Path $binary -Force | Out-Null
-          $portable = Join-Path $env:RUNNER_TEMP 'v547-portable'
-          $installer = Join-Path $env:RUNNER_TEMP 'v547-installer'
+          $portable = Join-Path $env:RUNNER_TEMP 'v548-portable'
+          $installer = Join-Path $env:RUNNER_TEMP 'v548-installer'
           $copy = @(
             @{ From = (Join-Path $portable "OpenPDF-Studio-Portable-V$version.exe"); Name = "OpenPDF-Studio-Portable-V$version.exe" },
             @{ From = (Join-Path $portable 'windows-smoke-portable.json'); Name = 'windows-smoke-portable.json' },
@@ -247,7 +247,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: OpenPDF-Studio-V${{ env.OPENPDF_VERSION }}-V547-Cumulative-Windows
+          name: OpenPDF-Studio-V${{ env.OPENPDF_VERSION }}-V548-Cumulative-Windows
           path: |
             01-Application/release/*.zip
             01-Application/release/*.zip.sha256

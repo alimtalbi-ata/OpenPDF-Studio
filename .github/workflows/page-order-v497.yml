@@ -13,6 +13,9 @@ on:
       - '04-Tests-et-Qualification/test_page_source_symlink_v547.py'
       - '03-Sources/openpdf_source_path_guard_v548.py'
       - '04-Tests-et-Qualification/test_source_path_chain_guard_v548.py'
+      - '04-Tests-et-Qualification/test_v548_ci_qualification_report.py'
+      - '02-Compilation/generate_docs_v514.py'
+      - '02-Compilation/write_v548_ci_qualification.py'
       - '.github/workflows/page-order-v497.yml'
   workflow_dispatch:
 jobs:

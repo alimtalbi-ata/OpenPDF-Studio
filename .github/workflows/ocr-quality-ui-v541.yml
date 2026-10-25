@@ -1,0 +1,37 @@
+name: V541 OCR quality UI integration and privacy
+on:
+  pull_request:
+    paths:
+      - '03-Sources/openpdf_desktop.py'
+      - '03-Sources/openpdf_ocr_quality_ui_v541.py'
+      - '03-Sources/openpdf_ocr_reference_corpus_v539.py'
+      - '04-Tests-et-Qualification/test_ocr_quality_ui_v541.py'
+      - '.github/workflows/ocr-quality-ui-v541.yml'
+  push:
+    branches:
+      - 'feature/v51.4-ocr-quality-ui-v541-*'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ocr-ui:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile UI adapter and desktop
+        run: python -m py_compile 03-Sources/openpdf_desktop.py 03-Sources/openpdf_ocr_quality_ui_v541.py 04-Tests-et-Qualification/test_ocr_quality_ui_v541.py
+      - name: Privacy and integration tests
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_quality_ui_v541.py -v
+      - name: OCR reference regressions (PDF serialization)
+        run: |
+          python -m pip install "PyMuPDF>=1.24,<2"
+          python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_page_floors_v540.py -v
+          python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_reference_corpus_v539.py -v

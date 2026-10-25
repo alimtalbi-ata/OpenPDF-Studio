@@ -209,42 +209,23 @@ def _successful_job_map(jobs, required_names):
     return result, by_name
 
 
-def _candidate_page_order_run(repo, token, head_sha, branch, pr_number, current_run):
-    query_sets = [
-        urllib.parse.urlencode({"head_sha": head_sha, "per_page": 100}),
-        urllib.parse.urlencode({"branch": branch, "per_page": 100}),
+def _candidate_page_order_run(repo, token, head_sha):
+    # Never borrow a green run from an older commit on the same PR. The path
+    # filters explicitly include this qualification pipeline, so each PR update
+    # produces a current page-order run for the checked-out SHA.
+    query = urllib.parse.urlencode({"head_sha": head_sha, "per_page": 100})
+    data = _request_json(repo, token, "/actions/runs?" + query)
+    candidates = [
+        run for run in data.get("workflow_runs", [])
+        if isinstance(run, dict)
+        and run.get("name") == PAGE_ORDER_WORKFLOW
+        and run.get("head_sha") == head_sha
     ]
-    collected = {}
-    for query in query_sets:
-        data = _request_json(repo, token, "/actions/runs?" + query)
-        for run in data.get("workflow_runs", []):
-            if isinstance(run, dict) and run.get("name") == PAGE_ORDER_WORKFLOW:
-                collected[run.get("id")] = run
-    candidates = list(collected.values())
-    exact = [run for run in candidates if run.get("head_sha") == head_sha]
-    if exact:
-        candidates = exact
-    else:
-        def related(run):
-            if run.get("head_branch") != branch:
-                return False
-            refs = run.get("pull_requests") or []
-            if pr_number is not None and refs:
-                return any(str(item.get("number")) == str(pr_number) for item in refs if isinstance(item, dict))
-            # Some GitHub responses omit pull_requests. Only accept a run created
-            # within ten minutes of this release job, never an old green run.
-            try:
-                created = datetime.fromisoformat(run["created_at"].replace("Z", "+00:00"))
-                current_created = datetime.fromisoformat(current_run["created_at"].replace("Z", "+00:00"))
-                return abs((created - current_created).total_seconds()) <= 600
-            except (KeyError, ValueError, TypeError):
-                return False
-        candidates = [run for run in candidates if related(run)]
     if not candidates:
-        raise QualificationError("No current page-order workflow run matched this source revision")
+        raise QualificationError("No page-order workflow run exists for this exact source revision")
     run = max(candidates, key=lambda item: item.get("created_at", ""))
     if run.get("status") != "completed" or run.get("conclusion") != "success":
-        raise QualificationError("The V548 page-order workflow has not passed")
+        raise QualificationError("The V548 page-order workflow has not passed for this exact revision")
     return run
 
 
@@ -279,16 +260,17 @@ def _verify_windows_binary_receipts(root, version):
             receipt = json.loads(receipt_path.read_text(encoding="utf-8-sig"))
         except (OSError, ValueError):
             raise QualificationError("Native Windows smoke receipt missing or invalid: " + mode) from None
+            checks = receipt.get("checks")
         if (str(receipt.get("version")) != version or receipt.get("mode") != mode
                 or receipt.get("passed") is not True or receipt.get("artifact_sha256") != data_hash
-                or not isinstance(receipt.get("checks"), list) or not receipt["checks"]
-                or any(check.get("passed") is not True for check in receipt["checks"])):
+                or not isinstance(checks, list) or not checks
+                or any(not isinstance(check, dict) or check.get("passed") is not True for check in checks)):
             raise QualificationError("Native Windows smoke receipt did not match: " + mode)
         observed[mode] = {
             "filename": filename,
             "bytes": size,
             "sha256": data_hash,
-            "checks_passed": len(receipt["checks"]),
+            "checks_passed": len(checks),
             "smoke_passed": True,
         }
     install_path = binary / ("windows-installation-v" + version + ".json")
@@ -298,9 +280,12 @@ def _verify_windows_binary_receipts(root, version):
         raise QualificationError("Native Windows install receipt missing or invalid") from None
     installer_hash = observed["installer"]["sha256"]
     required_steps = {"silent_install_pass", "installed_launch_pass", "installed_ocr_pass", "silent_uninstall_pass"}
+    install_steps = install.get("steps")
     if (str(install.get("version")) != version or install.get("passed") is not True
             or install.get("artifact_sha256") != installer_hash
-            or not required_steps.issubset(set(install.get("steps", [])))):
+            or not isinstance(install_steps, list)
+            or any(not isinstance(step, str) for step in install_steps)
+            or not required_steps.issubset(set(install_steps))):
         raise QualificationError("Native Windows install/uninstall receipt did not match")
     observed["installation"] = {
         "passed": True,
@@ -325,9 +310,13 @@ def generate(root):
         raise QualificationError("Required ephemeral GitHub Actions context is missing")
 
     source_run = _request_json(repo, token, "/actions/runs/" + run_id)
+    if source_run.get("head_sha") != head_sha:
+        raise QualificationError("The packaging run SHA does not match the checked-out SHA")
     source_jobs = _jobs(repo, token, run_id)
     source_names, source_by_name = _successful_job_map(source_jobs, CLOSURE_JOB_NAMES)
-    page_run = _candidate_page_order_run(repo, token, head_sha, branch, pr_number, source_run)
+    page_run = _candidate_page_order_run(repo, token, head_sha)
+    if page_run.get("head_sha") != head_sha:
+        raise QualificationError("The page-order run SHA does not match the checked-out SHA")
     page_jobs = _jobs(repo, token, page_run["id"])
     page_names, page_by_name = _successful_job_map(page_jobs, PAGE_JOB_NAMES)
 
@@ -337,6 +326,8 @@ def generate(root):
         job = page_by_name[PAGE_JOB_NAMES[os_key]]
         log = _download_job_log(repo, token, job["id"])
         result = analyze_test_log(log, expected_names)
+        if result["skipped"] != 0:
+            raise QualificationError("V548 functional suite contains skipped tests on " + os_key)
         os_results[os_key] = {
             **result,
             "job_id": job["id"],
@@ -364,6 +355,7 @@ def generate(root):
         "repository": repo,
         "branch": branch,
         "commit_sha": head_sha,
+        "pull_request_head_sha": os.environ.get("OPENPDF_PR_HEAD_SHA", "").strip() or None,
         "pull_request": int(pr_number) if pr_number and pr_number.isdigit() else None,
         "module_count": len(modules),
         "page_order": {

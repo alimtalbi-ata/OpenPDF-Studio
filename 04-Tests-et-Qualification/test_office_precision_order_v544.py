@@ -16,7 +16,7 @@ from openpdf_precision_order_v544 import measure_precision_order
 from openpdf_office_reference_v542 import evaluate_office_reference_corpus, REPORT_SCHEMA_V2
 from openpdf_office_precision_order_ui_v544 import (
     safe_office_receipt, format_office_quality_summary, serialize_office_quality_receipt)
-from test_office_reference_v542 import OfficeReferenceV542Tests
+import test_office_reference_v542 as office_fixtures
 
 
 def extended(thresholds):
@@ -30,7 +30,7 @@ def extended(thresholds):
 
 class OfficePrecisionOrderV544Tests(unittest.TestCase):
     def fixture(self):
-        value = OfficeReferenceV542Tests()
+        value = office_fixtures.OfficeReferenceV542Tests()
         value.setUp()
         self.addCleanup(value.doCleanups)
         return value
@@ -119,11 +119,12 @@ class OfficePrecisionOrderV544Tests(unittest.TestCase):
         fixture = self.fixture()
         fixture.case("docx", "Alpha beta")
         fixture.case("xlsx", "Gamma delta")
-        for thresholds in (
-            {**fixture.thresholds, "min_token_precision": 0.8},
-            extended({**fixture.thresholds, "min_token_precision": float("nan")}),
-            extended({**fixture.thresholds, "min_case_token_precision": True}),
-        ):
+        partial = {**fixture.thresholds, "min_token_precision": 0.8}
+        nan_thresholds = extended(fixture.thresholds)
+        nan_thresholds["min_token_precision"] = float("nan")
+        bool_thresholds = extended(fixture.thresholds)
+        bool_thresholds["min_case_token_precision"] = True
+        for thresholds in (partial, nan_thresholds, bool_thresholds):
             fixture.thresholds = thresholds
             with self.subTest(keys=tuple(sorted(thresholds)), values=str(thresholds)), self.assertRaises(ValueError):
                 evaluate_office_reference_corpus(fixture.manifest())

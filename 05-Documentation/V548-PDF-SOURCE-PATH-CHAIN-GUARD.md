@@ -21,11 +21,13 @@ V547 rejetait un lien symbolique placé directement sur le fichier PDF, mais aut
 
 Les noms de chemins ne sont pas inclus dans les messages de refus. Le comportement de traitement PDF reste inchangé pour les chemins réguliers sans alias.
 
-## Qualification à effectuer
+## Qualification reproductible et provenance
 
-Le workflow `.github/workflows/page-order-v497.yml` est configuré pour exécuter le test V548 sur Ubuntu et Windows, en plus des régressions V547 et de réorganisation de pages. Le workflow de fermeture des sources doit vérifier que le nouveau module est inclus dans la fermeture statique et dans le manifeste runtime, puis reconstruire les artefacts Windows natifs et le ZIP cumulatif.
+Le workflow `.github/workflows/page-order-v497.yml` exécute les tests V548 et les régressions de pages sur Ubuntu et Windows. Le workflow `.github/workflows/source-closure-v502.yml` vérifie la fermeture des sources, les régressions Office/OCR, les exécutables Windows natifs et l'installation/désinstallation avant le packaging.
 
-Les résultats ne seront revendiqués qu'après l'exécution des workflows du commit de cette PR. Les contrôles statiques, tests fonctionnels et qualifications natives Windows restent des catégories distinctes.
+Le script `02-Compilation/write_v548_ci_qualification.py` relie les reçus au SHA exact du commit courant. Il refuse de réutiliser un ancien run vert du même PR, vérifie les sept résultats V548 par système, les empreintes SHA-256 des exécutables et les reçus natifs. Il n'écrit qu'un état agrégé sans texte des documents ni journaux bruts. Le ZIP cumulatif doit inclure `04-Tests-et-Qualification/V548-CI-QUALIFICATION.json`; la génération du guide signale « NON VÉRIFIÉE » si le reçu est absent, ancien, incomplet ou s'il contient un test ignoré.
+
+Les statuts à citer sont ceux du run propre au SHA courant. La qualification statique, les tests fonctionnels Ubuntu/Windows, les smoke tests natifs Windows et la revue graphique humaine restent des catégories distinctes ; le passage des premières ne doit jamais être présenté comme une preuve de la dernière.
 
 ## Limites et compatibilité
 

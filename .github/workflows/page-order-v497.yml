@@ -11,6 +11,8 @@ on:
       - '04-Tests-et-Qualification/test_page_keywords_v498.py'
       - '04-Tests-et-Qualification/test_page_exclusions_v499.py'
       - '04-Tests-et-Qualification/test_page_source_symlink_v547.py'
+      - '03-Sources/openpdf_source_path_guard_v548.py'
+      - '04-Tests-et-Qualification/test_source_path_chain_guard_v548.py'
       - '.github/workflows/page-order-v497.yml'
   workflow_dispatch:
 jobs:
@@ -27,12 +29,14 @@ jobs:
           python-version: '3.12'
       - name: Install PyMuPDF for real PDF tests
         run: python -m pip install "pymupdf>=1.24,<2"
-      - name: Compile page and dispatcher modules
-        run: python -m compileall -q 03-Sources/openpdf_page_order_v497.py 03-Sources/openpdf_page_service_v345.py 03-Sources/openpdf_operations.py 03-Sources/openpdf_ui_controller_v348.py
+      - name: Compile page, dispatcher and source path guard modules
+        run: python -m compileall -q 03-Sources/openpdf_page_order_v497.py 03-Sources/openpdf_page_service_v345.py 03-Sources/openpdf_operations.py 03-Sources/openpdf_ui_controller_v348.py 03-Sources/openpdf_source_path_guard_v548.py
       - name: Run parser and real-PDF regression suite
         run: |
           python -m unittest discover -s 04-Tests-et-Qualification -p test_page_order_v497.py -v
           python -m unittest discover -s 04-Tests-et-Qualification -p test_page_keywords_v498.py -v
           python -m unittest discover -s 04-Tests-et-Qualification -p test_page_exclusions_v499.py -v
-      - name: V547 reject PDF source symlinks before path canonicalization
+      - name: V547 reject final-component PDF source symlinks before path canonicalization
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_page_source_symlink_v547.py -v
+      - name: V548 reject linked parent components before path normalization
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_source_path_chain_guard_v548.py -v

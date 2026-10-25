@@ -43,6 +43,50 @@ def explain_error(error):
     return f'{hint}\n\nDétail technique : {msg}'
 
 LABELS = dict(zip(OPERATIONS, ('Compresser', 'Fusionner', 'Extraire', 'Découper', 'Réorganiser', 'OCR', 'Vers Word', 'Vers Excel', 'Vers PowerPoint')))
+
+# Keep UI labels separate from stable engine identifiers. Legacy callers may still
+# pass the identifiers directly; the visible combobox uses actionable French labels.
+COMPRESSION_PROFILE_CHOICES = (
+    ('Réduction sûre — pas de sortie sans gain', 'smaller_only'),
+    ('Standard — optimisation PDF', 'standard'),
+    ('Images équilibré — perte possible', 'images_balanced'),
+    ('Images adaptatif — perte possible', 'images_adaptive'),
+    ('Automatique contrôlé — comparer et vérifier', 'auto_quality'),
+)
+_COMPRESSION_PROFILE_BY_LABEL = {label: profile for label, profile in COMPRESSION_PROFILE_CHOICES}
+_COMPRESSION_PROFILE_IDS = frozenset(profile for _label, profile in COMPRESSION_PROFILE_CHOICES)
+LOSSY_COMPRESSION_PROFILES = frozenset(('images_balanced', 'images_adaptive', 'auto_quality'))
+
+
+def compression_profile_id(value):
+    """Translate a visible profile label or legacy engine id to its stable id."""
+    if type(value) is not str:
+        raise ValueError('Profil de compression inconnu')
+    if value in _COMPRESSION_PROFILE_IDS:
+        return value
+    try:
+        return _COMPRESSION_PROFILE_BY_LABEL[value]
+    except KeyError as exc:
+        raise ValueError('Profil de compression inconnu') from exc
+
+
+def authorize_compression_profile(profile, *, ask_lossy, preview):
+    """Require explicit consent and a source preview before any lossy trial."""
+    profile = compression_profile_id(profile)
+    if profile not in LOSSY_COMPRESSION_PROFILES:
+        return True
+    if not callable(ask_lossy) or not callable(preview):
+        raise TypeError('Consentement et aperçu requis pour un profil avec perte')
+    if not ask_lossy():
+        return False
+    return bool(preview())
+
+
+def _preview_lossy_compression(app, source):
+    from openpdf_preview_v326 import preview_dialog
+    return preview_dialog(app, source)
+
+
 # Group operations by user intent; keep the stable operation identifiers unchanged.
 OPERATION_GROUPS = (
     ('Organiser les pages', ('fusion', 'extraction', 'decoupage', 'reorganisation')),
@@ -69,7 +113,7 @@ class OpenPDFStudio(tk.Tk):
         self.geometry('1040x720'); self.minsize(800,560)
         self._job_started=None; self.job_state=JobState();self.sources=[]; self.events=queue.Queue(); self.busy=False; self.preview_page=0; self.preview_total=0; self._preview_source=None; self._preview_generation=0; self._preview_cache={}; self._preview_pending=set(); self._preview_lock=threading.Lock(); self._preview_inflight=0; self._preview_limit=2
         self.operation=tk.StringVar(value='compression'); self.destination=tk.StringVar()
-        self.profile=tk.StringVar(value='smaller_only');self.first=tk.StringVar(value='1');self.last=tk.StringVar(value='1')
+        self.profile=tk.StringVar(value=COMPRESSION_PROFILE_CHOICES[0][0]);self.first=tk.StringVar(value='1');self.last=tk.StringVar(value='1')
         self.chunk=tk.StringVar(value='1');self.order=tk.StringVar(value='1,2');self.extraction_selection=tk.StringVar(value='');self.language=tk.StringVar(value='fra+eng')
         self.ocr_mode=tk.StringVar(value='Pages sans texte')
         self.ocr_before_office=tk.BooleanVar(value=False)  # explicit consent; never OCR silently
@@ -138,7 +182,10 @@ class OpenPDFStudio(tk.Tk):
             frame=ttk.Frame(self.options);self.opts[name]=frame
             if name not in ('OCR avant conversion','Tableaux Excel éditables'):
                 ttk.Label(frame,text=('Ordre (ex. toutes,!paires)' if name=='Ordre des pages' else 'Pages (optionnel, ex. !paires)' if name=='Pages à extraire' else name),width=22).pack(side='left')
-            if name=='Profil': ttk.Combobox(frame,textvariable=var,values=('smaller_only','standard','images_balanced'),state='readonly',width=25).pack(side='left')
+            if name=='Profil':
+                ttk.Combobox(frame, textvariable=var,
+                    values=tuple(label for label, _profile in COMPRESSION_PROFILE_CHOICES),
+                    state='readonly', width=44).pack(side='left')
             elif name=='Contrôle qualité': ttk.Combobox(frame,textvariable=var,values=QUALITY_MODES,state='readonly',width=27).pack(side='left')
             elif name=='Audit RGB intégral': ttk.Checkbutton(frame,variable=var,text='Tous les pixels à 50 % (plus lent, seuil 2 %)').pack(side='left')
             elif name=='Mode OCR': ttk.Combobox(frame,textvariable=var,values=tuple(OCR_MODES),state='readonly',width=28).pack(side='left')
@@ -549,6 +596,7 @@ class OpenPDFStudio(tk.Tk):
         op=self.operation.get();sources=tuple(self.sources);dest=self.destination.get().strip()
         kwargs=dict(profile=self.profile.get(),first=self.first.get(),last=self.last.get(),chunk=self.chunk.get(),order=self.order.get(),extraction_selection=self.extraction_selection.get(),language=self.language.get(),ocr_mode=self.ocr_mode.get(),compression_quality=self.compression_quality.get(),full_rgb_audit=self.full_rgb_audit.get(),ocr_before_office=self.ocr_before_office.get(),table_mode=self.xlsx_tables.get() if op=='xlsx' else False)
         try:
+            kwargs['profile'] = compression_profile_id(kwargs['profile'])
             if op in ('docx','xlsx','pptx') and self.ocr_before_office.get():
                 import math
                 try: angle=float(self.deskew_angle.get().strip())
@@ -570,6 +618,29 @@ class OpenPDFStudio(tk.Tk):
             if op in ('docx','xlsx','pptx') and self.ocr_before_office.get() and any(Path(p).expanduser().is_symlink() for p in sources):
                 raise ValueError('Source OCR Office : lien symbolique interdit')
             sources,dest=validate_request(op,sources,dest)
+            if op == 'compression' and kwargs['profile'] in LOSSY_COMPRESSION_PROFILES:
+                if kwargs['profile'] == 'auto_quality':
+                    consent_text = (
+                        'Le mode automatique compare plusieurs profils et ne publie que '
+                        'le plus petit candidat qui passe les contrôles RGB, transparence '
+                        'et structure PDF à échelle bornée (50 %). Ces contrôles ne certifient '
+                        'ni PDF/A, ni impression, ni accessibilité, ni exactitude OCR. '
+                        'La source restera intacte. Continuer ?')
+                else:
+                    consent_text = (
+                        'Ce profil peut réencoder les images et réduire leur netteté. '
+                        'La source restera intacte et une destination distincte sera créée. '
+                        'Vous pourrez examiner l’aperçu du PDF source avant de continuer. '
+                        'Continuer ?')
+                authorized = authorize_compression_profile(
+                    kwargs['profile'],
+                    ask_lossy=lambda: messagebox.askyesno(
+                        'Compression — perte possible', consent_text, parent=self),
+                    preview=lambda: _preview_lossy_compression(self, sources[0]))
+                if not authorized:
+                    self._append('Compression annulée : aucun fichier publié.')
+                    self.status.configure(text='Compression annulée — aucun fichier publié.')
+                    return
         except (ValueError,OSError) as exc:
             messagebox.showerror('Paramètres invalides',str(exc),parent=self)
             # Validation failures should guide the user to the field they can fix.

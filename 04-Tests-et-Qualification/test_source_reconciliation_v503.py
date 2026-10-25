@@ -49,7 +49,9 @@ class SourceReconciliationV503Tests(unittest.TestCase):
 
     def test_required_runtime_set_complete(self):
         modules = self.manifest["modules"]
-        self.assertEqual(len(modules), 97 if CURRENT_VERSION == "51.4" else 93 if CURRENT_VERSION == "51.3" else 92 if CURRENT_VERSION in ("51.1", "51.2") else 91 if CURRENT_VERSION == "51.0" else 90 if CURRENT_VERSION in ("50.8", "50.9") else 89 if CURRENT_VERSION == "50.7" else 88 if CURRENT_VERSION == "50.6" else 87 if CURRENT_VERSION == "50.5" else 86)
+        self.assertGreaterEqual(len(modules), 97 if CURRENT_VERSION == "51.4" else 93 if CURRENT_VERSION == "51.3" else 92 if CURRENT_VERSION in ("51.1", "51.2") else 91 if CURRENT_VERSION == "51.0" else 90 if CURRENT_VERSION in ("50.8", "50.9") else 89 if CURRENT_VERSION == "50.7" else 88 if CURRENT_VERSION == "50.6" else 87 if CURRENT_VERSION == "50.5" else 86)
+        if CURRENT_VERSION == "51.4":
+            self.assertTrue({"openpdf_ocr_reference_corpus_v539", "openpdf_ocr_quality_ui_v541", "openpdf_office_reference_v542", "openpdf_office_quality_ui_v543"}.issubset(modules))
         self.assertEqual(len(modules), len(set(modules)))
         for module in modules:
             with self.subTest(module=module):

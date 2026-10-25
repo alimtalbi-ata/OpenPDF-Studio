@@ -1,0 +1,54 @@
+name: V543 Office quality GUI and reference regression
+on:
+  pull_request:
+    paths:
+      - '03-Sources/openpdf_desktop.py'
+      - '03-Sources/openpdf_office_quality_ui_v543.py'
+      - '03-Sources/openpdf_office_reference_v542.py'
+      - '04-Tests-et-Qualification/test_office_quality_ui_v543.py'
+      - '07-Manifestes/V51.4-REQUIRED-RUNTIME-MODULES.json'
+      - '.github/workflows/office-quality-ui-v543.yml'
+  push:
+    branches:
+      - 'feature/v51.4-office-quality-ui-v543-*'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  office-quality-ui:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install conversion and GUI test dependencies
+        run: python -m pip install "PyMuPDF>=1.24,<2" "python-docx>=1.1,<2" "python-pptx>=1.0,<2" "openpyxl>=3.1,<4" "Pillow>=10,<13"
+      - name: Compile GUI, adapter, evaluator and tests
+        run: python -m py_compile 03-Sources/openpdf_desktop.py 03-Sources/openpdf_office_quality_ui_v543.py 03-Sources/openpdf_office_reference_v542.py 04-Tests-et-Qualification/test_office_quality_ui_v543.py
+      - name: V543 GUI privacy and wiring tests
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_office_quality_ui_v543.py -v
+      - name: V542 reference evaluator regression
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_office_reference_v542.py -v
+      - name: V541 OCR GUI regression
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_ocr_quality_ui_v541.py -v
+  linux-real-gui:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install display and conversion dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xvfb python3-tk
+          python -m pip install "PyMuPDF>=1.24,<2" "python-docx>=1.1,<2" "python-pptx>=1.0,<2" "openpyxl>=3.1,<4" "Pillow>=10,<13"
+      - name: Actual Tk dialog, asynchronous worker and exclusive export
+        run: OPENPDF_RUN_GUI_TEST=1 xvfb-run -a python -m unittest discover -s 04-Tests-et-Qualification -p test_office_quality_ui_v543.py -v

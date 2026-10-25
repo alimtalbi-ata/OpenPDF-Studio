@@ -224,7 +224,7 @@ def _comparison_lines(report):
 
 
 def _comparison_text(report):
-    return "Essais comparés :\\n" + "\\n".join(_comparison_lines(report))
+    return "Essais comparés :\n" + "\n".join(_comparison_lines(report))
 
 
 def auto_compress_gui(source, destination):
@@ -234,7 +234,7 @@ def auto_compress_gui(source, destination):
     comparison = _comparison_text(report)
     if report['status'] != 'published':
         # Preserve this prefix: the dispatcher maps it to the audited no_output state.
-        return ("Aucun gain conforme aux seuils de qualité. Aucun fichier de sortie modifié.\\n"
+        return ("Aucun gain conforme aux seuils de qualité. Aucun fichier de sortie modifié.\n"
                 + comparison)
 
     quality = report.get('selected_quality') or {}
@@ -242,10 +242,10 @@ def auto_compress_gui(source, destination):
     source_bytes = report['source_bytes']
     output_bytes = report['output_bytes']
     return (
-        f"Compression automatique publiée : {Path(destination).name}\\n"
+        f"Compression automatique publiée : {Path(destination).name}\n"
         f"Taille mesurée : {_size_text(source_bytes)} → {_size_text(output_bytes)} ; gain : "
         f"{_size_text(source_bytes - output_bytes)} "
-        f"({report['saving_percent']:.2f} %).\\n"
+        f"({report['saving_percent']:.2f} %).\n"
         f"Profil retenu : {report['selected_profile']}. "
         f"Contrôle RGB : {quality.get('pages_compared', 0)} page(s), "
         f"{quality.get('pixels_compared', 0):,} pixels à l’échelle "
@@ -257,7 +257,7 @@ def auto_compress_gui(source, destination):
         f"{structure.get('annotations_verified', 0)} annotation(s), "
         f"{structure.get('attachments_verified', 0)} pièce(s) jointe(s). "
         "Couverture de transparence contrôlée. Mesure raster à échelle bornée ; "
-        "ce n’est pas une certification PDF/A, impression, OCR ou accessibilité.\\n"
+        "ce n’est pas une certification PDF/A, impression, OCR ou accessibilité.\n"
         + comparison
     )
 

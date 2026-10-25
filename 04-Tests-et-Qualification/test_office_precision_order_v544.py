@@ -5,8 +5,13 @@ Author: Abdelhalim Talbi.
 from __future__ import annotations
 
 from pathlib import Path
+import json
+import os
 import sys
+import tempfile
+import time
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "03-Sources"))
@@ -144,6 +149,78 @@ class OfficePrecisionOrderV544Tests(unittest.TestCase):
                          metric["matched_tokens"])
         self.assertEqual(sum(v["cases"] for v in metric["by_format"].values()), report["cases"])
         self.assertEqual(metric["unexpected_tokens"], 1)
+
+
+@unittest.skipUnless(os.environ.get("OPENPDF_RUN_GUI_TEST") == "1",
+                     "Explicit GUI qualification not requested")
+class OfficePrecisionOrderV544LiveGuiTests(unittest.TestCase):
+    def test_live_dialog_displays_v2_metrics_and_exports_private_receipt(self):
+        import tkinter as tk
+        from tkinter import ttk
+        from openpdf_desktop import OpenPDFStudio
+
+        fixture = office_fixtures.OfficeReferenceV542Tests()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        fixture.case("docx", "Alpha Beta Gamma", actual="Extra Alpha Gamma Beta")
+        fixture.case("xlsx", "Budget annual 2026")
+        fixture.thresholds = extended(fixture.thresholds)
+        real_report = evaluate_office_reference_corpus(fixture.manifest())
+        self.assertEqual(real_report["schema"], REPORT_SCHEMA_V2)
+        self.assertEqual(real_report["status"], "FAIL")
+
+        root = OpenPDFStudio()
+        root.withdraw()
+        self.addCleanup(lambda: root.destroy() if root.winfo_exists() else None)
+
+        def widgets(widget):
+            yield widget
+            for child in widget.winfo_children():
+                yield from widgets(child)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "receipt.json"
+            with mock.patch("openpdf_office_reference_v542.evaluate_office_reference_corpus",
+                            return_value=real_report), \
+                 mock.patch("openpdf_desktop.filedialog.askopenfilename",
+                            return_value="synthetic.json"), \
+                 mock.patch("openpdf_desktop.filedialog.asksaveasfilename",
+                            return_value=str(target)), \
+                 mock.patch("openpdf_desktop.messagebox.showinfo"), \
+                 mock.patch("openpdf_desktop.messagebox.showerror") as show_error:
+                root._office_quality_dialog()
+                root.update()
+                window = next(w for w in root.winfo_children() if isinstance(w, tk.Toplevel))
+
+                def button(label):
+                    return next(w for w in widgets(window)
+                                if isinstance(w, ttk.Button) and w.cget("text") == label)
+
+                button("Manifeste…").invoke()
+                button("Analyser").invoke()
+                deadline = time.monotonic() + 8
+                while time.monotonic() < deadline:
+                    root.update()
+                    if str(button("Exporter le reçu").cget("state")) == "normal":
+                        break
+                    time.sleep(.04)
+                self.assertEqual(str(button("Exporter le reçu").cget("state")), "normal")
+                summary = "\n".join(w.get("1.0", "end") for w in widgets(window)
+                                    if isinstance(w, tk.Text))
+                self.assertIn("FAIL", summary)
+                self.assertIn("Précision", summary)
+                self.assertIn("ordre d’extraction", summary)
+                self.assertNotIn("Alpha Beta Gamma", summary)
+                self.assertNotIn(str(fixture.root), summary)
+                button("Exporter le reçu").invoke()
+                receipt = json.loads(target.read_text(encoding="utf-8"))
+                self.assertEqual(receipt["schema"], REPORT_SCHEMA_V2)
+                self.assertEqual(receipt["status"], "FAIL")
+                self.assertIn("precision_order", receipt)
+                self.assertNotIn(str(fixture.root), target.read_text(encoding="utf-8"))
+                button("Exporter le reçu").invoke()
+                show_error.assert_called_once()
+                window.destroy()
 
 
 if __name__ == "__main__":

@@ -70,6 +70,40 @@ class V548QualificationLogTests(unittest.TestCase):
         with self.assertRaisesRegex(qualification.QualificationError, "did not reconcile"):
             qualification.analyze_test_log("\n".join(unrelated), self.expected)
 
+    def test_old_green_page_order_run_on_another_sha_is_not_reused(self):
+        stale = {
+            "workflow_runs": [{
+                "name": qualification.PAGE_ORDER_WORKFLOW,
+                "head_sha": "b" * 40,
+                "status": "completed",
+                "conclusion": "success",
+                "id": 123,
+            }]
+        }
+        with unittest.mock.patch.object(qualification, "_request_json", return_value=stale):
+            with self.assertRaisesRegex(qualification.QualificationError, "exact source revision"):
+                qualification._candidate_page_order_run(
+                    "alimtalbi-ata/OpenPDF-Studio", "test-token", self.head
+                )
+
+    def test_current_page_order_run_is_selected_by_exact_sha(self):
+        current = {
+            "workflow_runs": [{
+                "name": qualification.PAGE_ORDER_WORKFLOW,
+                "head_sha": self.head,
+                "status": "completed",
+                "conclusion": "success",
+                "id": 456,
+                "created_at": "2026-10-26T00:00:00Z",
+            }]
+        }
+        with unittest.mock.patch.object(qualification, "_request_json", return_value=current):
+            run = qualification._candidate_page_order_run(
+                "alimtalbi-ata/OpenPDF-Studio", "test-token", self.head
+            )
+        self.assertEqual(run["id"], 456)
+
+
 
 class V548GuideFreshnessTests(unittest.TestCase):
     @classmethod

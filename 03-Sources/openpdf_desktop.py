@@ -82,6 +82,16 @@ def authorize_compression_profile(profile, *, ask_lossy, preview):
     return bool(preview())
 
 
+def compression_profile_option_names(profile):
+    """List only controls that actually affect the selected compression engine."""
+    profile = compression_profile_id(profile)
+    if profile == 'auto_quality':
+        # The automatic selector always applies its independent RGB/alpha/semantic
+        # gate; legacy sampled presets are intentionally not configurable here.
+        return ('Profil',)
+    return ('Profil', 'Contrôle qualité', 'Audit RGB intégral')
+
+
 def _preview_lossy_compression(app, source):
     from openpdf_preview_v326 import preview_dialog
     return preview_dialog(app, source)
@@ -199,6 +209,13 @@ class OpenPDFStudio(tk.Tk):
                 self.ocr_office_check=ttk.Checkbutton(frame,variable=var,command=self._refresh,text='OCR si PDF numérisé (fidélité limitée)')
                 self.ocr_office_check.pack(side='left')
             else: ttk.Entry(frame,textvariable=var,width=28).pack(side='left')
+        self.auto_compression_info = ttk.Label(
+            self.options,
+            text=('Le mode automatique compare des candidats temporaires et publie '
+                  'uniquement le plus petit gain conforme. Contrôle RGB, transparence '
+                  'et structure PDF à 50 % ; ne certifie pas PDF/A, impression, OCR '
+                  'ou accessibilité.'),
+            wraplength=540, justify='left')
         ttk.Label(left,text='3. Destination',font=('Segoe UI',12,'bold')).pack(anchor='w',pady=(12,4))
         dest=ttk.Frame(left);dest.pack(fill='x')
         self.destination_entry=ttk.Entry(dest,textvariable=self.destination);self.destination_entry.pack(side='left',fill='x',expand=True)
@@ -226,6 +243,7 @@ class OpenPDFStudio(tk.Tk):
         self.log=tk.Text(right,height=8,wrap='word',state='disabled');self.log.pack(fill='x',pady=6)
         self.status=ttk.Label(self,text='Prêt — sélectionnez des PDF, une opération et une destination',padding=(16,6));self.status.pack(anchor='w')
         self.bind('<Control-Shift-O>',lambda event:self._browse_destination() if not self.busy else None)
+        self.profile.trace_add('write', lambda *_: self._refresh())
         self._refresh()
     def _focus_destination(self):
         """Bring output location into view and focus its entry, including at high DPI."""
@@ -509,6 +527,14 @@ class OpenPDFStudio(tk.Tk):
             self.status.configure(text='Opération modifiée : choisissez une nouvelle destination')
     def _refresh(self):
         key=self.operation.get();show={'compression':('Profil','Contrôle qualité','Audit RGB intégral'),'extraction':('Début','Fin','Pages à extraire'),'decoupage':('Pages par fichier',),'reorganisation':('Ordre des pages',),'ocr':('Langue OCR','Mode OCR'),'docx':('Langue OCR','OCR avant conversion'),'xlsx':('Langue OCR','OCR avant conversion','Tableaux Excel éditables'),'pptx':('Langue OCR','OCR avant conversion')}.get(key,())
+        if key == 'compression':
+            show = compression_profile_option_names(self.profile.get())
+            if self.profile.get() == 'Automatique contrôlé — comparer et vérifier':
+                self.auto_compression_info.pack(fill='x',pady=(4,6))
+            else:
+                self.auto_compression_info.pack_forget()
+        else:
+            self.auto_compression_info.pack_forget()
         if key in ('docx', 'xlsx', 'pptx') and self.ocr_before_office.get():
             show += ('Redresser scan (degrés)',)
             show += ('Redressement automatique',)

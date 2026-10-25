@@ -84,6 +84,8 @@ class OpenPDFStudio(tk.Tk):
         header=ttk.Frame(self,padding=16);header.pack(fill='x')
         ttk.Label(header,text='OpenPDF Studio',font=('Segoe UI',19,'bold')).pack(side='left')
         ttk.Label(header,text=f'V{APP_VERSION}  •  Espace de travail',font=('Segoe UI',10)).pack(side='right')
+        self.ocr_quality_button=ttk.Button(header,text='Qualité OCR',command=self._ocr_quality_dialog);self.ocr_quality_button.pack(side='right',padx=12)
+        self.audit_button=ttk.Button(header,text='Audit',command=self._audit_dialog);self.audit_button.pack(side='right',padx=5)
         body=ttk.Panedwindow(self,orient='horizontal');body.pack(fill='both',expand=True,padx=14,pady=6)
         left_host=ttk.Frame(body);right=ttk.Frame(body,padding=10)
         body.add(left_host,weight=3);body.add(right,weight=2)
@@ -163,8 +165,8 @@ class OpenPDFStudio(tk.Tk):
         self.bind('<Escape>',lambda event:self.focus_set())
         self.operation.trace_add('write',lambda *_:self._on_operation_changed())
         self.recover_button=ttk.Button(footer,text='Récupérer',command=self._recover_dialog);self.recover_button.pack(side='left',pady=4)
-        self.audit_button=ttk.Button(footer,text='Audit',command=self._audit_dialog);self.audit_button.pack(side='left',padx=5,pady=4)
-        self.ocr_quality_button=ttk.Button(footer,text='Qualité OCR',command=self._ocr_quality_dialog);self.ocr_quality_button.pack(side='left',padx=5,pady=4)
+
+
         self._form_canvas=canvas
         bind_wheel(left)
         ttk.Label(right,text='Aperçu du document',font=('Segoe UI',12,'bold')).pack(anchor='w')

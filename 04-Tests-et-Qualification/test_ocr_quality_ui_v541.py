@@ -70,6 +70,8 @@ class QualityUiV541(unittest.TestCase):
         klass = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'OpenPDFStudio')
         self.assertIn('_ocr_quality_dialog', {n.name for n in klass.body if isinstance(n, ast.FunctionDef)})
         self.assertIn('Qualité OCR', source)
+        self.assertIn("ttk.Button(header,text='Qualité OCR'", source)
+        self.assertIn("ttk.Button(header,text='Audit'", source)
         self.assertIn('openpdf_ocr_reference_corpus_v539', source)
         self.assertIn('openpdf_ocr_quality_ui_v541', source)
 

@@ -18,6 +18,7 @@ from openpdf_desktop import (
     LOSSY_COMPRESSION_PROFILES,
     authorize_compression_profile,
     compression_profile_id,
+    compression_profile_option_names,
 )
 from openpdf_operations import run_operation
 
@@ -46,6 +47,21 @@ class CompressionProfileUiV546(unittest.TestCase):
         for value in ("auto", "Auto", "", None, True):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 compression_profile_id(value)
+
+    def test_auto_mode_hides_legacy_quality_controls_it_does_not_use(self):
+        self.assertEqual(compression_profile_option_names("auto_quality"), ("Profil",))
+        self.assertEqual(
+            compression_profile_option_names("Automatique contrôlé — comparer et vérifier"),
+            ("Profil",),
+        )
+        self.assertEqual(
+            compression_profile_option_names("smaller_only"),
+            ("Profil", "Contrôle qualité", "Audit RGB intégral"),
+        )
+        self.assertEqual(
+            compression_profile_option_names("Images adaptatif — perte possible"),
+            ("Profil", "Contrôle qualité", "Audit RGB intégral"),
+        )
 
     def test_lossless_profile_does_not_prompt_for_loss_or_preview(self):
         self.assertTrue(authorize_compression_profile(

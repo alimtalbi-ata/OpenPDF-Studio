@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import json
+from itertools import product
 import os
 import sys
 import tempfile
@@ -52,6 +53,44 @@ class OfficePrecisionOrderV544Tests(unittest.TestCase):
         self.assertEqual(metric["token_precision"], 1.0)
         self.assertEqual(metric["token_recall"], 1.0)
         self.assertAlmostEqual(metric["ordered_token_recall"], 1 / 3)
+
+    def test_ordered_recall_uses_longest_subsequence_not_first_greedy_match(self):
+        metric = measure_precision_order(["alpha", "beta", "gamma"],
+                                         ["beta", "gamma", "alpha"])
+        self.assertEqual(metric["ordered_matches"], 2)
+        self.assertAlmostEqual(metric["ordered_token_recall"], 2 / 3)
+
+    def test_ordered_recall_matches_dynamic_programming_oracle_exhaustively(self):
+        def sequences(max_length):
+            return [tuple(items) for length in range(max_length + 1)
+                    for items in product(("a", "b"), repeat=length)]
+
+        def lcs_length(left, right):
+            previous = [0] * (len(right) + 1)
+            for token in left:
+                current = [0]
+                for index, other in enumerate(right, 1):
+                    if token == other:
+                        current.append(previous[index - 1] + 1)
+                    else:
+                        current.append(max(previous[index], current[-1]))
+                previous = current
+            return previous[-1]
+
+        candidates = sequences(4)
+        comparisons = 0
+        for expected in candidates:
+            if not expected:
+                continue
+            for actual in candidates:
+                with self.subTest(expected=expected, actual=actual):
+                    oracle = lcs_length(expected, actual)
+                    metric = measure_precision_order(expected, actual)
+                    self.assertEqual(metric["ordered_matches"], oracle)
+                    self.assertAlmostEqual(metric["ordered_token_recall"],
+                                           oracle / len(expected))
+                comparisons += 1
+        self.assertEqual(comparisons, 930)
 
     def test_repeated_tokens_are_matched_only_as_many_times_as_expected(self):
         metric = measure_precision_order(["alpha", "alpha", "beta"], ["alpha", "beta", "extra"])

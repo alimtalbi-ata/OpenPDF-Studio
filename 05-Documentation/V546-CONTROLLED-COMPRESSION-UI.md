@@ -39,3 +39,9 @@ Les résultats définitifs sont consultables dans GitHub Actions pour le commit 
 ## Suite prioritaire
 
 Étendre le corpus autorisé de compression (documents vectoriels, scans, transparence, liens, signets, formulaires et pièces jointes), comparer temps CPU/mémoire et qualité, puis faire une revue interactive humaine de la GUI sous Windows.
+
+## Addendum V546.1 — Comparaison des candidats
+
+Le résultat de compression affiche maintenant une ligne par profil réellement essayé : disposition (retenu / conforme mais non retenu / aucun gain / rejeté), taille et gain mesurés quand un candidat passe, MAE et fraction de pixels modifiés, ainsi que la durée de l’essai. En l’absence de résultat conforme, les motifs restent compréhensibles sans publier de sortie.
+
+Les détails d’exception bruts, chemins absolus et noms de fichiers internes ne sont pas recopiés dans ces lignes de diagnostic. Cette sortie UI reste un résumé : elle ne remplace ni le reçu technique complet en mémoire du moteur, ni une certification de fidélité métier.

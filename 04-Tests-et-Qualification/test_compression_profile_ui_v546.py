@@ -21,6 +21,7 @@ from openpdf_desktop import (
     compression_profile_option_names,
 )
 from openpdf_operations import run_operation
+from openpdf_auto_compression_v505 import auto_compress_gui
 
 
 class CompressionProfileUiV546(unittest.TestCase):
@@ -131,8 +132,43 @@ class CompressionProfileUiV546(unittest.TestCase):
             self.assertIn("Contrôle RGB", result)
             self.assertIn("Contrôle structurel", result)
             self.assertIn("pas une certification PDF/A", result)
+            self.assertIn("Essais comparés", result)
+            self.assertIn("Réduction sûre", result)
+            self.assertIn("Images équilibré", result)
+            self.assertIn("Images adaptatif", result)
+            self.assertIn("ms", result)
+            self.assertNotIn(str(Path(folder)), result)
             self.assertEqual(sha256(source.read_bytes()).hexdigest(), before)
             self.assertLess(destination.stat().st_size, source.stat().st_size)
+
+    def test_no_gain_comparison_is_actionable_and_does_not_disclose_paths(self):
+        source = "/private/customer/secret/source.pdf"
+        destination = "/private/customer/secret/output.pdf"
+        report = {
+            "status": "no_compliant_gain",
+            "source_bytes": 1000,
+            "selected_profile": None,
+            "cases": [
+                {"profile": "smaller_only", "status": "no_gain", "elapsed_ms": 0.12},
+                {"profile": "images_balanced", "status": "rejected",
+                 "error_type": "CompressionRejected", "elapsed_ms": 12.5,
+                 "error": "failed while reading /private/customer/secret/source.pdf"},
+                {"profile": "images_adaptive", "status": "rejected",
+                 "error_type": "RuntimeError", "elapsed_ms": 17.25,
+                 "error": "destination /private/customer/secret/output.pdf"},
+            ],
+        }
+        with patch("openpdf_auto_compression_v505.auto_compress", return_value=report):
+            result = auto_compress_gui(source, destination)
+        self.assertTrue(result.startswith(
+            "Aucun gain conforme aux seuils de qualité. Aucun fichier de sortie modifié."))
+        self.assertIn("Essais comparés", result)
+        self.assertIn("Réduction sûre — aucun gain de taille", result)
+        self.assertIn("Images équilibré — rejeté par un contrôle (CompressionRejected)", result)
+        self.assertIn("Images adaptatif — rejeté par un contrôle (RuntimeError)", result)
+        self.assertIn("12.50 ms", result)
+        self.assertNotIn("/private/customer/secret", result)
+        self.assertNotIn("secret/source.pdf", result)
 
     def test_auto_quality_no_gain_is_recorded_as_no_output(self):
         with tempfile.TemporaryDirectory() as folder:

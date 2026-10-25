@@ -1,6 +1,6 @@
 {
   "author": "Abdelhalim Talbi",
-  "note": "V546.1: per-profile size/quality/timing diagnostics without raw exception text or private paths; correctly rendered line breaks; source hash pinned.",
+  "note": "V547: reject direct PDF source symlink aliases before path canonicalization; keep runtime source hashes pinned.",
   "schema": "openpdf-v51.4-source-hash-overrides-v1",
   "sha256": {
     "03-Sources/openpdf_auto_compression_v505.py": "198c529dbf4a97c9bbf0ccd43ea5e3c7b06aec52e5f5ad6efa90565ce358134a",
@@ -11,7 +11,8 @@
     "03-Sources/openpdf_office_precision_order_ui_v544.py": "c6139b0c5318aa1dfc97ebee9a70cafc0e374be2119da8c2e21393c1974bf3dd",
     "03-Sources/openpdf_office_reference_v542.py": "480fc4421bcc8970d9473fa801b00c0dc9e0029966db2d61386818a9f5057bba",
     "03-Sources/openpdf_office_roundtrip_v459.py": "1cd3305f151e9367c9113ccb7844e737e821eee36e068d990958f4c425a9f96e",
-    "03-Sources/openpdf_operations.py": "96837a66e0d33de7a6936ee5f02971157c52229628d427fa66fac17d037cc352",
+    "03-Sources/openpdf_operations.py": "9c940811529236bcb1fbb250d4bf4edd7fa7cc4baa7f029817a97e6f8a2b7ddd",
+    "03-Sources/openpdf_page_service_v345.py": "d6f4197bdc699e981561d772dab2a6360eae9dcac4a730b355a664627e9c40bd",
     "03-Sources/openpdf_precision_order_v544.py": "b5e77815f31a46734bc8e600b2639c1e87706254b9bbd1360780783812c824e5"
   }
 }

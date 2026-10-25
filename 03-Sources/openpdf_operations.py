@@ -35,10 +35,16 @@ def run_operation(operation, sources, destination, **kwargs):
         raise ValueError("Destination obligatoire")
     if Path(destination).expanduser().is_symlink():
         raise FileExistsError("Destination lien symbolique interdite")
+    source_paths = [Path(p).expanduser() for p in sources if str(p).strip()]
+    # Check original lexical names before resolve(): canonicalization follows
+    # symlinks and would otherwise hide the caller-supplied alias from lower layers.
+    if operation in ("compression", "fusion", "extraction", "decoupage", "reorganisation"):
+        if any(path.is_symlink() for path in source_paths):
+            raise ValueError("Source PDF via lien symbolique interdit")
     if operation in ("docx", "xlsx", "pptx") and kwargs.get("ocr_before_office", False):
-        if any(Path(p).expanduser().is_symlink() for p in sources):
+        if any(path.is_symlink() for path in source_paths):
             raise ValueError("Source OCR Office : lien symbolique interdit")
-    inputs = [Path(p).expanduser().resolve() for p in sources if str(p).strip()]
+    inputs = [path.resolve() for path in source_paths]
     if not inputs:
         raise ValueError("Au moins une source est obligatoire")
     output = Path(destination).expanduser().resolve()

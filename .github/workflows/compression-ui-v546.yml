@@ -1,5 +1,19 @@
 name: V546 Controlled compression UI and evidence
 on:
+  push:
+    branches:
+      - 'feature/v51.4-controlled-compression-ui-v546-20261025'
+    paths:
+      - '03-Sources/openpdf_desktop.py'
+      - '03-Sources/openpdf_operations.py'
+      - '03-Sources/openpdf_auto_compression_v505.py'
+      - '04-Tests-et-Qualification/test_compression_profile_ui_v546.py'
+      - '04-Tests-et-Qualification/test_auto_compression_v505.py'
+      - '04-Tests-et-Qualification/test_compression_semantics_v538.py'
+      - '04-Tests-et-Qualification/test_compression_coverage_v507.py'
+      - '04-Tests-et-Qualification/test_compression_alpha_v508.py'
+      - '07-Manifestes/V51.4-SOURCE-HASH-OVERRIDES.json'
+      - '.github/workflows/compression-ui-v546.yml'
   pull_request:
     paths:
       - '03-Sources/openpdf_desktop.py'

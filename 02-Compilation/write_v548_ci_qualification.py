@@ -236,6 +236,8 @@ def _verify_windows_binary_receipts(root, version):
         manifest = json.loads(manifest_path.read_text(encoding="utf-8-sig"))
     except (OSError, ValueError):
         raise QualificationError("Native Windows binary manifest is missing or invalid") from None
+    if not isinstance(manifest, dict):
+        raise QualificationError("Native Windows binary manifest schema mismatch")
     if str(manifest.get("version")) != version or not isinstance(manifest.get("binaries"), list):
         raise QualificationError("Native Windows binary manifest version/schema mismatch")
     required = {
@@ -260,7 +262,9 @@ def _verify_windows_binary_receipts(root, version):
             receipt = json.loads(receipt_path.read_text(encoding="utf-8-sig"))
         except (OSError, ValueError):
             raise QualificationError("Native Windows smoke receipt missing or invalid: " + mode) from None
-            checks = receipt.get("checks")
+        if not isinstance(receipt, dict):
+            raise QualificationError("Native Windows smoke receipt schema mismatch: " + mode)
+        checks = receipt.get("checks")
         if (str(receipt.get("version")) != version or receipt.get("mode") != mode
                 or receipt.get("passed") is not True or receipt.get("artifact_sha256") != data_hash
                 or not isinstance(checks, list) or not checks
@@ -278,6 +282,8 @@ def _verify_windows_binary_receipts(root, version):
         install = json.loads(install_path.read_text(encoding="utf-8-sig"))
     except (OSError, ValueError):
         raise QualificationError("Native Windows install receipt missing or invalid") from None
+    if not isinstance(install, dict):
+        raise QualificationError("Native Windows install receipt schema mismatch")
     installer_hash = observed["installer"]["sha256"]
     required_steps = {"silent_install_pass", "installed_launch_pass", "installed_ocr_pass", "silent_uninstall_pass"}
     install_steps = install.get("steps")

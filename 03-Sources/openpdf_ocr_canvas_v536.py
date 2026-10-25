@@ -1,8 +1,9 @@
 """V536: rotate OCR raster without silently clipping page-edge content.
 
 A full-canvas Pillow rotation clips content at the corners. Rotate with an
-expanded canvas, then uniformly fit (without anisotropic stretching) onto
-an original-size white page. The source PDF remains unchanged. This is an
+expanded canvas, then fit only the measured foreground bounds (without
+anisotropic stretching) onto an original-size white page. This preserves
+more OCR character resolution than fitting the entire empty expanded canvas. The source PDF remains unchanged. This is an
 OCR pre-processing choice, not a fidelity or OCR-accuracy guarantee.
 Author: Abdelhalim Talbi.
 """
@@ -54,8 +55,19 @@ def rotate_ocr_canvas(image: Image.Image, angle_degrees: float, *,
                              expand=False, fillcolor='white')
     rotated = bitmap.rotate(angle_degrees, resample=Image.Resampling.BICUBIC,
                             expand=True, fillcolor='white')
-    # Fit the *whole* expanded image into the original page. Unlike a
-    # non-expanded rotation, this retains content close to all four edges.
+    # V537: fit the foreground, not the empty white corners of the expanded
+    # canvas. This avoids unnecessary downsampling of small text near an edge.
+    # Include pale antialiased glyph pixels and a safety margin. Off-white
+    # page backgrounds conservatively enlarge the bbox (never crop content).
+    foreground = rotated.convert('L').point(lambda value: 255 if value < 250 else 0)
+    bounds = foreground.getbbox()
+    if bounds is None:
+        return Image.new('RGB', (width, height), 'white')
+    margin = 4
+    x0, y0, x1, y1 = bounds
+    crop = (max(0, x0 - margin), max(0, y0 - margin),
+            min(rotated.width, x1 + margin), min(rotated.height, y1 + margin))
+    rotated = rotated.crop(crop)
     scale = min(width / rotated.width, height / rotated.height, 1.0)
     target = (max(1, min(width, round(rotated.width * scale))),
               max(1, min(height, round(rotated.height * scale))))

@@ -151,15 +151,36 @@ def auto_compress(source, destination, policy=AutoCompressionPolicy()):
 
 
 def auto_compress_gui(source, destination):
-    """GUI worker: explicit opt-in to lossy trials, with a readable result."""
+    """GUI worker: report exact bytes and bounded RGB/alpha/structure evidence."""
     report = auto_compress(source, destination, AutoCompressionPolicy(
         profiles=('smaller_only', 'images_balanced', 'images_adaptive')))
     if report['status'] != 'published':
         return 'Aucun gain conforme aux seuils de qualité. Aucun fichier de sortie modifié.'
-    return (f"PDF optimisé : {destination}\n"
-            f"Profil retenu : {report['selected_profile']} ; "
-            f"gain : {report['saving_percent']:.2f} %. "
-            'Contrôles RGB et transparence à échelle bornée ; pas une certification de fidélité.')
+
+    def size_text(value):
+        return f"{value:,}".replace(",", " ") + " octets"
+
+    quality = report.get('selected_quality') or {}
+    structure = quality.get('structure') or {}
+    return (
+        f"Compression automatique publiée : {Path(destination).name}\n"
+        f"Taille mesurée : {size_text(report['source_bytes'])} → "
+        f"{size_text(report['output_bytes'])} ; gain : "
+        f"{size_text(report['source_bytes'] - report['output_bytes'])} "
+        f"({report['saving_percent']:.2f} %).\n"
+        f"Profil retenu : {report['selected_profile']}. "
+        f"Contrôle RGB : {quality.get('pages_compared', 0)} page(s), "
+        f"{quality.get('pixels_compared', 0):,} pixels à l’échelle "
+        f"{quality.get('render_scale', 0.5)} ; MAE max "
+        f"{quality.get('max_page_mae', 0):.3f}/255 ; pixels modifiés "
+        f"{quality.get('max_page_changed_fraction', 0):.2%}. "
+        f"Contrôle structurel : {structure.get('links_verified', 0)} lien(s), "
+        f"{structure.get('bookmarks_verified', 0)} signet(s), "
+        f"{structure.get('annotations_verified', 0)} annotation(s), "
+        f"{structure.get('attachments_verified', 0)} pièce(s) jointe(s). "
+        "Couverture de transparence contrôlée. Mesure raster à échelle bornée ; "
+        "ce n’est pas une certification PDF/A, impression, OCR ou accessibilité."
+    )
 
 
 def main(argv=None):

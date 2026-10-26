@@ -125,7 +125,11 @@ class SourceReconciliationV503Tests(unittest.TestCase):
             "actions/upload-artifact@v4",
             "write_v549_ci_qualification.py --root .",
             "generate_docs_v549.py",
-            "V550-Cumulative-Windows",
+            "write_v551_ci_qualification.py --root .",
+            "generate_docs_v551.py",
+            "test_atomic_output_v551.py",
+            "openpdf_windows_handle_publish_v551.py",
+            "V551-Cumulative-Windows",
         ):
             with self.subTest(contract=contract):
                 self.assertIn(contract, workflow)

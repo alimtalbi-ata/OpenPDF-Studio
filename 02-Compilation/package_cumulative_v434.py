@@ -204,7 +204,7 @@ def payload(root, version):
                 if rel.as_posix() == CHECKSUMS:
                     # Preserve the old repository list but label it honestly; generate a new
                     # current-release SHA256SUMS.txt from this archive's measured contents.
-                    yield '07-Manifestes/SHA256SUMS-LEGACY.txt', path
+                    yield '07-Manifestes/SHA256SUMS-LEGACY-NOT-CURRENT.txt', path
                     continue
                 if rel.as_posix() in (INVENTORY, '07-Manifestes/RELEASE-QUALIFICATION-LIMITS.txt'):
                     continue

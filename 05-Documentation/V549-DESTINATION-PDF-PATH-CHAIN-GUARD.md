@@ -15,7 +15,7 @@ V548 protège les chemins source, mais le contrôle de destination était plus f
 - Intégration au dispatcher compression/fusion/extraction/découpage/réorganisation et aux conversions DOCX/XLSX/PPTX.
 - Intégration aux points d'entrée directs merge/extract/reorder/split et au chemin de récupération de découpage.
 - Les destinations déjà existantes restent protégées ; aucun écrasement n'est introduit.
-- Manifeste runtime et pins SHA-256 réconciliés, suite de tests fonctionnels dédiée, guide Word/PDF V549 dépendant des reçus réels.
+- Manifeste runtime et pins SHA-256 réconciliés, suite de 12 tests fonctionnels dédiés, guide Word/PDF V549 dépendant des reçus réels.
 
 ## Qualification attendue
 

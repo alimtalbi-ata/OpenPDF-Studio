@@ -22,6 +22,10 @@ LOCAL_SIG = b"PK\x03\x04"
 CENTRAL_SIG = b"PK\x01\x02"
 EOCD_SIG = b"PK\x05\x06"
 DD_SIG = b"PK\x07\x08"
+ZIP64_LOCATOR = struct.Struct("<4sIQI")
+ZIP64_LOCATOR_SIG = b"PK\x06\x07"
+ZIP64_EOCD = struct.Struct("<4sQ2H2I4Q")
+ZIP64_EOCD_SIG = b"PK\x06\x06"
 
 
 def _local(name, payload, *, flags=0, method=zipfile.ZIP_STORED, crc=None,
@@ -268,6 +272,66 @@ class ZipLocalRecordGuardV555Tests(unittest.TestCase):
         _write_manual_zip(path, header, central, 1)
         with self.assertRaisesRegex(ValueError, "Encrypted or masked"):
             _guard(path)
+
+
+    def test_rejects_eocd_count_mismatch_even_when_zipfile_ignores_it(self):
+        path = self.root / "eocd-count-mismatch.zip"
+        with zipfile.ZipFile(path, "w") as archive:
+            archive.writestr("03-Sources/one.txt", b"one")
+            archive.writestr("03-Sources/two.txt", b"two")
+        data = bytearray(path.read_bytes())
+        eocd = data.rfind(EOCD_SIG)
+        self.assertGreaterEqual(eocd, 0)
+        # CPython's parser still lists both central records when this count is stale.
+        struct.pack_into("<HH", data, eocd + 8, 1, 1)
+        path.write_bytes(data)
+        with zipfile.ZipFile(path) as archive:
+            self.assertEqual(len(archive.infolist()), 2)
+        with self.assertRaisesRegex(ValueError, "ZIP EOCD entry-count mismatch"):
+            _guard(path)
+        # The cumulative verifier must enforce the same gate before reading the inventory.
+        with self.assertRaisesRegex(ValueError, "ZIP EOCD entry-count mismatch"):
+            package.verify(path)
+
+    def test_rejects_unindexed_bytes_after_eocd(self):
+        path = self.root / "trailing-unindexed-bytes.zip"
+        _normal_zip(path)
+        path.write_bytes(path.read_bytes() + b"UNINDEXED-TRAILER")
+        # zipfile ignores these appended bytes; the cumulative gate must not.
+        with zipfile.ZipFile(path) as archive:
+            self.assertEqual(archive.namelist(), ["03-Sources/safe.txt"])
+        with self.assertRaisesRegex(ValueError, "ZIP EOCD comment length does not reach physical EOF"):
+            _guard(path)
+        with self.assertRaisesRegex(ValueError, "ZIP EOCD comment length does not reach physical EOF"):
+            package.verify(path)
+
+    def test_accepts_a_valid_archive_comment(self):
+        path = self.root / "valid-comment.zip"
+        _normal_zip(path)
+        with zipfile.ZipFile(path, "a") as archive:
+            archive.comment = b"OpenPDF Studio cumulative package"
+        self.assertEqual(_guard(path)["entries"], 1)
+
+    def test_accepts_consistent_zip64_end_records(self):
+        path = self.root / "zip64-eocd.zip"
+        _normal_zip(path, name="03-Sources/zip64-eocd.txt", payload=b"zip64 end record")
+        data = path.read_bytes()
+        eocd_offset = data.rfind(EOCD_SIG)
+        self.assertGreaterEqual(eocd_offset, 0)
+        fields = EOCD.unpack_from(data, eocd_offset)
+        self.assertEqual(fields[-1], 0)
+        zip64_offset = eocd_offset
+        zip64_record = ZIP64_EOCD.pack(
+            ZIP64_EOCD_SIG, 44, 45, 45, 0, 0, fields[3], fields[4], fields[5], fields[6]
+        )
+        locator = ZIP64_LOCATOR.pack(ZIP64_LOCATOR_SIG, 0, zip64_offset, 1)
+        end_record = EOCD.pack(
+            EOCD_SIG, 0, 0, 0xFFFF, 0xFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0
+        )
+        path.write_bytes(data[:eocd_offset] + zip64_record + locator + end_record)
+        with zipfile.ZipFile(path) as archive:
+            self.assertEqual(archive.namelist(), ["03-Sources/zip64-eocd.txt"])
+        self.assertEqual(_guard(path)["entries"], 1)
 
 
 if __name__ == "__main__":

@@ -66,15 +66,19 @@ class AtomicOutputV551Tests(unittest.TestCase):
         self.assertTrue(staged.exists())
 
     def _make_junction(self, link, target):
-        command = 'mklink /J "' + str(link) + '" "' + str(target) + '"'
+        # Use PowerShell Junction creation to avoid cmd.exe /c nested-quote parsing.
+        env = os.environ.copy()
+        env["OPENPDF_TEST_JUNCTION_LINK"] = str(link)
+        env["OPENPDF_TEST_JUNCTION_TARGET"] = str(target)
+        script = "New-Item -ItemType Junction -Path $env:OPENPDF_TEST_JUNCTION_LINK -Target $env:OPENPDF_TEST_JUNCTION_TARGET -ErrorAction Stop | Out-Null"
         completed = subprocess.run(
-            ["cmd.exe", "/d", "/c", command],
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            ["powershell.exe", "-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script],
+            env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             text=True, check=False,
         )
         self.assertEqual(
             completed.returncode, 0,
-            "mklink /J failed; the Windows runner must support junctions: " + completed.stdout,
+            "PowerShell junction creation failed; no security test is counted as passed: " + completed.stdout,
         )
         self.addCleanup(lambda: os.rmdir(link) if link.exists() else None)
 
@@ -105,18 +109,21 @@ class AtomicOutputV551Tests(unittest.TestCase):
         staged = self.output / "staged.pdf"
         destination = self.output / "published.pdf"
         staged.write_bytes(b"anchored bytes")
-        original_link = native._create_exclusive_link
+        original_open = native._open_relative
         swapped = False
 
-        def swap_parent_then_link(ntdll, source_handle, parent_handle, leaf):
+        def swap_parent_before_staging_open(kernel32, ntdll, parent, name, desired_access, share_access, options):
             nonlocal swapped
-            if not swapped:
+            # Swap after both directory handles are pinned, but before the staging file handle
+            # is opened. Once the file is pinned without delete sharing, Windows correctly
+            # prevents this rename; this hook exercises the earlier race window instead.
+            if name == "staged.pdf" and not swapped:
                 self.output.rename(self.moved)
                 self.output.mkdir()
                 swapped = True
-            return original_link(ntdll, source_handle, parent_handle, leaf)
+            return original_open(kernel32, ntdll, parent, name, desired_access, share_access, options)
 
-        with patch.object(native, "_create_exclusive_link", side_effect=swap_parent_then_link):
+        with patch.object(native, "_open_relative", side_effect=swap_parent_before_staging_open):
             with self.assertRaisesRegex(RuntimeError, "déplacé ou remplacé"):
                 atomic.publish_exclusive(staged, destination)
         self.assertTrue(swapped)

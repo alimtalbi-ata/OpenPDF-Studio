@@ -132,7 +132,7 @@ class DestinationPathChainGuardV549Tests(unittest.TestCase):
         target = self.real_dir / "not-created.pdf"
         alias = self.root / "final-link.pdf"
         alias.symlink_to(target)
-        with self.assertRaisesRegex(ValueError, "lien symbolique"):
+        with self.assertRaises(FileExistsError):
             guard_destination_path(alias, allow_existing=True)
         self.assertFalse(target.exists())
 

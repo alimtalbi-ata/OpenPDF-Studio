@@ -29,6 +29,7 @@ class V548QualificationLogTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.expected = qualification.expected_test_names(ROOT)
+        cls.head = "a" * 40  # Synthetic commit fixture; never an attested release SHA.
 
     def test_expected_names_and_full_pass_log_reconcile(self):
         log = "\n".join(outcome_line(name) for name in self.expected)

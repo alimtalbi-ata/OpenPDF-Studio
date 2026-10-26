@@ -42,7 +42,13 @@ class RestoredRuntimeTests(unittest.TestCase):
     def test_atomic_publication_unsupported_volume_fails_closed(self):
         source, dest = self.root/'tmp.pdf', self.root/'final.pdf'
         source.write_bytes(b'nonempty')
-        with patch('openpdf_atomic_output.os.link', side_effect=OSError('unsupported')):
+        if os.name == "nt":
+            # V551 routes Windows to the native handle-relative publisher, not os.link(Path, Path).
+            import openpdf_windows_handle_publish_v551 as native
+            failure = patch.object(native, "publish_exclusive_windows", side_effect=OSError("unsupported"))
+        else:
+            failure = patch("openpdf_atomic_output.os.link", side_effect=OSError("unsupported"))
+        with failure:
             with self.assertRaises(OSError):
                 publish_exclusive(source, dest)
         self.assertFalse(dest.exists())

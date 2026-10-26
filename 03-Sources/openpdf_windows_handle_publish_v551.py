@@ -114,6 +114,8 @@ def _apis():
         kernel32.GetFileInformationByHandle.restype = wintypes.BOOL
         kernel32.FlushFileBuffers.argtypes = [wintypes.HANDLE]
         kernel32.FlushFileBuffers.restype = wintypes.BOOL
+        kernel32.GetDriveTypeW.argtypes = [wintypes.LPCWSTR]
+        kernel32.GetDriveTypeW.restype = wintypes.UINT
         ntdll.NtCreateFile.argtypes = [
             ctypes.POINTER(wintypes.HANDLE), wintypes.ULONG,
             ctypes.POINTER(_OBJECT_ATTRIBUTES), ctypes.POINTER(_IO_STATUS_BLOCK),
@@ -221,6 +223,9 @@ def _open_relative(kernel32, ntdll, parent, name, desired_access, share_access, 
 
 
 def _open_root(kernel32, anchor):
+    # DRIVE_REMOTE=4: reject mapped network drives, even if they have a letter.
+    if int(kernel32.GetDriveTypeW(anchor)) == 4:
+        raise OSError("Publication V551 refuse un lecteur réseau")
     handle = kernel32.CreateFileW(
         anchor,
         _FILE_LIST_DIRECTORY | _FILE_READ_ATTRIBUTES | _SYNCHRONIZE,
@@ -265,10 +270,13 @@ def _open_directory_chain(kernel32, ntdll, directory):
             if component in ("", "."):
                 continue
             child = _open_relative(kernel32, ntdll, current, component, access, share, options)
-            info = _info(kernel32, child)
-            if not _is_directory(info) or _is_reparse(info):
+            try:
+                info = _info(kernel32, child)
+                if not _is_directory(info) or _is_reparse(info):
+                    raise OSError("Composant parent lié, reparse ou non répertoire")
+            except BaseException:
                 _close(kernel32, child)
-                raise OSError("Composant parent lié, reparse ou non répertoire")
+                raise
             _close(kernel32, current)
             current = child
         return current

@@ -54,6 +54,11 @@ def render_sha256_sums(rows):
         selected.append((name, sha))
     return ''.join(f'{sha}  {name}\n' for name, sha in sorted(selected))
 
+def validate_sha256_sums(actual, rows):
+    """Require SHA256SUMS.txt to match every non-circular inventory member."""
+    if not isinstance(actual, bytes) or actual != render_sha256_sums(rows).encode('ascii'):
+        raise ValueError('SHA256SUMS.txt does not match the current release inventory')
+
 
 def digest(path):
     with open(path, 'rb') as stream:
@@ -192,7 +197,12 @@ def payload(root, version):
                 path = current / filename
                 rel = path.relative_to(root)
                 lower = filename.casefold()
-                if rel.as_posix() in (INVENTORY, CHECKSUMS, '07-Manifestes/RELEASE-QUALIFICATION-LIMITS.txt'):
+                if rel.as_posix() == CHECKSUMS:
+                    # Preserve the old repository list but label it honestly; generate a new
+                    # current-release SHA256SUMS.txt from this archive's measured contents.
+                    yield '07-Manifestes/SHA256SUMS-LEGACY.txt', path
+                    continue
+                if rel.as_posix() in (INVENTORY, '07-Manifestes/RELEASE-QUALIFICATION-LIMITS.txt'):
                     continue
                 if forbidden_member(rel.as_posix(), version):
                     continue
@@ -242,7 +252,7 @@ def verify(path):
                 if '/'.join(parents[:index]).casefold() in folded:
                     raise ValueError('ZIP file/directory collision: ' + name)
         if INVENTORY not in members or CHECKSUMS not in members or members[INVENTORY].file_size > 32 * 1024**2:
-            raise ValueError('Integrity inventory missing or oversized')
+            raise ValueError('Integrity inventory or current checksum list missing/oversized')
         rows = json.loads(archive.read(INVENTORY).decode('utf-8-sig'))
         if not isinstance(rows, list):
             raise ValueError('Invalid integrity inventory')
@@ -263,9 +273,7 @@ def verify(path):
             recorded[name] = row
         if set(recorded) | {INVENTORY} != set(members):
             raise ValueError('ZIP contains files not represented in inventory')
-        expected_sums = render_sha256_sums(rows).encode('ascii')
-        if archive.read(CHECKSUMS) != expected_sums:
-            raise ValueError('SHA256SUMS.txt does not match the current release inventory')
+        validate_sha256_sums(archive.read(CHECKSUMS), rows)
         if 'VERSION.txt' not in members:
             raise ValueError('Missing ZIP version')
         version = archive.read('VERSION.txt').decode('utf-8-sig').strip()

@@ -64,6 +64,10 @@ jobs:
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_zip_local_record_guard_v555.py -v
       - name: Test V555 versioned guide and exact-SHA provenance
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_generate_docs_v555.py -v
+      - name: Test V556 archive verification stability and TOCTOU regressions
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_package_stable_verification_v556.py -v
+      - name: Test V556 versioned guide and exact-SHA provenance
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_generate_docs_v556.py -v
   source-readiness:
     name: Full application source closure (release-blocking)
     runs-on: ubuntu-latest
@@ -280,6 +284,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'V554-specific Word/PDF qualification guide generation failed' }
           py -3.12 02-Compilation/generate_docs_v555.py
           if ($LASTEXITCODE -ne 0) { throw 'V555-specific Word/PDF qualification guide generation failed' }
+          py -3.12 02-Compilation/generate_docs_v556.py
+          if ($LASTEXITCODE -ne 0) { throw 'V556-specific Word/PDF qualification guide generation failed' }
       - name: Build the cumulative ZIP and verify CRC, inventory and binary receipts
         shell: pwsh
         run: |
@@ -300,7 +306,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: OpenPDF-Studio-V${{ env.OPENPDF_VERSION }}-V555-Cumulative-Windows
+          name: OpenPDF-Studio-V${{ env.OPENPDF_VERSION }}-V556-Cumulative-Windows
           path: |
             01-Application/release/*.zip
             01-Application/release/*.zip.sha256

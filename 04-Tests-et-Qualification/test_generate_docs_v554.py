@@ -36,10 +36,14 @@ class V554DocumentationTests(unittest.TestCase):
 
             import fitz
             pdf = fitz.open(out["pdf"])
-            self.assertGreaterEqual(pdf.page_count, 1)
-            text = "\n".join(page.get_text() for page in pdf)
-            for expected in (sha, "V554", "Abdelhalim Talbi", "200:1", "100:1", "40345390400"):
-                self.assertIn(expected, text)
+            try:
+                self.assertGreaterEqual(pdf.page_count, 1)
+                text = "\n".join(page.get_text() for page in pdf)
+                for expected in (sha, "V554", "Abdelhalim Talbi", "200:1", "100:1", "40345390400"):
+                    self.assertIn(expected, text)
+            finally:
+                # Windows keeps the generated PDF locked until the MuPDF handle is closed.
+                pdf.close()
 
             svg = Path(out["svg"]).read_text(encoding="utf-8")
             self.assertIn("ZIP resource preflight", svg)
@@ -56,9 +60,10 @@ class V554DocumentationTests(unittest.TestCase):
         self.assertIn("SHA n'a pas été fourni", sections["Traçabilité CI"])
 
     def test_guide_reports_limits_and_unqualified_proof_domains(self):
-        sections = dict(GENERATOR.build_sections(
+        context = GENERATOR.build_context(
             commit_sha="b" * 40, pr_number=60, workflow_run_id=40345390400
-        ))
+        )
+        sections = dict(GENERATOR.build_sections(context))
         text = "\n".join(sections.values())
         for expected in ("200 000 membres", "8 GiB", "4 GiB", "Authenticode", "fidélité visuelle Office"):
             self.assertIn(expected, text)

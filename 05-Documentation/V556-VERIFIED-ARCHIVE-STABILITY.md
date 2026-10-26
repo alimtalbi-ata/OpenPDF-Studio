@@ -6,7 +6,7 @@ Base empilée : V555, PR #61. main est préservée; aucune fusion automatique.
 
 ## Priorité et changement produit
 
-La fonction de vérification du ZIP cumulatif validait les entrées et l'inventaire à travers un descripteur, fermait le lecteur ZIP, puis rouvrait le chemin pour calculer le SHA-256 de sortie. Un remplacement du chemin dans cet intervalle pouvait dissocier les données vérifiées de l'empreinte retournée. V556 relie le reçu au même descripteur utilisé pendant toute la lecture : précontrôle lstat, refus des entrées non régulières, identité du fichier ouvert et du chemin, SHA-256 initial/final, contrôle de l'identité à la fin.
+La fonction de vérification du ZIP cumulatif validait les entrées et l'inventaire à travers un descripteur, fermait le lecteur ZIP, puis rouvrait le chemin pour calculer le SHA-256 de sortie. Un remplacement du chemin dans cet intervalle pouvait dissocier les données vérifiées de l'empreinte retournée. V556 relie le reçu au même descripteur non tamponné utilisé pendant toute la lecture, afin d’éviter qu’un cache de lecture masque une mutation en place : précontrôle lstat, refus des entrées non régulières, identité du fichier ouvert et du chemin, SHA-256 initial/final, contrôle de l'identité à la fin.
 
 Les gardes précédentes demeurent obligatoires : V553 pour les collisions de chemins normalisés, V554 pour les ratios d'expansion, V555 pour la structure locale/centrale et EOCD, et le manifeste/checksum SHA-256 pour chaque membre.
 

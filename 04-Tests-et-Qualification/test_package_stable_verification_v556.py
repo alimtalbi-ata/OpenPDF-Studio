@@ -88,8 +88,17 @@ class StableArchiveVerificationV556Tests(unittest.TestCase):
             return result
 
         with mock.patch.object(package, "validate_local_record_layout", side_effect=mutate_after_structural_preflight):
-            with self.assertRaisesRegex(ValueError, "ZIP (content changed|path changed) during verification"):
+            # The unbuffered reader may detect the mutation by CRC while reading
+            # the affected member, before the final digest comparison. Both are
+            # valid fail-closed outcomes.
+            with self.assertRaises((ValueError, zipfile.BadZipFile)) as caught:
                 self._verify(self.archive_path)
+            self.assertTrue(
+                "ZIP content changed" in str(caught.exception)
+                or "ZIP path changed" in str(caught.exception)
+                or "CRC" in str(caught.exception),
+                str(caught.exception),
+            )
 
     @unittest.skipUnless(os.name == "posix", "Replacing an open path depends on POSIX rename semantics")
     def test_detects_path_replacement_while_original_descriptor_is_open(self):
@@ -106,6 +115,15 @@ class StableArchiveVerificationV556Tests(unittest.TestCase):
         with mock.patch.object(package, "validate_local_record_layout", side_effect=replace_after_structural_preflight):
             with self.assertRaisesRegex(ValueError, "ZIP path changed during verification"):
                 self._verify(self.archive_path)
+
+    def test_file_id_identity_does_not_depend_on_platform_ctime_resolution(self):
+        from types import SimpleNamespace
+        opened = SimpleNamespace(st_dev=7, st_ino=99, st_size=128,
+                                 st_mtime_ns=1000, st_ctime_ns=2000)
+        named = SimpleNamespace(st_dev=7, st_ino=99, st_size=128,
+                                st_mtime_ns=1000, st_ctime_ns=9000)
+        self.assertEqual(package._archive_file_identity(opened),
+                         package._archive_file_identity(named))
 
     def test_rejects_mismatched_path_identity_for_open_descriptor(self):
         _write_archive(self.archive_path, "51.4")
@@ -125,7 +143,8 @@ class StableArchiveVerificationV556Tests(unittest.TestCase):
 
     def test_implementation_uses_same_stream_for_parse_and_digest(self):
         source = (ROOT / "02-Compilation/package_cumulative_v434.py").read_text(encoding="utf-8")
-        self.assertIn("archive_stream_handle = path.open('rb')", source)
+        self.assertIn('open_flags |= getattr(os, "O_NOFOLLOW", 0)', source)
+        self.assertIn('os.fdopen(archive_fd, "rb", buffering=0)', source)
         self.assertIn("zipfile.ZipFile(archive_stream)", source)
         self.assertIn("_digest_open_stream(archive_stream)", source)
         self.assertIn("_assert_archive_path_binding(path, archive_stream, expected_identity)", source)

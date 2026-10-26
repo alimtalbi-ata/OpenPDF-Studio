@@ -300,13 +300,27 @@ def payload(root, version):
 
 
 def _archive_file_identity(metadata):
-    """Fingerprint the open file and named path without depending on atime."""
+    """Return a stable file identity, avoiding Windows ctime semantics.
+
+    On Windows, st_ctime historically denotes creation time and can vary in
+    semantics/resolution between descriptor and path stat calls. Prefer the
+    volume/file-index pair when the platform exposes it. The initial/final
+    SHA-256 comparison independently protects the bytes actually consumed.
+    """
+    device = getattr(metadata, "st_dev", None)
+    inode = getattr(metadata, "st_ino", None)
+    if type(device) is int and type(inode) is int and device != 0 and inode != 0:
+        return ("file-id", device, inode)
+
+    # Portable fallback for filesystems that do not report a file index. This
+    # is weaker against same-size/same-mtime path replacement; digest stability
+    # still binds the opened stream's contents to the verifier's receipt.
     return (
-        getattr(metadata, "st_dev", None),
-        getattr(metadata, "st_ino", None),
-        metadata.st_size,
+        "metadata-fallback",
+        device,
+        getattr(metadata, "st_size", None),
         getattr(metadata, "st_mtime_ns", int(metadata.st_mtime * 1_000_000_000)),
-        getattr(metadata, "st_ctime_ns", int(metadata.st_ctime * 1_000_000_000)),
+        getattr(metadata, "st_birthtime_ns", None),
     )
 
 
@@ -345,8 +359,14 @@ def verify(path):
         raise ValueError("ZIP input path is missing or inaccessible") from None
     if (not stat.S_ISREG(named_before_open.st_mode) or stat.S_ISLNK(named_before_open.st_mode)):
         raise ValueError("ZIP input is not a regular file")
+    # Use an unbuffered descriptor. A BufferedReader can retain bytes read for
+    # the initial digest and hide an in-place write from the final digest even
+    # though both operations use the same Python file object.
+    open_flags = os.O_RDONLY | getattr(os, "O_BINARY", 0)
+    open_flags |= getattr(os, "O_NOFOLLOW", 0)
     try:
-        archive_stream_handle = path.open('rb')
+        archive_fd = os.open(path, open_flags)
+        archive_stream_handle = os.fdopen(archive_fd, "rb", buffering=0)
     except OSError:
         raise ValueError("ZIP input path is missing or inaccessible") from None
     with archive_stream_handle as archive_stream:

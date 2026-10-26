@@ -130,10 +130,14 @@ class SourceReconciliationV503Tests(unittest.TestCase):
             "generate_docs_v549.py",
             "write_v551_ci_qualification.py --root .",
             "generate_docs_v551.py",
-            "V554-Cumulative-Windows",
+            "V555-Cumulative-Windows",
             "generate_docs_v554.py",
             "test_generate_docs_v554.py",
             "test_package_expansion_ratio_v554.py",
+            "zip_local_record_guard_v555.py",
+            "test_zip_local_record_guard_v555.py",
+            "generate_docs_v555.py",
+            "test_generate_docs_v555.py",
         ):
             with self.subTest(contract=contract):
                 self.assertIn(contract, workflow)

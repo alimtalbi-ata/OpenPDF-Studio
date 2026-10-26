@@ -11,6 +11,20 @@ import unicodedata
 import zipfile
 from pathlib import Path
 
+try:
+    from zip_local_record_guard_v555 import validate_local_record_layout
+except ModuleNotFoundError:
+    # File-spec imports used by the regression suite need an explicit sibling load.
+    from importlib.util import module_from_spec, spec_from_file_location
+    _guard_spec = spec_from_file_location(
+        "openpdf_zip_local_record_guard_v555", Path(__file__).with_name("zip_local_record_guard_v555.py")
+    )
+    if _guard_spec is None or _guard_spec.loader is None:
+        raise
+    _guard_module = module_from_spec(_guard_spec)
+    _guard_spec.loader.exec_module(_guard_module)
+    validate_local_record_layout = _guard_module.validate_local_record_layout
+
 FOLDERS = ('01-Application', '02-Compilation', '03-Sources', '04-Tests-et-Qualification', '05-Documentation', '06-Historique', '07-Manifestes')
 OPTIONAL_FOLDERS = ('.github',)
 ROOT_FILES = {'README.md', 'LISEZ-MOI.md', 'VERSION.txt', 'BUILD-OPENPDF-WINDOWS.cmd', '.gitattributes'}
@@ -301,9 +315,11 @@ def verify(path):
                 directories.add(key)
                 directory_names.append(directory_name)
         infos = [x for x in all_infos if not x.is_dir()]
-        if len(infos) > MAX_FILES or sum(x.file_size for x in infos) > MAX_UNCOMPRESSED or any(x.file_size > MAX_MEMBER for x in infos):
+        if len(all_infos) > MAX_FILES or len(infos) > MAX_FILES or sum(x.file_size for x in infos) > MAX_UNCOMPRESSED or any(x.file_size > MAX_MEMBER for x in infos):
             raise ValueError('ZIP safety limits exceeded')
         validate_archive_resources(infos)
+        # Inspect raw local headers before reading inventory or any member payload.
+        validate_local_record_layout(archive, all_infos)
         members = {}
         folded = set()
         for info in infos:

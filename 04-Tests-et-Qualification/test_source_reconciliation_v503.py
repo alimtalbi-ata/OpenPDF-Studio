@@ -114,7 +114,7 @@ class SourceReconciliationV503Tests(unittest.TestCase):
     def test_v547_cumulative_zip_uses_only_qualified_windows_artifacts(self):
         workflow = (ROOT / ".github/workflows/source-closure-v502.yml").read_text(encoding="utf-8")
         self.assertIn("windows-cumulative-package:", workflow)
-        self.assertIn("needs: [source-readiness, windows-portable-build, windows-installer-build]", workflow)
+        self.assertIn("needs: [closure-unit-tests, source-readiness, windows-portable-build, windows-installer-build]", workflow)
         for contract in (
             "v514-windows-portable-build-evidence",
             "v514-windows-installer-build-evidence",

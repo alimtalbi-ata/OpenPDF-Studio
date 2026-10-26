@@ -8,6 +8,7 @@ from openpdf_reservation import reserve
 from openpdf_split_transaction import split_transaction, recover_transactions
 from openpdf_ui_controller_v348 import OPERATIONS, run_operation as _legacy_run_operation
 from openpdf_source_path_guard_v548 import guard_pdf_source_path
+from openpdf_destination_path_guard_v549 import guard_destination_path
 
 def run_operation(operation, sources, destination, **kwargs):
     if operation not in OPERATIONS:
@@ -34,14 +35,15 @@ def run_operation(operation, sources, destination, **kwargs):
         raise ValueError('Mode tableaux réservé à la conversion Excel')
     if not destination:
         raise ValueError("Destination obligatoire")
-    if Path(destination).expanduser().is_symlink():
-        raise FileExistsError("Destination lien symbolique interdite")
-    # Validate every lexical component before any source canonicalization.
+    # Reject linked destination ancestors before canonicalization or reservation.
+    output = guard_destination_path(
+        destination, directory=(operation == "decoupage"), allow_existing=True
+    )
+    # Validate every lexical source component before the operation starts.
     source_paths = [guard_pdf_source_path(p) for p in sources if str(p).strip()]
     inputs = source_paths
     if not inputs:
         raise ValueError("Au moins une source est obligatoire")
-    output = Path(destination).expanduser().resolve()
     if operation == "decoupage":
         if not output.is_dir():
             raise ValueError("Le découpage exige un dossier existant")
@@ -109,6 +111,6 @@ __all__ = ["OPERATIONS", "run_operation"]
 
 def recover_split(destination):
     """Explicit recovery, serialized with all cooperating split jobs."""
-    output=Path(destination).expanduser().resolve()
+    output=guard_destination_path(destination, directory=True)
     with reserve(output / ".openpdf-split"):
         return recover_transactions(output)

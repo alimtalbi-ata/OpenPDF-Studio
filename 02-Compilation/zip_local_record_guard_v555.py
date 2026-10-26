@@ -173,7 +173,7 @@ def _validate_eocd_central_directory(archive, infos, central_start: int, file_si
         raise ValueError("ZIP EOCD record is missing or truncated")
     fields = _EOCD_RECORD.unpack(raw)
     if fields[0] != _EOCD_SIGNATURE:
-        raise ValueError("ZIP EOCD signature differs from the active ZIP reader's parsed comment")
+        raise ValueError("ZIP EOCD comment length does not reach physical EOF: signature differs from the active ZIP reader's parsed comment")
 
     _validate_eocd_candidate(fp, infos, central_start, file_size, eocd_offset, fields)
     fp.seek(eocd_offset + _EOCD_RECORD.size)

@@ -17,6 +17,8 @@ _FILE_READ_DATA = 0x0001
 _FILE_WRITE_DATA = 0x0002
 _FILE_READ_ATTRIBUTES = 0x0080
 _FILE_WRITE_ATTRIBUTES = 0x0100
+_FILE_ADD_FILE = 0x0002
+_DELETE = 0x00010000
 _SYNCHRONIZE = 0x00100000
 _FILE_SHARE_READ = 0x00000001
 _FILE_SHARE_WRITE = 0x00000002
@@ -261,16 +263,15 @@ def _absolute_local_drive_path(path):
 
 def _open_directory_chain(kernel32, ntdll, directory, require_add_file=False):
     path = _absolute_local_drive_path(directory)
-    components = [part for part in path.parts[1:] if part not in (\"\", \".\")]
+    components = [part for part in path.parts[1:] if part not in ("", ".")]
     current = _open_root(kernel32, path.anchor, require_add_file=require_add_file and not components)
     access = _FILE_LIST_DIRECTORY | _FILE_READ_ATTRIBUTES | _SYNCHRONIZE
     share = _FILE_SHARE_READ | _FILE_SHARE_WRITE | _FILE_SHARE_DELETE
     options = _FILE_DIRECTORY_FILE | _FILE_OPEN_REPARSE_POINT | _FILE_SYNCHRONOUS_IO_NONALERT
     try:
-        for component in path.parts[1:]:
-            if component in ("", "."):
-                continue
-            child = _open_relative(kernel32, ntdll, current, component, access, share, options)
+        for index, component in enumerate(components):
+            child_access = access | (_FILE_ADD_FILE if require_add_file and index == len(components) - 1 else 0)
+            child = _open_relative(kernel32, ntdll, current, component, child_access, share, options)
             try:
                 info = _info(kernel32, child)
                 if not _is_directory(info) or _is_reparse(info):

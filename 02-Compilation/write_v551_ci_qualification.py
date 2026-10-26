@@ -119,7 +119,7 @@ def generate(root):
         raise v550.v549.QualificationError("V551 packaging commit SHA mismatch")
     page_run = v550.v549._candidate_page_order_run(repo, token, head_sha)
     jobs = v550.v549._jobs(repo, token, page_run["id"])
-    _, by_name = v550.v549._successful_job_map(jobs, v550.PAGE_JOB_NAMES)
+    _, by_name = v550.v549._successful_job_map(jobs, v550.v549.PAGE_JOB_NAMES)
     names = expected_test_names(root)
     platform_results = {}
     for platform, job_name in v550.PAGE_JOB_NAMES.items():

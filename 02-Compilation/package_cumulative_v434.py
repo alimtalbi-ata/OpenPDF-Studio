@@ -298,100 +298,161 @@ def payload(root, version):
             yield filename, path
 
 
+
+def _archive_file_identity(metadata):
+    """Fingerprint the open file and named path without depending on atime."""
+    return (
+        getattr(metadata, "st_dev", None),
+        getattr(metadata, "st_ino", None),
+        metadata.st_size,
+        getattr(metadata, "st_mtime_ns", int(metadata.st_mtime * 1_000_000_000)),
+        getattr(metadata, "st_ctime_ns", int(metadata.st_ctime * 1_000_000_000)),
+    )
+
+
+def _digest_open_stream(stream):
+    """Hash the same open file descriptor used by ZipFile; preserve its cursor."""
+    position = stream.tell()
+    digest_value = hashlib.sha256()
+    try:
+        stream.seek(0)
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest_value.update(block)
+    finally:
+        stream.seek(position)
+    return digest_value.hexdigest()
+
+
+def _assert_archive_path_binding(path, stream, expected_identity):
+    """Fail closed if the path or open descriptor no longer names the same file."""
+    try:
+        opened = os.fstat(stream.fileno())
+        named = os.lstat(path)
+    except OSError:
+        raise ValueError("ZIP path changed during verification") from None
+    if (not stat.S_ISREG(named.st_mode)
+            or stat.S_ISLNK(named.st_mode)
+            or _archive_file_identity(opened) != expected_identity
+            or _archive_file_identity(named) != expected_identity):
+        raise ValueError("ZIP path changed during verification")
+
+
 def verify(path):
-    with zipfile.ZipFile(path) as archive:
-        all_infos = archive.infolist()
-        directories = set()
-        directory_names = []
-        for entry in all_infos:
-            if entry.is_dir():
-                directory_name = entry.filename.rstrip('/')
-                safe_name(directory_name)
+    path = Path(path)
+    try:
+        named_before_open = path.lstat()
+    except OSError:
+        raise ValueError("ZIP input path is missing or inaccessible") from None
+    if (not stat.S_ISREG(named_before_open.st_mode) or stat.S_ISLNK(named_before_open.st_mode)):
+        raise ValueError("ZIP input is not a regular file")
+    try:
+        archive_stream_handle = path.open('rb')
+    except OSError:
+        raise ValueError("ZIP input path is missing or inaccessible") from None
+    with archive_stream_handle as archive_stream:
+        opened_stat = os.fstat(archive_stream.fileno())
+        if not stat.S_ISREG(opened_stat.st_mode):
+            raise ValueError("ZIP input is not a regular file")
+        expected_identity = _archive_file_identity(opened_stat)
+        _assert_archive_path_binding(path, archive_stream, expected_identity)
+        initial_digest = _digest_open_stream(archive_stream)
+        _assert_archive_path_binding(path, archive_stream, expected_identity)
+        with zipfile.ZipFile(archive_stream) as archive:
+            all_infos = archive.infolist()
+            directories = set()
+            directory_names = []
+            for entry in all_infos:
+                if entry.is_dir():
+                    directory_name = entry.filename.rstrip('/')
+                    safe_name(directory_name)
+                    key = archive_path_key(directory_name)
+                    if key in directories:
+                        raise ValueError('Duplicate ZIP directory after Unicode normalization: ' + entry.filename)
+                    if stat.S_IFMT(entry.external_attr >> 16) == stat.S_IFLNK:
+                        raise ValueError('Symlink ZIP directory: ' + entry.filename)
+                    directories.add(key)
+                    directory_names.append(directory_name)
+            infos = [x for x in all_infos if not x.is_dir()]
+            if len(all_infos) > MAX_FILES or len(infos) > MAX_FILES or sum(x.file_size for x in infos) > MAX_UNCOMPRESSED or any(x.file_size > MAX_MEMBER for x in infos):
+                raise ValueError('ZIP safety limits exceeded')
+            validate_archive_resources(infos)
+            # Inspect raw local headers before reading inventory or any member payload.
+            validate_local_record_layout(archive, all_infos)
+            members = {}
+            folded = set()
+            for info in infos:
+                safe_name(info.filename)
+                key = archive_path_key(info.filename)
+                if key in folded or key in directories:
+                    raise ValueError('Duplicate ZIP member after Unicode normalization: ' + info.filename)
+                if stat.S_IFMT(info.external_attr >> 16) == stat.S_IFLNK:
+                    raise ValueError('Symlink ZIP member: ' + info.filename)
+                folded.add(key)
+                members[info.filename] = info
+            # Reconstruct implicit directories: ZIP producers commonly omit explicit
+            # directory entries, so validating only the entries visible in the central
+            # directory misses aliases such as A/first.txt and fullwidth-A/second.txt.
+            directory_sources = {}
+            for directory_name in directory_names:
                 key = archive_path_key(directory_name)
-                if key in directories:
-                    raise ValueError('Duplicate ZIP directory after Unicode normalization: ' + entry.filename)
-                if stat.S_IFMT(entry.external_attr >> 16) == stat.S_IFLNK:
-                    raise ValueError('Symlink ZIP directory: ' + entry.filename)
-                directories.add(key)
-                directory_names.append(directory_name)
-        infos = [x for x in all_infos if not x.is_dir()]
-        if len(all_infos) > MAX_FILES or len(infos) > MAX_FILES or sum(x.file_size for x in infos) > MAX_UNCOMPRESSED or any(x.file_size > MAX_MEMBER for x in infos):
-            raise ValueError('ZIP safety limits exceeded')
-        validate_archive_resources(infos)
-        # Inspect raw local headers before reading inventory or any member payload.
-        validate_local_record_layout(archive, all_infos)
-        members = {}
-        folded = set()
-        for info in infos:
-            safe_name(info.filename)
-            key = archive_path_key(info.filename)
-            if key in folded or key in directories:
-                raise ValueError('Duplicate ZIP member after Unicode normalization: ' + info.filename)
-            if stat.S_IFMT(info.external_attr >> 16) == stat.S_IFLNK:
-                raise ValueError('Symlink ZIP member: ' + info.filename)
-            folded.add(key)
-            members[info.filename] = info
-        # Reconstruct implicit directories: ZIP producers commonly omit explicit
-        # directory entries, so validating only the entries visible in the central
-        # directory misses aliases such as A/first.txt and fullwidth-A/second.txt.
-        directory_sources = {}
-        for directory_name in directory_names:
-            key = archive_path_key(directory_name)
-            prior = directory_sources.get(key)
-            if prior is not None and prior != directory_name:
-                raise ValueError('Duplicate ZIP directory after Unicode normalization: ' + directory_name)
-            directory_sources[key] = directory_name
+                prior = directory_sources.get(key)
+                if prior is not None and prior != directory_name:
+                    raise ValueError('Duplicate ZIP directory after Unicode normalization: ' + directory_name)
+                directory_sources[key] = directory_name
 
-        # Check both files and explicit directories and derive every implicit
-        # parent. Identical spelling may share a directory; a different spelling
-        # with the same NFKC/casefold identity must fail closed.
-        for name in list(members) + directory_names:
-            original_parts = name.split('/')[:-1]
-            for index in range(1, len(original_parts) + 1):
-                raw_parent = '/'.join(original_parts[:index])
-                parent_key = archive_path_key(raw_parent)
-                if parent_key in folded:
-                    raise ValueError('ZIP file/directory collision: ' + name)
-                prior = directory_sources.get(parent_key)
-                if prior is not None and prior != raw_parent:
-                    raise ValueError('Duplicate ZIP directory after Unicode normalization: ' + raw_parent)
-                directory_sources[parent_key] = raw_parent
-        if INVENTORY not in members or CHECKSUMS not in members or members[INVENTORY].file_size > 32 * 1024**2:
-            raise ValueError('Integrity inventory or current checksum list missing/oversized')
-        rows = json.loads(archive.read(INVENTORY).decode('utf-8-sig'))
-        if not isinstance(rows, list):
-            raise ValueError('Invalid integrity inventory')
-        recorded = {}
-        for row in rows:
-            if not isinstance(row, dict) or not isinstance(row.get('path'), str) or type(row.get('bytes')) is not int or row['bytes'] < 0 or not re.fullmatch('[0-9a-f]{64}', str(row.get('sha256'))):
-                raise ValueError('Invalid integrity inventory record')
-            name = row['path']
-            safe_name(name)
-            if name == INVENTORY or name in recorded or name not in members or members[name].file_size != row['bytes']:
-                raise ValueError('Missing or duplicated inventory member: ' + name)
-            h = hashlib.sha256()
-            with archive.open(members[name]) as stream:
-                for block in iter(lambda: stream.read(1024 * 1024), b''):
-                    h.update(block)
-            if h.hexdigest() != row['sha256']:
-                raise ValueError('ZIP member SHA256 mismatch: ' + name)
-            recorded[name] = row
-        if set(recorded) | {INVENTORY} != set(members):
-            raise ValueError('ZIP contains files not represented in inventory')
-        validate_sha256_sums(archive.read(CHECKSUMS), rows)
-        if 'VERSION.txt' not in members:
-            raise ValueError('Missing ZIP version')
-        version = archive.read('VERSION.txt').decode('utf-8-sig').strip()
-        if not re.fullmatch(r'\d+\.\d+', version):
-            raise ValueError('Invalid ZIP version')
-        for name in members:
-            if name not in (INVENTORY, '07-Manifestes/RELEASE-QUALIFICATION-LIMITS.txt') and forbidden_member(name, version):
-                raise ValueError('Forbidden release payload member: ' + name)
-        required = evidence(version, archive.read, lambda name: members[name].file_size if name in members else 0)
-        if any(x.startswith('01-Application/binary/') and x not in required for x in members):
-            raise ValueError('Unexpected binary in ZIP')
-    return {'verified_files': len(rows), 'archive_bytes': Path(path).stat().st_size, 'archive_sha256': digest(path)}
-
+            # Check both files and explicit directories and derive every implicit
+            # parent. Identical spelling may share a directory; a different spelling
+            # with the same NFKC/casefold identity must fail closed.
+            for name in list(members) + directory_names:
+                original_parts = name.split('/')[:-1]
+                for index in range(1, len(original_parts) + 1):
+                    raw_parent = '/'.join(original_parts[:index])
+                    parent_key = archive_path_key(raw_parent)
+                    if parent_key in folded:
+                        raise ValueError('ZIP file/directory collision: ' + name)
+                    prior = directory_sources.get(parent_key)
+                    if prior is not None and prior != raw_parent:
+                        raise ValueError('Duplicate ZIP directory after Unicode normalization: ' + raw_parent)
+                    directory_sources[parent_key] = raw_parent
+            if INVENTORY not in members or CHECKSUMS not in members or members[INVENTORY].file_size > 32 * 1024**2:
+                raise ValueError('Integrity inventory or current checksum list missing/oversized')
+            rows = json.loads(archive.read(INVENTORY).decode('utf-8-sig'))
+            if not isinstance(rows, list):
+                raise ValueError('Invalid integrity inventory')
+            recorded = {}
+            for row in rows:
+                if not isinstance(row, dict) or not isinstance(row.get('path'), str) or type(row.get('bytes')) is not int or row['bytes'] < 0 or not re.fullmatch('[0-9a-f]{64}', str(row.get('sha256'))):
+                    raise ValueError('Invalid integrity inventory record')
+                name = row['path']
+                safe_name(name)
+                if name == INVENTORY or name in recorded or name not in members or members[name].file_size != row['bytes']:
+                    raise ValueError('Missing or duplicated inventory member: ' + name)
+                h = hashlib.sha256()
+                with archive.open(members[name]) as stream:
+                    for block in iter(lambda: stream.read(1024 * 1024), b''):
+                        h.update(block)
+                if h.hexdigest() != row['sha256']:
+                    raise ValueError('ZIP member SHA256 mismatch: ' + name)
+                recorded[name] = row
+            if set(recorded) | {INVENTORY} != set(members):
+                raise ValueError('ZIP contains files not represented in inventory')
+            validate_sha256_sums(archive.read(CHECKSUMS), rows)
+            if 'VERSION.txt' not in members:
+                raise ValueError('Missing ZIP version')
+            version = archive.read('VERSION.txt').decode('utf-8-sig').strip()
+            if not re.fullmatch(r'\d+\.\d+', version):
+                raise ValueError('Invalid ZIP version')
+            for name in members:
+                if name not in (INVENTORY, '07-Manifestes/RELEASE-QUALIFICATION-LIMITS.txt') and forbidden_member(name, version):
+                    raise ValueError('Forbidden release payload member: ' + name)
+            required = evidence(version, archive.read, lambda name: members[name].file_size if name in members else 0)
+            if any(x.startswith('01-Application/binary/') and x not in required for x in members):
+                raise ValueError('Unexpected binary in ZIP')
+        final_digest = _digest_open_stream(archive_stream)
+        _assert_archive_path_binding(path, archive_stream, expected_identity)
+        if final_digest != initial_digest:
+            raise ValueError("ZIP content changed during verification")
+        return {"verified_files": len(rows), "archive_bytes": opened_stat.st_size, "archive_sha256": final_digest}
 
 def package(root, commit=''):
     root = Path(root).resolve(strict=True)

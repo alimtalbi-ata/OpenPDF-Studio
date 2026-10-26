@@ -147,7 +147,7 @@ class V549GuideFreshnessTests(unittest.TestCase):
         count = len(self.manifest["modules"])
         tests = {
             platform: {
-                "expected": 11, "passed": 11, "skipped": 0, "failed": 0,
+                "expected": 12, "passed": 12, "skipped": 0, "failed": 0,
                 "conclusion": "success", "job_id": 101 if platform == "ubuntu" else 102,
                 "job_url": "https://github.com/alimtalbi-ata/OpenPDF-Studio/actions/runs/1/job/101",
             }

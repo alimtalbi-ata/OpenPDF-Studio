@@ -38,6 +38,7 @@ def render_sha256_sums(rows):
     """
     selected = []
     seen = set()
+    folded = set()
     for row in rows:
         if not isinstance(row, dict):
             raise ValueError('Invalid SHA256SUMS inventory row')
@@ -48,9 +49,10 @@ def render_sha256_sums(rows):
         safe_name(name)
         if name in (CHECKSUMS, INVENTORY):
             continue
-        if name in seen:
-            raise ValueError('Duplicate SHA256SUMS path: ' + name)
+        if name in seen or name.casefold() in folded:
+            raise ValueError('Duplicate SHA256SUMS path after normalization: ' + name)
         seen.add(name)
+        folded.add(name.casefold())
         selected.append((name, sha))
     return ''.join(f'{sha}  {name}\n' for name, sha in sorted(selected))
 
@@ -197,6 +199,8 @@ def payload(root, version):
                 path = current / filename
                 rel = path.relative_to(root)
                 lower = filename.casefold()
+                if path.is_symlink() or not path.is_file():
+                    raise ValueError('Unsafe payload symlink: ' + str(rel))
                 if rel.as_posix() == CHECKSUMS:
                     # Preserve the old repository list but label it honestly; generate a new
                     # current-release SHA256SUMS.txt from this archive's measured contents.

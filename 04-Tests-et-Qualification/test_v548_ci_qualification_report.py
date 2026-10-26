@@ -31,6 +31,19 @@ class V548QualificationLogTests(unittest.TestCase):
         cls.expected = qualification.expected_test_names(ROOT)
         cls.head = "a" * 40  # Synthetic commit fixture; never an attested release SHA.
 
+    def test_successful_job_map_resolves_display_names_from_mapping_values(self):
+        jobs = [{
+            "name": "Native Windows portable build and smoke",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://example.invalid/job",
+        }]
+        names, by_name = qualification._successful_job_map(
+            jobs, {"portable_windows": "Native Windows portable build and smoke"}
+        )
+        self.assertEqual(names["portable_windows"]["conclusion"], "success")
+        self.assertIn("Native Windows portable build and smoke", by_name)
+
     def test_expected_names_and_full_pass_log_reconcile(self):
         log = "\n".join(outcome_line(name) for name in self.expected)
         report = qualification.analyze_test_log(log, self.expected)

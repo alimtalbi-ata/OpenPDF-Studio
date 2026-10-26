@@ -15,7 +15,7 @@ from PIL import Image as PILImage, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "05-Documentation"
-TITLE = "OpenPDF Studio V51.4 — Opérations PDF, conversions Office et sécurité des sources"
+TITLE = "OpenPDF Studio V51.4 — Opérations PDF, conversions Office et sécurité des chemins"
 CI_SCHEMA = "openpdf.v549.ci-qualification.v1"
 MODULE_MANIFEST = "07-Manifestes/V51.4-REQUIRED-RUNTIME-MODULES.json"
 CI_REPORT = "04-Tests-et-Qualification/V549-CI-QUALIFICATION.json"
@@ -336,7 +336,7 @@ def build():
     SimpleDocTemplate(
         str(pdf), pagesize=A4, rightMargin=42, leftMargin=42, topMargin=42, bottomMargin=42,
     ).build(story)
-    return {"docx": DOCS / "OpenPDF-Studio-V51.4-Guide.docx", "pdf": pdf}
+    return {"docx": DOCS / "OpenPDF-Studio-V51.4-V549-Guide.docx", "pdf": pdf}
 
 
 if __name__ == "__main__":

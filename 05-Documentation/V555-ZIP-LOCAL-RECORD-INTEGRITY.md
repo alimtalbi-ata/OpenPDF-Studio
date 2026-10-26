@@ -6,7 +6,7 @@
 
 ## Priorité et modification
 
-V555 ajoute un précontrôle structurel au vérificateur de ZIP cumulatif. Avant toute lecture du manifeste ou d'un contenu, il rapproche les en-têtes locaux du répertoire central : nom, flags, méthode, CRC, tailles compressées/décompressées. Il vérifie les champs extra de nom Unicode et ZIP64, les descripteurs de données, les offsets, l'absence de chevauchement et le rejet des octets de préfixe ou d'intervalle non indexés.
+V555 ajoute un précontrôle structurel au vérificateur de ZIP cumulatif. Avant toute lecture du manifeste ou d'un contenu, il rapproche les en-têtes locaux du répertoire central : nom, flags, méthode, CRC, tailles compressées/décompressées. Il vérifie les champs extra de nom Unicode et ZIP64, les descripteurs de données, les offsets, l'absence de chevauchement et le rejet des octets de préfixe ou d'intervalle non indexés. Il valide aussi les champs EOCD/ZIP64 : nombre d'entrées annoncé, offset et taille du répertoire central, longueur du commentaire et fermeture exacte sur la fin physique du ZIP. Il rejette les données après l'EOCD qui ne sont pas couvertes par un commentaire valide et les divergences de compte que le lecteur Python tolère.
 
 Les fichiers chiffrés ou utilisant des flags d'en-tête masqué sont refusés. Ce garde-fou complète, sans les remplacer, la politique de ratio V554, les limites absolues, la validation des chemins normalisés et les contrôles SHA-256.
 
@@ -18,7 +18,7 @@ Une réussite des tests fonctionnels n'est pas une qualification de binaire. La 
 
 ## Limites
 
-Les archives synthétiques ne sont pas des preuves de livraison. Le contrôle ne garantit pas l'absence de toute vulnérabilité ZIP et ne certifie pas le comportement de chaque extracteur tiers. SHA-256 seul n'authentifie pas l'éditeur; aucune signature Authenticode, revue graphique humaine Windows, exactitude OCR métier ou fidélité Office certifiée n'est revendiquée.
+Les archives synthétiques ne sont pas des preuves de livraison. Le contrôle ne garantit pas l'absence de toute vulnérabilité ZIP et ne certifie pas le comportement de chaque extracteur tiers. Les enregistrements EOCD ZIP64 comportant des données extensibles non prises en charge par le lecteur Python actif sont refusés explicitement. SHA-256 seul n'authentifie pas l'éditeur; aucune signature Authenticode, revue graphique humaine Windows, exactitude OCR métier ou fidélité Office certifiée n'est revendiquée.
 
 ## Prochaine priorité
 

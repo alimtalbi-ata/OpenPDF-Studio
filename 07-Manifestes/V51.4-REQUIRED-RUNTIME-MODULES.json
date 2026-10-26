@@ -37,6 +37,7 @@
     "openpdf_conversion_service_v351",
     "openpdf_core_v260",
     "openpdf_desktop",
+    "openpdf_destination_path_guard_v549",
     "openpdf_docx_roundtrip_v460",
     "openpdf_engine_v271",
     "openpdf_engine_v272",

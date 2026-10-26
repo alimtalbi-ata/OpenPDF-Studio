@@ -14,12 +14,20 @@ on:
       - '03-Sources/openpdf_source_path_guard_v548.py'
       - '04-Tests-et-Qualification/test_source_path_chain_guard_v548.py'
       - '04-Tests-et-Qualification/test_v548_ci_qualification_report.py'
-      - '03-Sources/openpdf_destination_path_guard_v549.py'
+      - '03-Sources/openpdf_destination_path_guard_v549.py 03-Sources/openpdf_atomic_output.py'
+      - '03-Sources/openpdf_atomic_output.py'
       - '04-Tests-et-Qualification/test_destination_path_chain_guard_v549.py'
+      - '04-Tests-et-Qualification/test_atomic_output_v550.py'
+      - '04-Tests-et-Qualification/test_v550_ci_qualification_report.py'
       - '04-Tests-et-Qualification/test_v549_ci_qualification_report.py'
       - '02-Compilation/write_v549_ci_qualification.py'
       - '02-Compilation/generate_docs_v549.py'
       - '05-Documentation/V549-DESTINATION-PDF-PATH-CHAIN-GUARD.*'
+      - '05-Documentation/V550-HANDLE-ANCHORED-PUBLICATION.*'
+      - '05-Documentation/OpenPDF-Studio-V51.4-V550-Guide.*'
+      - '02-Compilation/write_v550_ci_qualification.py'
+      - '02-Compilation/generate_docs_v550.py'
+      - '06-Historique/V550-HANDLE-ANCHORED-PUBLICATION.md'
       - '06-Historique/V549-DESTINATION-PDF-PATH-CHAIN-GUARD.md'
       - '02-Compilation/generate_docs_v514.py'
       - '02-Compilation/write_v548_ci_qualification.py'
@@ -54,3 +62,5 @@ jobs:
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_source_path_chain_guard_v548.py -v
       - name: V549 reject linked destination components before path normalization
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_destination_path_chain_guard_v549.py -v
+      - name: V550 handle-anchored exclusive publication
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_atomic_output_v550.py -v

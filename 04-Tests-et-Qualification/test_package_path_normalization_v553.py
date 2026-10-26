@@ -55,6 +55,16 @@ class PackagePathNormalizationV553Tests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "ZIP file/directory collision"):
                 package.verify(archive_path)
 
+    def test_implicit_parent_directories_cannot_alias_after_nfkc(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            archive_path = Path(temporary) / "implicit-directory-collision.zip"
+            with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+                # No explicit directory entries: common ZIP producers only write files.
+                archive.writestr("01-Application/A/first.txt", b"first")
+                archive.writestr("01-Application/Ａ/second.txt", b"second")
+            with self.assertRaisesRegex(ValueError, "Duplicate ZIP directory after Unicode normalization"):
+                package.verify(archive_path)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -7,6 +7,7 @@ import re
 import shutil
 import stat
 import tempfile
+import unicodedata
 import zipfile
 from pathlib import Path
 
@@ -38,7 +39,6 @@ def render_sha256_sums(rows):
     """
     selected = []
     seen = set()
-    folded = set()
     for row in rows:
         if not isinstance(row, dict):
             raise ValueError('Invalid SHA256SUMS inventory row')
@@ -49,10 +49,10 @@ def render_sha256_sums(rows):
         safe_name(name)
         if name in (CHECKSUMS, INVENTORY):
             continue
-        if name in seen or name.casefold() in folded:
-            raise ValueError('Duplicate SHA256SUMS path after normalization: ' + name)
-        seen.add(name)
-        folded.add(name.casefold())
+        key = archive_path_key(name)
+        if key in seen:
+            raise ValueError('Duplicate SHA256SUMS path after normalization (NFKC/casefold): ' + name)
+        seen.add(key)
         selected.append((name, sha))
     return ''.join(f'{sha}  {name}\n' for name, sha in sorted(selected))
 
@@ -80,12 +80,29 @@ def safe_name(name):
         raise ValueError('Unexpected ZIP member root: ' + name)
 
 
+def archive_path_key(name):
+    """Return a Windows-aware archive-path identity, rejecting normalized syntax changes.
+
+    Compatibility characters must not turn into path separators, traversal segments,
+    reserved device names, or other forbidden Windows syntax after validation.
+    NFKC plus casefold is used only as a collision key; the original stored name is
+    preserved in the manifest and archive.
+    """
+    safe_name(name)
+    normalized = unicodedata.normalize('NFKC', name)
+    if normalized.count('/') != name.count('/'):
+        raise ValueError('ZIP path separators change under Unicode normalization: ' + name)
+    safe_name(normalized)
+    return normalized.casefold()
+
+
 def forbidden_member(name, version):
     """Apply the same security and slimming policy when verifying external ZIPs.
 
     SHA-256 alone is insufficient if an attacker regenerates the inventory.
+    Compatibility Unicode is normalized before checking security exclusions.
     """
-    parts = name.split('/')
+    parts = unicodedata.normalize('NFKC', name).split('/')
     basename = parts[-1].casefold()
     if any(part.casefold() in SKIP_DIRS or part.casefold().startswith('.staging-') for part in parts[:-1]):
         return True
@@ -180,6 +197,7 @@ def evidence(version, read, size):
 
 
 def payload(root, version):
+    seen = set()
     for folder in FOLDERS + OPTIONAL_FOLDERS:
         base = root / folder
         if folder in OPTIONAL_FOLDERS and not base.exists() and not base.is_symlink():
@@ -201,24 +219,39 @@ def payload(root, version):
                 lower = filename.casefold()
                 if path.is_symlink() or not path.is_file():
                     raise ValueError('Unsafe payload symlink: ' + str(rel))
-                if rel.as_posix() == CHECKSUMS:
+                candidate = rel.as_posix()
+                safe_name(candidate)
+                archive_path_key(candidate)
+                if candidate == CHECKSUMS:
                     # Preserve the old repository list but label it honestly; generate a new
                     # current-release SHA256SUMS.txt from this archive's measured contents.
-                    yield '07-Manifestes/SHA256SUMS-LEGACY-NOT-CURRENT.txt', path
+                    output_name = '07-Manifestes/SHA256SUMS-LEGACY-NOT-CURRENT.txt'
+                    output_key = archive_path_key(output_name)
+                    if output_key in seen:
+                        raise ValueError('Unicode-normalized payload collision: ' + output_name)
+                    seen.add(output_key)
+                    yield output_name, path
                     continue
-                if rel.as_posix() in (INVENTORY, '07-Manifestes/RELEASE-QUALIFICATION-LIMITS.txt'):
+                if candidate in (INVENTORY, '07-Manifestes/RELEASE-QUALIFICATION-LIMITS.txt'):
                     continue
-                if forbidden_member(rel.as_posix(), version):
+                if forbidden_member(candidate, version):
                     continue
                 if path.is_symlink() or not path.is_file():
                     raise ValueError('Unsafe payload symlink: ' + str(rel))
-                safe_name(rel.as_posix())
-                yield rel.as_posix(), path
+                key = archive_path_key(candidate)
+                if key in seen:
+                    raise ValueError('Unicode-normalized payload collision: ' + candidate)
+                seen.add(key)
+                yield candidate, path
     for filename in sorted(ROOT_FILES):
         path = root / filename
         if path.is_symlink():
             raise ValueError('Unsafe root symlink: ' + filename)
         if path.is_file():
+            key = archive_path_key(filename)
+            if key in seen:
+                raise ValueError('Unicode-normalized payload collision: ' + filename)
+            seen.add(key)
             yield filename, path
 
 
@@ -226,15 +259,18 @@ def verify(path):
     with zipfile.ZipFile(path) as archive:
         all_infos = archive.infolist()
         directories = set()
+        directory_names = []
         for entry in all_infos:
             if entry.is_dir():
-                safe_name(entry.filename.rstrip('/'))
-                key = entry.filename.casefold()
+                directory_name = entry.filename.rstrip('/')
+                safe_name(directory_name)
+                key = archive_path_key(directory_name)
                 if key in directories:
-                    raise ValueError('Duplicate ZIP directory: ' + entry.filename)
+                    raise ValueError('Duplicate ZIP directory after Unicode normalization: ' + entry.filename)
                 if stat.S_IFMT(entry.external_attr >> 16) == stat.S_IFLNK:
                     raise ValueError('Symlink ZIP directory: ' + entry.filename)
                 directories.add(key)
+                directory_names.append(directory_name)
         infos = [x for x in all_infos if not x.is_dir()]
         if len(infos) > MAX_FILES or sum(x.file_size for x in infos) > MAX_UNCOMPRESSED or any(x.file_size > MAX_MEMBER for x in infos):
             raise ValueError('ZIP safety limits exceeded')
@@ -242,19 +278,38 @@ def verify(path):
         folded = set()
         for info in infos:
             safe_name(info.filename)
-            if info.filename.casefold() in folded or (info.filename + '/').casefold() in directories:
-                raise ValueError('Duplicate ZIP member: ' + info.filename)
+            key = archive_path_key(info.filename)
+            if key in folded or key in directories:
+                raise ValueError('Duplicate ZIP member after Unicode normalization: ' + info.filename)
             if stat.S_IFMT(info.external_attr >> 16) == stat.S_IFLNK:
                 raise ValueError('Symlink ZIP member: ' + info.filename)
-            folded.add(info.filename.casefold())
+            folded.add(key)
             members[info.filename] = info
-        # Reject paths that use a regular file as a parent directory. Such ZIPs
-        # cannot be extracted consistently on Windows or POSIX.
-        for name in members:
-            parents = name.split('/')[:-1]
-            for index in range(1, len(parents) + 1):
-                if '/'.join(parents[:index]).casefold() in folded:
+        # Reconstruct implicit directories: ZIP producers commonly omit explicit
+        # directory entries, so validating only the entries visible in the central
+        # directory misses aliases such as A/first.txt and fullwidth-A/second.txt.
+        directory_sources = {}
+        for directory_name in directory_names:
+            key = archive_path_key(directory_name)
+            prior = directory_sources.get(key)
+            if prior is not None and prior != directory_name:
+                raise ValueError('Duplicate ZIP directory after Unicode normalization: ' + directory_name)
+            directory_sources[key] = directory_name
+
+        # Check both files and explicit directories and derive every implicit
+        # parent. Identical spelling may share a directory; a different spelling
+        # with the same NFKC/casefold identity must fail closed.
+        for name in list(members) + directory_names:
+            original_parts = name.split('/')[:-1]
+            for index in range(1, len(original_parts) + 1):
+                raw_parent = '/'.join(original_parts[:index])
+                parent_key = archive_path_key(raw_parent)
+                if parent_key in folded:
                     raise ValueError('ZIP file/directory collision: ' + name)
+                prior = directory_sources.get(parent_key)
+                if prior is not None and prior != raw_parent:
+                    raise ValueError('Duplicate ZIP directory after Unicode normalization: ' + raw_parent)
+                directory_sources[parent_key] = raw_parent
         if INVENTORY not in members or CHECKSUMS not in members or members[INVENTORY].file_size > 32 * 1024**2:
             raise ValueError('Integrity inventory or current checksum list missing/oversized')
         rows = json.loads(archive.read(INVENTORY).decode('utf-8-sig'))

@@ -192,7 +192,7 @@ def _jobs(repo, token, run_id):
 
 def _successful_job_map(jobs, required_names):
     by_name = {job.get("name"): job for job in jobs if isinstance(job, dict)}
-    missing = [name for name in required_names if name not in by_name]
+    missing = [job_name for job_name in required_names.values() if job_name not in by_name]
     if missing:
         raise QualificationError("Required CI jobs were missing: " + ", ".join(missing))
     result = {}

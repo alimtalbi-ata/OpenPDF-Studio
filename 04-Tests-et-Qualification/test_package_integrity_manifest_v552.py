@@ -77,10 +77,10 @@ class PackageIntegrityManifestV552Tests(unittest.TestCase):
             files = list(package.payload(root, "51.4"))
             paths = {name for name, _ in files}
             self.assertNotIn(package.CHECKSUMS, paths)
-            self.assertIn("07-Manifestes/SHA256SUMS-LEGACY.txt", paths)
+            self.assertIn("07-Manifestes/SHA256SUMS-LEGACY-NOT-CURRENT.txt", paths)
             self.assertEqual(
                 next(path.read_text(encoding="utf-8") for name, path in files
-                     if name == "07-Manifestes/SHA256SUMS-LEGACY.txt"),
+                     if name == "07-Manifestes/SHA256SUMS-LEGACY-NOT-CURRENT.txt"),
                 "deadbeef  stale-file.txt\n",
             )
 

@@ -21,6 +21,13 @@ class V551QualificationTests(unittest.TestCase):
     def setUpClass(cls):
         cls.names = qualification.expected_test_names(ROOT)
 
+    def test_page_order_job_map_comes_from_canonical_v549_helper(self):
+        # V550 re-exports the V549 helper module as `v549`; it does not define
+        # PAGE_JOB_NAMES itself. Keep receipt generation aligned with that API.
+        names = qualification.v550.v549.PAGE_JOB_NAMES
+        self.assertEqual(set(names), {"ubuntu", "windows"})
+        source = (ROOT / "02-Compilation" / "write_v551_ci_qualification.py").read_text(encoding="utf-8")
+        self.assertIn("for platform, job_name in v550.v549.PAGE_JOB_NAMES.items():", source)
     def test_inventory_has_eight_tests(self):
         self.assertEqual(len(self.names), 8)
 

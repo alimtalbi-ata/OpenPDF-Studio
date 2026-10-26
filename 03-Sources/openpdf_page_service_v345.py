@@ -8,6 +8,7 @@ import fitz
 from openpdf_atomic_output import publish_exclusive
 from openpdf_page_source_integrity_v435 import snapshot_source, verify_source as verify_source_snapshot
 from openpdf_source_path_guard_v548 import guard_pdf_source_path
+from openpdf_destination_path_guard_v549 import guard_destination_path
 
 @dataclass(frozen=True)
 class PageReceipt:
@@ -27,7 +28,7 @@ def _source(path):
     return guard_pdf_source_path(path)
 
 def _target(path,sources):
-    p=Path(path).resolve()
+    p=guard_destination_path(path, allow_existing=True)
     if p.suffix.lower()!='.pdf' or p in sources:raise ValueError('Destination PDF invalide ou source écrasée')
     if not p.parent.is_dir():raise ValueError('Dossier de destination inexistant')
     if p.exists():raise FileExistsError(f'Destination existante : {p}')
@@ -208,7 +209,7 @@ def reorder(source,destination,indices):
     return PageReceipt('reorder',(p,),(n,),(h,))
 
 def split(source,folder,chunk_size=1):
-    src=_source(source);dest=Path(folder).resolve()
+    src=_source(source);dest=guard_destination_path(folder, directory=True)
     if not dest.is_dir():raise ValueError('Dossier de destination inexistant')
     if not isinstance(chunk_size,int) or isinstance(chunk_size,bool) or chunk_size<1:raise ValueError('Taille de lot invalide')
     with fitz.open(src) as doc:
@@ -216,7 +217,9 @@ def split(source,folder,chunk_size=1):
         n=doc.page_count
     # Fail closed: no overwrite of existing outputs; avoids partial replacement of prior runs.
     targets=[dest/f'{src.stem}_pages_{i+1:04d}-{min(i+chunk_size,n):04d}.pdf' for i in range(0,n,chunk_size)]
-    if any(p.exists() or p.resolve()==src for p in targets):raise FileExistsError('Sortie déjà existante : découpage interrompu')
+    for target in targets:
+        guard_destination_path(target, allow_existing=True)
+    if any(p.exists() or p==src for p in targets):raise FileExistsError('Sortie déjà existante : découpage interrompu')
     published=[]
     try:
         for i,target in zip(range(0,n,chunk_size),targets):

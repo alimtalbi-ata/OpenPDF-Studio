@@ -53,8 +53,9 @@ def guard_destination_path(path, *, directory=False, allow_existing=False):
 
             current = current / component
             if _is_link_or_junction(current):
-                if index == len(parts) - 1:
-                    # Preserve the legacy API contract for a linked final output.
+                if index == len(parts) - 1 and not directory:
+                    # Preserve the legacy file-output contract; linked directory
+                    # targets are invalid destinations, not file-exists conflicts.
                     raise FileExistsError("Destination lien symbolique interdite")
                 raise ValueError(_LINK_ERROR)
             try:

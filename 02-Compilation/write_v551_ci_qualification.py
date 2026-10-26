@@ -122,7 +122,7 @@ def generate(root):
     _, by_name = v550.v549._successful_job_map(jobs, v550.v549.PAGE_JOB_NAMES)
     names = expected_test_names(root)
     platform_results = {}
-    for platform, job_name in v550.PAGE_JOB_NAMES.items():
+    for platform, job_name in v550.v549.PAGE_JOB_NAMES.items():
         job = by_name[job_name]
         parsed = analyze_test_log(
             v550.v549._download_job_log(repo, token, job["id"]), names

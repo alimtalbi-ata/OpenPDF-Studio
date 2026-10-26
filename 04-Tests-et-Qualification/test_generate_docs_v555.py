@@ -29,9 +29,16 @@ class GenerateDocsV555Tests(unittest.TestCase):
             pdf = fitz.open(out["pdf"])
             try:
                 self.assertGreaterEqual(pdf.page_count, 1)
-                text = "\n".join(page.get_text() for page in pdf)
+                page_text = [page.get_text() for page in pdf]
+                text = "\n".join(page_text)
                 for expected in (sha, "V555", "Abdelhalim Talbi", "ZIP local-record", "non indexés"):
                     self.assertIn(expected, text)
+                trace_pages = [page for page in page_text if "Traçabilité" in page]
+                self.assertTrue(trace_pages, "PDF traceability section must be present")
+                self.assertTrue(
+                    any("Commit:" in page for page in trace_pages),
+                    "Traceability heading must stay with its provenance body",
+                )
             finally:
                 pdf.close()
             svg = Path(out["svg"]).read_text(encoding="utf-8")

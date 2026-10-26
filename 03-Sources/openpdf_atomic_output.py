@@ -257,4 +257,8 @@ def publish_exclusive(temporary, destination):
         raise ValueError("Chemin de publication invalide")
     if os.name == "posix":
         return _publish_posix(temporary_path, destination_path, original_destination)
+    if os.name == "nt":
+        # V551 uses native handle-relative publication; never downgrade silently.
+        from openpdf_windows_handle_publish_v551 import publish_exclusive_windows
+        return publish_exclusive_windows(temporary_path, destination_path)
     return _publish_path_based(temporary_path, destination_path, original_destination)

@@ -67,7 +67,7 @@ class AtomicOutputV550Tests(unittest.TestCase):
         staged = self.output / "staged.pdf"
         destination = self.redirect / "published.pdf"
         staged.write_bytes(b"nonempty")
-        with self.assertRaisesRegex(ValueError, "same folder|même dossier"):
+        with self.assertRaisesRegex(ValueError, "same folder|même (?:dossier|répertoire)"):
             atomic.publish_exclusive(staged, destination)
         self.assertFalse(destination.exists())
 

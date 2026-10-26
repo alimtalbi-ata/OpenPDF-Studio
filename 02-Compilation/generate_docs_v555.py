@@ -196,10 +196,17 @@ def generate(root=ROOT, *, commit_sha=None, pr_number=None, workflow_run_id=None
         Spacer(1, 3 * mm),
     ]
     for heading, body in sections:
-        story.append(Paragraph(escape(heading), styles["Heading2"]))
-        for line in body.split("\n"):
-            if line.strip():
-                story.append(Paragraph(escape(line), styles["V555Body"]))
+        block = [Paragraph(escape(heading), styles["Heading2"])]
+        block.extend(
+            Paragraph(escape(line), styles["V555Body"])
+            for line in body.split("\n")
+            if line.strip()
+        )
+        # Never leave the provenance heading stranded at a page boundary.
+        if heading == "Traçabilité":
+            story.append(KeepTogether(block))
+        else:
+            story.extend(block)
     rows = [
         ["Niveau", "Contrôle", "Portée"],
         ["Précontrôle", "Local + central", "Métadonnées avant lecture"],

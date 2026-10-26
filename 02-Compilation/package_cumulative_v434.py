@@ -197,6 +197,7 @@ def evidence(version, read, size):
 
 
 def payload(root, version):
+    seen = set()
     for folder in FOLDERS + OPTIONAL_FOLDERS:
         base = root / folder
         if folder in OPTIONAL_FOLDERS and not base.exists() and not base.is_symlink():

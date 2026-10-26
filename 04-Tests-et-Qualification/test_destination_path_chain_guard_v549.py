@@ -116,6 +116,23 @@ class DestinationPathChainGuardV549Tests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "lien symbolique"):
                 openpdf_operations.recover_split(linked_parent)
 
+    def test_windows_junction_ancestor_is_rejected_before_resolve(self):
+        linked_parent = self.root / "synthetic-junction"
+        destination = linked_parent / "output.pdf"
+        original_symlink = Path.is_symlink
+
+        def is_symlink(path):
+            return original_symlink(path)
+
+        def is_junction(path):
+            return path == linked_parent
+
+        with patch.object(Path, "is_symlink", autospec=True, side_effect=is_symlink), patch.object(
+            Path, "is_junction", create=True, autospec=True, side_effect=is_junction
+        ), patch.object(Path, "resolve", side_effect=AssertionError("junction path was resolved")):
+            with self.assertRaisesRegex(ValueError, "lien symbolique"):
+                guard_destination_path(destination)
+
     def test_real_parent_symlink_is_rejected_without_writing_through_alias(self):
         linked_parent = self.root / "real-parent-link"
         linked_parent.symlink_to(self.real_dir, target_is_directory=True)

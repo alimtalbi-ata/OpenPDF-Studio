@@ -1,4 +1,5 @@
 """Release checksum-list integrity tests. No Windows build evidence is fabricated."""
+import os
 import sys
 import tempfile
 import unittest
@@ -40,9 +41,9 @@ class PackageIntegrityManifestV552Tests(unittest.TestCase):
     def test_duplicate_paths_are_rejected(self):
         rows = [
             {"path": "03-Sources/a.py", "sha256": "a" * 64},
-            {"path": "03-Sources/a.py", "sha256": "b" * 64},
+            {"path": "03-Sources/A.py", "sha256": "b" * 64},
         ]
-        with self.assertRaisesRegex(ValueError, "Duplicate SHA256SUMS path"):
+        with self.assertRaisesRegex(ValueError, "Duplicate SHA256SUMS path after normalization"):
             package.render_sha256_sums(rows)
 
     def test_invalid_paths_and_hashes_are_rejected(self):
@@ -55,6 +56,17 @@ class PackageIntegrityManifestV552Tests(unittest.TestCase):
                 {"path": "03-Sources/a.py", "sha256": "not-a-hash"},
             ])
 
+    @unittest.skipUnless(os.name == "posix", "This test requires reliable POSIX symlink creation")
+    def test_linked_source_checksum_is_rejected_before_legacy_renaming(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for folder in package.FOLDERS:
+                (root / folder).mkdir(parents=True, exist_ok=True)
+            actual = root / "07-Manifestes" / "actual.txt"
+            actual.write_text("do not follow links", encoding="utf-8")
+            (root / package.CHECKSUMS).symlink_to(actual)
+            with self.assertRaisesRegex(ValueError, "Unsafe payload symlink"):
+                list(package.payload(root, "51.4"))
     def test_old_repository_checksum_list_is_preserved_as_legacy_payload(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

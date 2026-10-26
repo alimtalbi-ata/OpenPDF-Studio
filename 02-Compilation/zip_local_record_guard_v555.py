@@ -15,10 +15,194 @@ _FLAG_ENCRYPTED = 0x0001
 _FLAG_STRONG_ENCRYPTION = 0x0040
 _FLAG_MASKED_HEADER = 0x2000
 _FLAG_DATA_DESCRIPTOR = 0x0008
+_EOCD_RECORD = struct.Struct("<4s4H2IH")
+_EOCD_SIGNATURE = b"PK\x05\x06"
+_ZIP64_LOCATOR = struct.Struct("<4sIQI")
+_ZIP64_LOCATOR_SIGNATURE = b"PK\x06\x07"
+_ZIP64_EOCD = struct.Struct("<4sQ2H2I4Q")
+_ZIP64_EOCD_SIGNATURE = b"PK\x06\x06"
+_CENTRAL_DIRECTORY_HEADER = struct.Struct("<4s6H3I5H2I")
+_CENTRAL_DIRECTORY_SIGNATURE = b"PK\x01\x02"
+_ZIP16_SENTINEL = 0xFFFF
 
 
 def _error(message: str, name: str) -> ValueError:
     return ValueError(f"{message}: {name}")
+
+
+
+def _count_central_directory_records(fp, offset: int, size: int, expected_count: int) -> int:
+    """Walk central-record boundaries without reading or decompressing member data."""
+    cursor = 0
+    count = 0
+    while cursor < size:
+        remaining = size - cursor
+        if remaining < _CENTRAL_DIRECTORY_HEADER.size:
+            raise ValueError("Truncated ZIP central-directory entry or trailing bytes")
+        fp.seek(offset + cursor)
+        raw = fp.read(_CENTRAL_DIRECTORY_HEADER.size)
+        if len(raw) != _CENTRAL_DIRECTORY_HEADER.size:
+            raise ValueError("Truncated ZIP central-directory entry header")
+        fields = _CENTRAL_DIRECTORY_HEADER.unpack(raw)
+        if fields[0] != _CENTRAL_DIRECTORY_SIGNATURE:
+            raise ValueError("Invalid ZIP central-directory record signature")
+        name_length, extra_length, comment_length = fields[10], fields[11], fields[12]
+        disk_start = fields[13]
+        if disk_start != 0:
+            raise ValueError("Multi-disk ZIP entry is not accepted")
+        record_length = (_CENTRAL_DIRECTORY_HEADER.size + name_length
+                         + extra_length + comment_length)
+        if record_length > remaining:
+            raise ValueError("ZIP central-directory entry exceeds declared size")
+        cursor += record_length
+        count += 1
+        if count > expected_count:
+            raise ValueError("ZIP EOCD entry-count mismatch: central directory contains more entries")
+    if cursor != size or count != expected_count:
+        raise ValueError("ZIP EOCD entry-count mismatch: central directory record count differs")
+    return count
+
+
+def _validate_eocd_candidate(fp, infos, central_start: int, file_size: int,
+                             eocd_offset: int, fields) -> None:
+    (signature, disk_number, central_disk, entries_on_disk32, entries_total32,
+     central_size32, central_offset32, comment_length) = fields
+    if signature != _EOCD_SIGNATURE:
+        raise ValueError("Invalid ZIP EOCD signature")
+    if eocd_offset + _EOCD_RECORD.size + comment_length != file_size:
+        raise ValueError("ZIP EOCD comment length does not reach physical EOF (trailing bytes or malformed comment)")
+    if disk_number != 0 or central_disk != 0:
+        raise ValueError("Multi-disk ZIP archives are not accepted")
+
+    uses_zip64 = (
+        entries_on_disk32 == _ZIP16_SENTINEL
+        or entries_total32 == _ZIP16_SENTINEL
+        or central_size32 == _ZIP32_SENTINEL
+        or central_offset32 == _ZIP32_SENTINEL
+    )
+    if uses_zip64:
+        locator_offset = eocd_offset - _ZIP64_LOCATOR.size
+        if locator_offset < 0:
+            raise ValueError("Missing ZIP64 EOCD locator")
+        fp.seek(locator_offset)
+        raw_locator = fp.read(_ZIP64_LOCATOR.size)
+        if len(raw_locator) != _ZIP64_LOCATOR.size:
+            raise ValueError("Truncated ZIP64 EOCD locator")
+        locator_signature, locator_disk, zip64_offset, disk_count = _ZIP64_LOCATOR.unpack(raw_locator)
+        if locator_signature != _ZIP64_LOCATOR_SIGNATURE:
+            raise ValueError("Missing ZIP64 EOCD locator")
+        if locator_disk != 0 or disk_count != 1:
+            raise ValueError("Multi-disk ZIP64 archives are not accepted")
+        if zip64_offset + _ZIP64_EOCD.size > locator_offset:
+            raise ValueError("ZIP64 EOCD offset is outside the allowed record region")
+        fp.seek(zip64_offset)
+        raw_zip64 = fp.read(_ZIP64_EOCD.size)
+        if len(raw_zip64) != _ZIP64_EOCD.size:
+            raise ValueError("Truncated ZIP64 EOCD record")
+        (zip64_signature, record_size, _made, _needed, zip64_disk, zip64_central_disk,
+         entries_on_disk64, entries_total64, central_size64, central_offset64) = _ZIP64_EOCD.unpack(raw_zip64)
+        if zip64_signature != _ZIP64_EOCD_SIGNATURE:
+            raise ValueError("Invalid ZIP64 EOCD signature")
+        # The Python zipfile reader used by this verifier supports the fixed 44-byte
+        # ZIP64 end-record body, not optional extensible data sectors.
+        if record_size != 44:
+            raise ValueError("ZIP64 EOCD extensible data is not supported by the active Python ZIP reader")
+        if zip64_offset + 12 + record_size != locator_offset:
+            raise ValueError("Unindexed bytes around ZIP64 EOCD record")
+        if zip64_disk != 0 or zip64_central_disk != 0:
+            raise ValueError("Multi-disk ZIP64 archives are not accepted")
+        if entries_on_disk64 != entries_total64:
+            raise ValueError("ZIP EOCD entry-count mismatch: ZIP64 disk and total counts differ")
+        for raw, sentinel, actual, label in (
+            (entries_on_disk32, _ZIP16_SENTINEL, entries_on_disk64, "entries-on-disk"),
+            (entries_total32, _ZIP16_SENTINEL, entries_total64, "total entries"),
+            (central_size32, _ZIP32_SENTINEL, central_size64, "central-directory size"),
+            (central_offset32, _ZIP32_SENTINEL, central_offset64, "central-directory offset"),
+        ):
+            if raw != sentinel and raw != actual:
+                raise ValueError("ZIP EOCD and ZIP64 values disagree: " + label)
+        entries_on_disk = entries_on_disk64
+        entries_total = entries_total64
+        central_size = central_size64
+        central_offset = central_offset64
+        central_end = zip64_offset
+    else:
+        entries_on_disk = entries_on_disk32
+        entries_total = entries_total32
+        central_size = central_size32
+        central_offset = central_offset32
+        central_end = eocd_offset
+        if entries_on_disk != entries_total:
+            raise ValueError("ZIP EOCD entry-count mismatch: per-disk and total counts differ")
+
+    if entries_on_disk != entries_total:
+        raise ValueError("ZIP EOCD entry-count mismatch: per-disk and total counts differ")
+    if central_offset != central_start:
+        raise ValueError("ZIP EOCD central-directory offset differs from parsed offset")
+    if central_offset + central_size != central_end:
+        raise ValueError("Unindexed bytes between ZIP central directory and end record")
+    if len(infos) != entries_total:
+        raise ValueError(
+            "ZIP EOCD entry-count mismatch: end record says %d, parser found %d"
+            % (entries_total, len(infos))
+        )
+    _count_central_directory_records(fp, central_offset, central_size, entries_total)
+
+
+def _validate_eocd_central_directory(archive, infos, central_start: int, file_size: int) -> None:
+    """Require one self-consistent EOCD and an exactly bounded central directory.
+
+    This prevents zipfile's size-driven directory parser from accepting a stale
+    EOCD entry count, and rejects trailing bytes not covered by a ZIP comment.
+    """
+    fp = getattr(archive, "fp", None)
+    if fp is None or file_size < _EOCD_RECORD.size:
+        raise ValueError("ZIP EOCD record is missing or truncated")
+    tail_size = min(file_size, _EOCD_RECORD.size + 0xFFFF)
+    fp.seek(file_size - tail_size)
+    tail = fp.read(tail_size)
+    if len(tail) != tail_size:
+        raise ValueError("Unable to read the ZIP EOCD search window")
+    tail_start = file_size - tail_size
+
+    candidates = []
+    position = tail.rfind(_EOCD_SIGNATURE)
+    while position >= 0:
+        if position + _EOCD_RECORD.size <= len(tail):
+            fields = _EOCD_RECORD.unpack_from(tail, position)
+            if fields[0] == _EOCD_SIGNATURE:
+                candidates.append((tail_start + position, fields))
+        position = tail.rfind(_EOCD_SIGNATURE, 0, position)
+    if not candidates:
+        raise ValueError("ZIP EOCD record is missing or truncated")
+
+    errors = []
+    passed = 0
+    for offset, fields in candidates:
+        try:
+            _validate_eocd_candidate(fp, infos, central_start, file_size, offset, fields)
+            passed += 1
+        except ValueError as exc:
+            errors.append(str(exc))
+    if passed == 1:
+        return
+    if passed > 1:
+        raise ValueError("Ambiguous valid ZIP EOCD records")
+    priorities = (
+        "ZIP EOCD entry-count mismatch",
+        "ZIP EOCD comment length",
+        "ZIP64",
+        "Unindexed bytes",
+        "ZIP central-directory",
+        "Invalid ZIP central-directory",
+    )
+    for prefix in priorities:
+        for message in errors:
+            if message.startswith(prefix):
+                raise ValueError(message)
+    if errors:
+        raise ValueError(errors[0])
+    raise ValueError("ZIP EOCD record is invalid")
 
 
 def _parse_extra_fields(extra: bytes, name: str, location: str) -> dict[int, list[bytes]]:
@@ -137,6 +321,7 @@ def validate_local_record_layout(archive, infos) -> dict[str, int]:
         file_size = fp.tell()
         if central_start > file_size:
             raise ValueError("ZIP central-directory boundary exceeds file size")
+        _validate_eocd_central_directory(archive, infos, central_start, file_size)
         spans: list[tuple[int, int, str]] = []
         offsets: set[int] = set()
         for info in infos:

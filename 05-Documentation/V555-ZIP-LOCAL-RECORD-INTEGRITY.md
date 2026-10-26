@@ -6,7 +6,7 @@
 
 ## Priorité et modification
 
-V555 ajoute un précontrôle structurel au vérificateur de ZIP cumulatif. Avant toute lecture du manifeste ou d'un contenu, il rapproche les en-têtes locaux du répertoire central : nom, flags, méthode, CRC, tailles compressées/décompressées. Il vérifie les champs extra de nom Unicode et ZIP64, les descripteurs de données, les offsets et le chevauchement physique des enregistrements.
+V555 ajoute un précontrôle structurel au vérificateur de ZIP cumulatif. Avant toute lecture du manifeste ou d'un contenu, il rapproche les en-têtes locaux du répertoire central : nom, flags, méthode, CRC, tailles compressées/décompressées. Il vérifie les champs extra de nom Unicode et ZIP64, les descripteurs de données, les offsets, l'absence de chevauchement et le rejet des octets de préfixe ou d'intervalle non indexés.
 
 Les fichiers chiffrés ou utilisant des flags d'en-tête masqué sont refusés. Ce garde-fou complète, sans les remplacer, la politique de ratio V554, les limites absolues, la validation des chemins normalisés et les contrôles SHA-256.
 

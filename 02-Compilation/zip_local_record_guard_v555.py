@@ -150,59 +150,35 @@ def _validate_eocd_candidate(fp, infos, central_start: int, file_size: int,
 
 
 def _validate_eocd_central_directory(archive, infos, central_start: int, file_size: int) -> None:
-    """Require one self-consistent EOCD and an exactly bounded central directory.
+    """Validate the exact EOCD record selected by the active ZIP reader.
 
-    This prevents zipfile's size-driven directory parser from accepting a stale
-    EOCD entry count, and rejects trailing bytes not covered by a ZIP comment.
+    Derive its offset from ZipFile.comment instead of scanning every signature in
+    the maximum-size comment window. This avoids repeated O(entry-count) walks on
+    attacker-controlled signature-like bytes while validating the same EOCD that
+    CPython used to parse the archive.
     """
     fp = getattr(archive, "fp", None)
+    comment = getattr(archive, "comment", None)
     if fp is None or file_size < _EOCD_RECORD.size:
         raise ValueError("ZIP EOCD record is missing or truncated")
-    tail_size = min(file_size, _EOCD_RECORD.size + 0xFFFF)
-    fp.seek(file_size - tail_size)
-    tail = fp.read(tail_size)
-    if len(tail) != tail_size:
-        raise ValueError("Unable to read the ZIP EOCD search window")
-    tail_start = file_size - tail_size
+    if not isinstance(comment, bytes) or len(comment) > 0xFFFF:
+        raise ValueError("ZIP EOCD comment metadata is invalid")
 
-    candidates = []
-    position = tail.rfind(_EOCD_SIGNATURE)
-    while position >= 0:
-        if position + _EOCD_RECORD.size <= len(tail):
-            fields = _EOCD_RECORD.unpack_from(tail, position)
-            if fields[0] == _EOCD_SIGNATURE:
-                candidates.append((tail_start + position, fields))
-        position = tail.rfind(_EOCD_SIGNATURE, 0, position)
-    if not candidates:
+    eocd_offset = file_size - _EOCD_RECORD.size - len(comment)
+    if eocd_offset < 0:
         raise ValueError("ZIP EOCD record is missing or truncated")
+    fp.seek(eocd_offset)
+    raw = fp.read(_EOCD_RECORD.size)
+    if len(raw) != _EOCD_RECORD.size:
+        raise ValueError("ZIP EOCD record is missing or truncated")
+    fields = _EOCD_RECORD.unpack(raw)
+    if fields[0] != _EOCD_SIGNATURE:
+        raise ValueError("ZIP EOCD signature differs from the active ZIP reader's parsed comment")
 
-    errors = []
-    passed = 0
-    for offset, fields in candidates:
-        try:
-            _validate_eocd_candidate(fp, infos, central_start, file_size, offset, fields)
-            passed += 1
-        except ValueError as exc:
-            errors.append(str(exc))
-    if passed == 1:
-        return
-    if passed > 1:
-        raise ValueError("Ambiguous valid ZIP EOCD records")
-    priorities = (
-        "ZIP EOCD entry-count mismatch",
-        "ZIP EOCD comment length",
-        "ZIP64",
-        "Unindexed bytes",
-        "ZIP central-directory",
-        "Invalid ZIP central-directory",
-    )
-    for prefix in priorities:
-        for message in errors:
-            if message.startswith(prefix):
-                raise ValueError(message)
-    if errors:
-        raise ValueError(errors[0])
-    raise ValueError("ZIP EOCD record is invalid")
+    _validate_eocd_candidate(fp, infos, central_start, file_size, eocd_offset, fields)
+    fp.seek(eocd_offset + _EOCD_RECORD.size)
+    if fp.read(len(comment)) != comment:
+        raise ValueError("ZIP EOCD comment changed during structural validation")
 
 
 def _parse_extra_fields(extra: bytes, name: str, location: str) -> dict[int, list[bytes]]:

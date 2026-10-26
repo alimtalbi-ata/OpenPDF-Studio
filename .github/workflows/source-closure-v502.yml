@@ -278,7 +278,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: OpenPDF-Studio-V${{ env.OPENPDF_VERSION }}-V549-Cumulative-Windows
+          name: OpenPDF-Studio-V${{ env.OPENPDF_VERSION }}-V550-Cumulative-Windows
           path: |
             01-Application/release/*.zip
             01-Application/release/*.zip.sha256

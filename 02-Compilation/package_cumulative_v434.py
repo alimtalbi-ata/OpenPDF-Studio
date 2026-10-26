@@ -22,6 +22,35 @@ CHECKSUMS = '07-Manifestes/SHA256SUMS.txt'
 MAX_FILES = 200000
 MAX_UNCOMPRESSED = 8 * 1024**3
 MAX_MEMBER = 4 * 1024**3
+# Fail closed on decompression amplification before any archive member is read.
+# A 1 MiB threshold avoids treating tiny, harmless metadata as a bomb.
+MAX_MEMBER_EXPANSION_RATIO = 200
+MAX_ARCHIVE_EXPANSION_RATIO = 100
+RATIO_CHECK_MIN_UNCOMPRESSED = 1024 * 1024
+
+
+def validate_archive_resources(infos):
+    """Reject ZIP decompression amplification using central-directory metadata.
+
+    This preflight deliberately runs before archive.read()/archive.open(). Existing
+    absolute file-count and expanded-size limits remain in force. Small members
+    are covered by the aggregate ratio limit once the archive crosses 1 MiB.
+    """
+    total_compressed = 0
+    total_uncompressed = 0
+    for info in infos:
+        compressed = info.compress_size
+        uncompressed = info.file_size
+        if type(compressed) is not int or type(uncompressed) is not int or compressed < 0 or uncompressed < 0:
+            raise ValueError('Invalid ZIP member sizes: ' + str(getattr(info, 'filename', '<unknown>')))
+        total_compressed += compressed
+        total_uncompressed += uncompressed
+        if uncompressed >= RATIO_CHECK_MIN_UNCOMPRESSED:
+            if compressed == 0 or uncompressed > compressed * MAX_MEMBER_EXPANSION_RATIO:
+                raise ValueError('ZIP member expansion ratio exceeded: ' + info.filename)
+    if total_uncompressed >= RATIO_CHECK_MIN_UNCOMPRESSED:
+        if total_compressed == 0 or total_uncompressed > total_compressed * MAX_ARCHIVE_EXPANSION_RATIO:
+            raise ValueError('ZIP archive expansion ratio exceeded')
 
 
 def write_fixed_member(archive, name, content):
@@ -274,6 +303,7 @@ def verify(path):
         infos = [x for x in all_infos if not x.is_dir()]
         if len(infos) > MAX_FILES or sum(x.file_size for x in infos) > MAX_UNCOMPRESSED or any(x.file_size > MAX_MEMBER for x in infos):
             raise ValueError('ZIP safety limits exceeded')
+        validate_archive_resources(infos)
         members = {}
         folded = set()
         for info in infos:

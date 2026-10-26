@@ -66,10 +66,12 @@ class V551QualificationTests(unittest.TestCase):
             "ubuntu": {
                 "expected": 8, "passed": 2, "skipped": 6, "failed": 0,
                 "skipped_names": sorted(qualification.WINDOWS_ONLY_TESTS),
+                "job_url": "https://github.com/example/job", "conclusion": "success",
             },
             "windows": {
                 "expected": 8, "passed": 8, "skipped": 0, "failed": 0,
                 "skipped_names": [],
+                "job_url": "https://github.com/example/job", "conclusion": "success",
             },
         }
         return {
@@ -81,6 +83,7 @@ class V551QualificationTests(unittest.TestCase):
                 "tests": tests,
             },
             "parent_v550": {"qualified": True, "commit_sha": sha},
+            "capabilities": {"windows_native_handle_relative_publication": True, "windows_path_based_fallback": False},
             "limits": {"full_windows_toctou_elimination": False},
         }
 

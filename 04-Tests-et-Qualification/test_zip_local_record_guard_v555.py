@@ -191,6 +191,30 @@ class ZipLocalRecordGuardV555Tests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Overlapping ZIP local records"):
             _guard(path)
 
+    def test_rejects_unindexed_prefix_before_first_local_record(self):
+        path = self.root / "prefix-unindexed.zip"
+        name, payload = "03-Sources/prefixed.txt", b"visible"
+        prefix = b"UNINDEXED"
+        record = _local(name, payload) + payload
+        central = _central(name, payload, len(prefix))
+        _write_manual_zip(path, prefix + record, central, 1)
+        with self.assertRaisesRegex(ValueError, "Unindexed bytes"):
+            _guard(path)
+
+    def test_rejects_unindexed_gap_between_local_records(self):
+        path = self.root / "gap-unindexed.zip"
+        name_a, payload_a = "03-Sources/first.txt", b"first"
+        name_b, payload_b = "03-Sources/second.txt", b"second"
+        record_a = _local(name_a, payload_a) + payload_a
+        gap = b"unmanifested-hidden-bytes"
+        offset_b = len(record_a) + len(gap)
+        record_b = _local(name_b, payload_b) + payload_b
+        records = record_a + gap + record_b
+        central = _central(name_a, payload_a, 0) + _central(name_b, payload_b, offset_b)
+        _write_manual_zip(path, records, central, 2)
+        with self.assertRaisesRegex(ValueError, "Unindexed bytes"):
+            _guard(path)
+
     def test_accepts_and_validates_a_well_formed_data_descriptor(self):
         path = self.root / "descriptor-valid.zip"
         name = "03-Sources/descriptor.bin"

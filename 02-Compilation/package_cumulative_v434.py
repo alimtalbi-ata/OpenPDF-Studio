@@ -52,7 +52,7 @@ def render_sha256_sums(rows):
             raise ValueError('Duplicate SHA256SUMS path: ' + name)
         seen.add(name)
         selected.append((name, sha))
-    return ''.join(f'{sha}  {name}\\n' for name, sha in sorted(selected))
+    return ''.join(f'{sha}  {name}\n' for name, sha in sorted(selected))
 
 
 def digest(path):
@@ -262,7 +262,8 @@ def verify(path):
                 raise ValueError('ZIP member SHA256 mismatch: ' + name)
             recorded[name] = row
         if set(recorded) | {INVENTORY} != set(members):
-            raise ValueError('ZIP contains files not represented in inventory')        expected_sums = render_sha256_sums(rows).encode('ascii')
+            raise ValueError('ZIP contains files not represented in inventory')
+        expected_sums = render_sha256_sums(rows).encode('ascii')
         if archive.read(CHECKSUMS) != expected_sums:
             raise ValueError('SHA256SUMS.txt does not match the current release inventory')
         if 'VERSION.txt' not in members:

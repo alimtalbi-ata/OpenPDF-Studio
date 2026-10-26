@@ -222,13 +222,13 @@ def _open_relative(kernel32, ntdll, parent, name, desired_access, share_access, 
     return result_handle.value
 
 
-def _open_root(kernel32, anchor):
+def _open_root(kernel32, anchor, require_add_file=False):
     # DRIVE_REMOTE=4: reject mapped network drives, even if they have a letter.
     if int(kernel32.GetDriveTypeW(anchor)) == 4:
         raise OSError("Publication V551 refuse un lecteur réseau")
     handle = kernel32.CreateFileW(
         anchor,
-        _FILE_LIST_DIRECTORY | _FILE_READ_ATTRIBUTES | _SYNCHRONIZE,
+        _FILE_LIST_DIRECTORY | _FILE_READ_ATTRIBUTES | _SYNCHRONIZE | (_FILE_ADD_FILE if require_add_file else 0),
         _FILE_SHARE_READ | _FILE_SHARE_WRITE | _FILE_SHARE_DELETE,
         None, _OPEN_EXISTING,
         _FILE_FLAG_BACKUP_SEMANTICS | _FILE_FLAG_OPEN_REPARSE_POINT,
@@ -259,9 +259,10 @@ def _absolute_local_drive_path(path):
     return path
 
 
-def _open_directory_chain(kernel32, ntdll, directory):
+def _open_directory_chain(kernel32, ntdll, directory, require_add_file=False):
     path = _absolute_local_drive_path(directory)
-    current = _open_root(kernel32, path.anchor)
+    components = [part for part in path.parts[1:] if part not in (\"\", \".\")]
+    current = _open_root(kernel32, path.anchor, require_add_file=require_add_file and not components)
     access = _FILE_LIST_DIRECTORY | _FILE_READ_ATTRIBUTES | _SYNCHRONIZE
     share = _FILE_SHARE_READ | _FILE_SHARE_WRITE | _FILE_SHARE_DELETE
     options = _FILE_DIRECTORY_FILE | _FILE_OPEN_REPARSE_POINT | _FILE_SYNCHRONOUS_IO_NONALERT
@@ -347,7 +348,7 @@ def publish_exclusive_windows(temporary, destination):
     temp_parent_handle = destination_parent_handle = source_handle = published_handle = None
     try:
         temp_parent_handle = _open_directory_chain(kernel32, ntdll, temporary.parent)
-        destination_parent_handle = _open_directory_chain(kernel32, ntdll, destination.parent)
+        destination_parent_handle = _open_directory_chain(kernel32, ntdll, destination.parent, require_add_file=True)
         temp_parent_info = _info(kernel32, temp_parent_handle)
         destination_parent_info = _info(kernel32, destination_parent_handle)
         if _identity(temp_parent_info) != _identity(destination_parent_info):
@@ -355,7 +356,7 @@ def publish_exclusive_windows(temporary, destination):
 
         source_handle = _open_relative(
             kernel32, ntdll, temp_parent_handle, temporary.name,
-            _FILE_READ_DATA | _FILE_WRITE_DATA | _FILE_READ_ATTRIBUTES | _SYNCHRONIZE,
+            _DELETE | _FILE_READ_DATA | _FILE_WRITE_DATA | _FILE_READ_ATTRIBUTES | _FILE_WRITE_ATTRIBUTES | _SYNCHRONIZE,
             _FILE_SHARE_READ,
             _FILE_NON_DIRECTORY_FILE | _FILE_OPEN_REPARSE_POINT | _FILE_SYNCHRONOUS_IO_NONALERT,
         )

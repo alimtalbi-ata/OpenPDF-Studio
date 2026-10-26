@@ -31,7 +31,7 @@ class GenerateDocsV555Tests(unittest.TestCase):
                 self.assertGreaterEqual(pdf.page_count, 1)
                 page_text = [page.get_text() for page in pdf]
                 text = "\n".join(page_text)
-                for expected in (sha, "V555", "Abdelhalim Talbi", "ZIP local-record", "non indexés"):
+                for expected in (sha, "V555", "Abdelhalim Talbi", "ZIP local-record", "EOCD", "non indexés"):
                     self.assertIn(expected, text)
                 trace_pages = [page for page in page_text if "Traçabilité" in page]
                 self.assertTrue(trace_pages, "PDF traceability section must be present")

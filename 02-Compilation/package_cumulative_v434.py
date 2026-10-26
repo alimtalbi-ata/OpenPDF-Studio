@@ -285,15 +285,31 @@ def verify(path):
                 raise ValueError('Symlink ZIP member: ' + info.filename)
             folded.add(key)
             members[info.filename] = info
-        # Check both files and explicit directories: a regular file may otherwise
-        # alias a parent of a child even when no explicit ZIP directory exists.
+        # Reconstruct implicit directories: ZIP producers commonly omit explicit
+        # directory entries, so validating only the entries visible in the central
+        # directory misses aliases such as A/first.txt and fullwidth-A/second.txt.
+        directory_sources = {}
+        for directory_name in directory_names:
+            key = archive_path_key(directory_name)
+            prior = directory_sources.get(key)
+            if prior is not None and prior != directory_name:
+                raise ValueError('Duplicate ZIP directory after Unicode normalization: ' + directory_name)
+            directory_sources[key] = directory_name
+
+        # Check both files and explicit directories and derive every implicit
+        # parent. Identical spelling may share a directory; a different spelling
+        # with the same NFKC/casefold identity must fail closed.
         for name in list(members) + directory_names:
-            normalized = unicodedata.normalize('NFKC', name)
-            parents = normalized.split('/')[:-1]
-            for index in range(1, len(parents) + 1):
-                parent_key = archive_path_key('/'.join(parents[:index]))
+            original_parts = name.split('/')[:-1]
+            for index in range(1, len(original_parts) + 1):
+                raw_parent = '/'.join(original_parts[:index])
+                parent_key = archive_path_key(raw_parent)
                 if parent_key in folded:
                     raise ValueError('ZIP file/directory collision: ' + name)
+                prior = directory_sources.get(parent_key)
+                if prior is not None and prior != raw_parent:
+                    raise ValueError('Duplicate ZIP directory after Unicode normalization: ' + raw_parent)
+                directory_sources[parent_key] = raw_parent
         if INVENTORY not in members or CHECKSUMS not in members or members[INVENTORY].file_size > 32 * 1024**2:
             raise ValueError('Integrity inventory or current checksum list missing/oversized')
         rows = json.loads(archive.read(INVENTORY).decode('utf-8-sig'))

@@ -1,6 +1,6 @@
 {
   "author": "Abdelhalim Talbi",
-  "note": "V548: reject symbolic-link and Windows-junction components throughout lexical PDF source paths before canonicalization; pin runtime source hashes.",
+  "note": "V549: reject destination symlink/junction components before normalization; retain V548 source-chain guard. SHA-256 pins are source hashes.",
   "schema": "openpdf-v51.4-source-hash-overrides-v1",
   "sha256": {
     "03-Sources/openpdf_auto_compression_v505.py": "198c529dbf4a97c9bbf0ccd43ea5e3c7b06aec52e5f5ad6efa90565ce358134a",
@@ -11,9 +11,10 @@
     "03-Sources/openpdf_office_precision_order_ui_v544.py": "c6139b0c5318aa1dfc97ebee9a70cafc0e374be2119da8c2e21393c1974bf3dd",
     "03-Sources/openpdf_office_reference_v542.py": "480fc4421bcc8970d9473fa801b00c0dc9e0029966db2d61386818a9f5057bba",
     "03-Sources/openpdf_office_roundtrip_v459.py": "1cd3305f151e9367c9113ccb7844e737e821eee36e068d990958f4c425a9f96e",
-    "03-Sources/openpdf_operations.py": "c7744448a005783c8221806c9a9f50b74cdfbdd59ba86660585dc7160058ee18",
-    "03-Sources/openpdf_page_service_v345.py": "b27f307620ad0d9cbde813ff577b63cab53e40694537f8b79a98bb6ed83213e9",
+    "03-Sources/openpdf_operations.py": "9b7bf930c72baafe6b60a99a7b960cbb1df47edc6e46474d5158d8eca5236523",
+    "03-Sources/openpdf_page_service_v345.py": "47171912097b053aa3c77bacba05087d3e3ea725dfa2054d2f70b43ec7da5537",
     "03-Sources/openpdf_precision_order_v544.py": "b5e77815f31a46734bc8e600b2639c1e87706254b9bbd1360780783812c824e5",
-    "03-Sources/openpdf_source_path_guard_v548.py": "2ad0f5c193e632acff51349548157b789be31ee59ea2a8b59b158c630089723f"
+    "03-Sources/openpdf_source_path_guard_v548.py": "2ad0f5c193e632acff51349548157b789be31ee59ea2a8b59b158c630089723f",
+    "03-Sources/openpdf_destination_path_guard_v549.py": "83d399e1c13814fe16395f808ce8a52a2db4c6cd396e4cbb6723c8e9e2d85241"
   }
 }

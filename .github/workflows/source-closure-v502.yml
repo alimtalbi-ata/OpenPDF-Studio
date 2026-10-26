@@ -46,6 +46,8 @@ jobs:
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_source_closure_v502.py -v
       - name: Test V548 evidence reconciliation and guide freshness
         run: python -m unittest discover -s 04-Tests-et-Qualification -p test_v548_ci_qualification_report.py -v
+      - name: Test V549 evidence reconciliation and guide freshness
+        run: python -m unittest discover -s 04-Tests-et-Qualification -p test_v549_ci_qualification_report.py -v
   source-readiness:
     name: Full application source closure (release-blocking)
     runs-on: ubuntu-latest
@@ -201,12 +203,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: v514-windows-portable-build-evidence
-          path: ${{ runner.temp }}/v548-portable
+          path: ${{ runner.temp }}/v549-portable
       - name: Download installer Windows build evidence
         uses: actions/download-artifact@v4
         with:
           name: v514-windows-installer-build-evidence
-          path: ${{ runner.temp }}/v548-installer
+          path: ${{ runner.temp }}/v549-installer
       - name: Assemble exact binaries and their native receipts
         shell: pwsh
         run: |
@@ -216,8 +218,8 @@ jobs:
           $binary = Join-Path $env:GITHUB_WORKSPACE '01-Application/binary'
           if (Test-Path -LiteralPath $binary) { Remove-Item -LiteralPath $binary -Recurse -Force }
           New-Item -ItemType Directory -Path $binary -Force | Out-Null
-          $portable = Join-Path $env:RUNNER_TEMP 'v548-portable'
-          $installer = Join-Path $env:RUNNER_TEMP 'v548-installer'
+          $portable = Join-Path $env:RUNNER_TEMP 'v549-portable'
+          $installer = Join-Path $env:RUNNER_TEMP 'v549-installer'
           $copy = @(
             @{ From = (Join-Path $portable "OpenPDF-Studio-Portable-V$version.exe"); Name = "OpenPDF-Studio-Portable-V$version.exe" },
             @{ From = (Join-Path $portable 'windows-smoke-portable.json'); Name = 'windows-smoke-portable.json' },
@@ -236,18 +238,20 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Combined binary manifest generation failed' }
           py -3.12 -m pip install "python-docx>=1.1,<2" "reportlab>=4,<5" "pypdf>=5,<7" "Pillow>=10,<13"
           if ($LASTEXITCODE -ne 0) { throw 'Documentation dependencies failed to install' }
-      - name: Reconcile exact V548 CI and native Windows receipts
+      - name: Reconcile exact V549 CI and native Windows receipts
         shell: pwsh
         env:
           OPENPDF_GITHUB_TOKEN: ${{ github.token }}
         run: |
-          py -3.12 02-Compilation/write_v548_ci_qualification.py --root .
-          if ($LASTEXITCODE -ne 0) { throw 'V548 CI receipts did not reconcile to this exact source SHA' }
+          py -3.12 02-Compilation/write_v549_ci_qualification.py --root .
+          if ($LASTEXITCODE -ne 0) { throw 'V549 CI receipts did not reconcile to this exact source SHA' }
       - name: Generate versioned Word/PDF guide from reconciled evidence
         shell: pwsh
         run: |
           py -3.12 02-Compilation/generate_release_docs.py
           if ($LASTEXITCODE -ne 0) { throw 'Versioned Word/PDF generation failed' }
+          py -3.12 02-Compilation/generate_docs_v549.py
+          if ($LASTEXITCODE -ne 0) { throw 'V549-specific Word/PDF qualification guide generation failed' }
       - name: Build the cumulative ZIP and verify CRC, inventory and binary receipts
         shell: pwsh
         run: |
@@ -268,7 +272,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: OpenPDF-Studio-V${{ env.OPENPDF_VERSION }}-V548-Cumulative-Windows
+          name: OpenPDF-Studio-V${{ env.OPENPDF_VERSION }}-V549-Cumulative-Windows
           path: |
             01-Application/release/*.zip
             01-Application/release/*.zip.sha256

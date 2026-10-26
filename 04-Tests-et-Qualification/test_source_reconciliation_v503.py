@@ -123,6 +123,9 @@ class SourceReconciliationV503Tests(unittest.TestCase):
             "OpenPDF-Studio-V",
             "Pillow>=10,<13",
             "actions/upload-artifact@v4",
+            "write_v549_ci_qualification.py --root .",
+            "generate_docs_v549.py",
+            "V549-Cumulative-Windows",
         ):
             with self.subTest(contract=contract):
                 self.assertIn(contract, workflow)

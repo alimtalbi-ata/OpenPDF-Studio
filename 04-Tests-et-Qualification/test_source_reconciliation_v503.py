@@ -114,7 +114,10 @@ class SourceReconciliationV503Tests(unittest.TestCase):
     def test_v547_cumulative_zip_uses_only_qualified_windows_artifacts(self):
         workflow = (ROOT / ".github/workflows/source-closure-v502.yml").read_text(encoding="utf-8")
         self.assertIn("windows-cumulative-package:", workflow)
-        self.assertIn("needs: [closure-unit-tests, source-readiness, windows-portable-build, windows-installer-build]", workflow)
+        self.assertIn("needs: [closure-unit-tests, source-readiness, windows-portable-build, windows-installer-build]", workflow)        # The packaging snapshot deliberately uses globs; verify coverage here,
+        # and verify V551-specific wiring in the workflow that executes its tests.
+        self.assertIn("03-Sources/**", workflow)
+        self.assertIn("04-Tests-et-Qualification/*.py", workflow)
         for contract in (
             "v514-windows-portable-build-evidence",
             "v514-windows-installer-build-evidence",
@@ -125,11 +128,20 @@ class SourceReconciliationV503Tests(unittest.TestCase):
             "actions/upload-artifact@v4",
             "write_v549_ci_qualification.py --root .",
             "generate_docs_v549.py",
-            "V550-Cumulative-Windows",
+            "write_v551_ci_qualification.py --root .",
+            "generate_docs_v551.py",
+            "V551-Cumulative-Windows",
         ):
             with self.subTest(contract=contract):
                 self.assertIn(contract, workflow)
 
+    def test_v551_windows_publication_is_in_ci_and_runtime_manifest(self):
+        workflow = (ROOT / ".github/workflows/page-order-v497.yml").read_text(encoding="utf-8")
+        self.assertIn("03-Sources/openpdf_windows_handle_publish_v551.py", workflow)
+        self.assertIn("04-Tests-et-Qualification/test_atomic_output_v551.py", workflow)
+        self.assertIn("python -m unittest discover -s 04-Tests-et-Qualification -p test_atomic_output_v551.py -v", workflow)
+        manifest = json.loads((ROOT / f"07-Manifestes/V{CURRENT_VERSION}-REQUIRED-RUNTIME-MODULES.json").read_text(encoding="utf-8"))
+        self.assertIn("openpdf_windows_handle_publish_v551", manifest["modules"])
     def test_ci_has_native_windows_job_and_preserves_evidence(self):
         workflow = (ROOT / ".github/workflows/source-closure-v502.yml").read_text(encoding="utf-8")
         self.assertIn("windows-portable-build:", workflow)

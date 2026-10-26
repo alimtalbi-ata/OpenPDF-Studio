@@ -50,16 +50,24 @@ class AtomicOutputV550Tests(unittest.TestCase):
         staged = self.output / "staged.pdf"
         destination = self.output / "published.pdf"
         staged.write_bytes(b"nonempty")
-        with patch.object(atomic, "_supports_anchored_publication", return_value=True), patch.object(atomic.os, "link", side_effect=OSError("simulated unsupported volume")):
-            with self.assertRaises(OSError):
-                atomic.publish_exclusive(staged, destination)
+        if os.name == "nt":
+            # V551 no longer uses os.link on Windows; simulate unsupported native FS/API.
+            import openpdf_windows_handle_publish_v551 as native
+            with patch.object(native, "publish_exclusive_windows",
+                              side_effect=OSError("simulated unsupported volume")):
+                with self.assertRaises(OSError):
+                    atomic.publish_exclusive(staged, destination)
+        else:
+            with patch.object(atomic, "_supports_anchored_publication", return_value=True), patch.object(atomic.os, "link", side_effect=OSError("simulated unsupported volume")):
+                with self.assertRaises(OSError):
+                    atomic.publish_exclusive(staged, destination)
         self.assertFalse(destination.exists())
 
     def test_different_parent_directory_is_refused(self):
         staged = self.output / "staged.pdf"
         destination = self.redirect / "published.pdf"
         staged.write_bytes(b"nonempty")
-        with self.assertRaisesRegex(ValueError, "same folder|même dossier"):
+        with self.assertRaisesRegex(ValueError, "same folder|même (?:dossier|répertoire)"):
             atomic.publish_exclusive(staged, destination)
         self.assertFalse(destination.exists())
 

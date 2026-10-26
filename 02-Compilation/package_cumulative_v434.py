@@ -17,6 +17,7 @@ SKIP_DIRS = {'.git', '.venv', 'venv', '__pycache__', 'build', 'dist', 'node_modu
 SKIP_FILES = {'.env', 'token.json', 'credentials.json', 'secrets.json', '.netrc', 'id_rsa', 'id_ed25519'}
 SKIP_EXT = {'.pyc', '.pyo', '.log', '.tmp', '.bak', '.pem', '.p12', '.pfx', '.key', '.sqlite', '.db'}
 INVENTORY = '07-Manifestes/RELEASE-FILES-SHA256.json'
+CHECKSUMS = '07-Manifestes/SHA256SUMS.txt'
 MAX_FILES = 200000
 MAX_UNCOMPRESSED = 8 * 1024**3
 MAX_MEMBER = 4 * 1024**3
@@ -28,6 +29,37 @@ def write_fixed_member(archive, name, content):
     info.compress_type = zipfile.ZIP_DEFLATED
     info.external_attr = (stat.S_IFREG | 0o644) << 16
     archive.writestr(info, content)
+
+def render_sha256_sums(rows):
+    """Render the current release checksum list from verified inventory rows.
+
+    SHA256SUMS.txt excludes itself and the JSON inventory to avoid circular hashes;
+    the JSON inventory includes the hash of SHA256SUMS.txt.
+    """
+    selected = []
+    seen = set()
+    folded = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError('Invalid SHA256SUMS inventory row')
+        name = row.get('path')
+        sha = row.get('sha256')
+        if not isinstance(name, str) or not re.fullmatch('[0-9a-f]{64}', str(sha)):
+            raise ValueError('Invalid SHA256SUMS inventory entry')
+        safe_name(name)
+        if name in (CHECKSUMS, INVENTORY):
+            continue
+        if name in seen or name.casefold() in folded:
+            raise ValueError('Duplicate SHA256SUMS path after normalization: ' + name)
+        seen.add(name)
+        folded.add(name.casefold())
+        selected.append((name, sha))
+    return ''.join(f'{sha}  {name}\n' for name, sha in sorted(selected))
+
+def validate_sha256_sums(actual, rows):
+    """Require SHA256SUMS.txt to match every non-circular inventory member."""
+    if not isinstance(actual, bytes) or actual != render_sha256_sums(rows).encode('ascii'):
+        raise ValueError('SHA256SUMS.txt does not match the current release inventory')
 
 
 def digest(path):
@@ -167,6 +199,13 @@ def payload(root, version):
                 path = current / filename
                 rel = path.relative_to(root)
                 lower = filename.casefold()
+                if path.is_symlink() or not path.is_file():
+                    raise ValueError('Unsafe payload symlink: ' + str(rel))
+                if rel.as_posix() == CHECKSUMS:
+                    # Preserve the old repository list but label it honestly; generate a new
+                    # current-release SHA256SUMS.txt from this archive's measured contents.
+                    yield '07-Manifestes/SHA256SUMS-LEGACY-NOT-CURRENT.txt', path
+                    continue
                 if rel.as_posix() in (INVENTORY, '07-Manifestes/RELEASE-QUALIFICATION-LIMITS.txt'):
                     continue
                 if forbidden_member(rel.as_posix(), version):
@@ -216,8 +255,8 @@ def verify(path):
             for index in range(1, len(parents) + 1):
                 if '/'.join(parents[:index]).casefold() in folded:
                     raise ValueError('ZIP file/directory collision: ' + name)
-        if INVENTORY not in members or members[INVENTORY].file_size > 32 * 1024**2:
-            raise ValueError('Integrity inventory missing or oversized')
+        if INVENTORY not in members or CHECKSUMS not in members or members[INVENTORY].file_size > 32 * 1024**2:
+            raise ValueError('Integrity inventory or current checksum list missing/oversized')
         rows = json.loads(archive.read(INVENTORY).decode('utf-8-sig'))
         if not isinstance(rows, list):
             raise ValueError('Invalid integrity inventory')
@@ -238,6 +277,7 @@ def verify(path):
             recorded[name] = row
         if set(recorded) | {INVENTORY} != set(members):
             raise ValueError('ZIP contains files not represented in inventory')
+        validate_sha256_sums(archive.read(CHECKSUMS), rows)
         if 'VERSION.txt' not in members:
             raise ValueError('Missing ZIP version')
         version = archive.read('VERSION.txt').decode('utf-8-sig').strip()
@@ -310,6 +350,9 @@ def package(root, commit=''):
                 raise ValueError('Duplicate generated qualification file')
             write_fixed_member(archive, extra, qualification)
             rows.append({'path': extra, 'bytes': len(qualification), 'sha256': hashlib.sha256(qualification).hexdigest()})
+            sums = render_sha256_sums(rows).encode('ascii')
+            write_fixed_member(archive, CHECKSUMS, sums)
+            rows.append({'path': CHECKSUMS, 'bytes': len(sums), 'sha256': hashlib.sha256(sums).hexdigest()})
             write_fixed_member(archive, INVENTORY, json.dumps(sorted(rows, key=lambda x: x['path']), indent=2).encode())
         result = verify(partial)
         os.replace(partial, target)

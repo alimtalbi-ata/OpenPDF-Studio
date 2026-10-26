@@ -1,9 +1,9 @@
 {
   "author": "Abdelhalim Talbi",
-  "note": "V550: POSIX directory/file-handle-anchored exclusive publication; Windows retains the V549 path-based fallback with residual TOCTOU risk.",
+  "note": "V551: route Windows publication through the native handle-relative helper; local-drive-only, fail-closed, residual TOCTOU limits remain explicitly documented.",
   "schema": "openpdf-v51.4-source-hash-overrides-v1",
   "sha256": {
-    "03-Sources/openpdf_atomic_output.py": "2de10bbc9d591f6192d7c172c390c05d87f62418da80a3a9d25c6a1f9d499aa3",
+    "03-Sources/openpdf_atomic_output.py": "4d2910128e789a04060db6fba681adb728e3232320d650d2da94120b534e78c8",
     "03-Sources/openpdf_auto_compression_v505.py": "198c529dbf4a97c9bbf0ccd43ea5e3c7b06aec52e5f5ad6efa90565ce358134a",
     "03-Sources/openpdf_compression_acceptance_v489.py": "f83890cdccefe28791b6a27030f2a7c048d97798307b11417a1c292b75d0f468",
     "03-Sources/openpdf_conversion_service_v351.py": "1c2542db57e28f8ef4142d3a59cbf42a4a6dce795fd3cddd74ad9aae72a26271",
@@ -16,6 +16,7 @@
     "03-Sources/openpdf_operations.py": "9b7bf930c72baafe6b60a99a7b960cbb1df47edc6e46474d5158d8eca5236523",
     "03-Sources/openpdf_page_service_v345.py": "47171912097b053aa3c77bacba05087d3e3ea725dfa2054d2f70b43ec7da5537",
     "03-Sources/openpdf_precision_order_v544.py": "b5e77815f31a46734bc8e600b2639c1e87706254b9bbd1360780783812c824e5",
-    "03-Sources/openpdf_source_path_guard_v548.py": "2ad0f5c193e632acff51349548157b789be31ee59ea2a8b59b158c630089723f"
+    "03-Sources/openpdf_source_path_guard_v548.py": "2ad0f5c193e632acff51349548157b789be31ee59ea2a8b59b158c630089723f",
+    "03-Sources/openpdf_windows_handle_publish_v551.py": "dbfcf013d5e430831f2b8235b0a2a19d50399736e4bcea8094c9f762f8a46683"
   }
 }

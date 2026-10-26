@@ -251,9 +251,17 @@ def validate_local_record_layout(archive, infos) -> dict[str, int]:
             spans.append((offset, record_end, str(name)))
 
         spans.sort(key=lambda item: (item[0], item[1], item[2]))
-        for previous, current in zip(spans, spans[1:]):
-            if current[0] < previous[1]:
-                raise ValueError("Overlapping ZIP local records: " + previous[2] + " and " + current[2])
+        cursor = 0
+        previous_name = None
+        for start, end, name in spans:
+            if start < cursor:
+                raise ValueError("Overlapping ZIP local records: " + str(previous_name) + " and " + name)
+            if start > cursor:
+                raise ValueError("Unindexed bytes in ZIP local-record region before: " + name)
+            cursor = end
+            previous_name = name
+        if cursor != central_start:
+            raise ValueError("Unindexed bytes before ZIP central directory")
         return {"entries": len(spans), "local_records": len(spans), "overlapping_records": 0}
     finally:
         try:

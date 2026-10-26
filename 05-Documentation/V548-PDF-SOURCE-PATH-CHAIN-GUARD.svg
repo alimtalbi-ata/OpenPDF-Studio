@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="520" viewBox="0 0 1080 520" role="img" aria-labelledby="title desc">
+<title id="title">OpenPDF Studio V548 — Garde du chemin source PDF</title>
+<desc id="desc">Le chemin lexical est inspecté composant par composant avant canonicalisation. Un lien symbolique, une jonction, un composant manquant ou un fichier non-PDF arrête le traitement. Les chemins PDF réguliers poursuivent vers le dispatcher ou le service de pages.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#334155"/></marker></defs>
+<rect x="1" y="1" width="1078" height="518" rx="18" fill="#f8fafc" stroke="#cbd5e1"/>
+<text x="40" y="44" font-family="Arial,sans-serif" font-size="24" font-weight="700" fill="#0f172a">V548 — Prévalidation de la chaîne source</text>
+<rect x="40" y="78" width="270" height="82" rx="12" fill="#dbeafe" stroke="#2563eb"/>
+<text x="175" y="109" font-family="Arial,sans-serif" font-size="17" font-weight="700" text-anchor="middle" fill="#1e3a8a">Chemin fourni</text>
+<text x="175" y="134" font-family="Arial,sans-serif" font-size="14" text-anchor="middle" fill="#1e3a8a">absolu lexical, sans resolve()</text>
+<path d="M310 119 H372" stroke="#334155" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="382" y="78" width="310" height="82" rx="12" fill="#e0f2fe" stroke="#0284c7"/>
+<text x="537" y="109" font-family="Arial,sans-serif" font-size="17" font-weight="700" text-anchor="middle" fill="#0c4a6e">Inspecter chaque composant</text>
+<text x="537" y="134" font-family="Arial,sans-serif" font-size="14" text-anchor="middle" fill="#0c4a6e">symlink + jonction + lstat</text>
+<path d="M692 119 H754 V204 H790" fill="none" stroke="#334155" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="722" y="107" font-family="Arial,sans-serif" font-size="13" fill="#334155">composant lié</text>
+<rect x="800" y="168" width="238" height="72" rx="12" fill="#fee2e2" stroke="#dc2626"/>
+<text x="919" y="197" font-family="Arial,sans-serif" font-size="17" font-weight="700" text-anchor="middle" fill="#7f1d1d">Refus immédiat</text>
+<text x="919" y="220" font-family="Arial,sans-serif" font-size="14" text-anchor="middle" fill="#7f1d1d">aucune opération publiée</text>
+<path d="M537 160 V214" stroke="#334155" stroke-width="2.5" marker-end="url(#arrow)"/>
+<text x="550" y="190" font-family="Arial,sans-serif" font-size="13" fill="#334155">chemin régulier</text>
+<rect x="382" y="225" width="310" height="74" rx="12" fill="#dcfce7" stroke="#16a34a"/>
+<text x="537" y="254" font-family="Arial,sans-serif" font-size="17" font-weight="700" text-anchor="middle" fill="#14532d">Valider le fichier final</text>
+<text x="537" y="278" font-family="Arial,sans-serif" font-size="14" text-anchor="middle" fill="#14532d">fichier régulier + suffixe .pdf</text>
+<path d="M537 299 V348" stroke="#334155" stroke-width="2.5" marker-end="url(#arrow)"/>
+<rect x="300" y="359" width="474" height="82" rx="12" fill="#fef3c7" stroke="#d97706"/>
+<text x="537" y="390" font-family="Arial,sans-serif" font-size="17" font-weight="700" text-anchor="middle" fill="#78350f">Traitement existant</text>
+<text x="537" y="415" font-family="Arial,sans-serif" font-size="14" text-anchor="middle" fill="#78350f">compression • pages • fusion • OCR/Office</text>
+<text x="40" y="485" font-family="Arial,sans-serif" font-size="13" fill="#475569">Limite : le contrôle du chemin réduit les alias; il ne supprime pas toutes les courses TOCTOU après vérification.</text>
+</svg>

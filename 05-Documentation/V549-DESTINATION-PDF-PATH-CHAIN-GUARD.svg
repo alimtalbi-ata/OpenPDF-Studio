@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="320" viewBox="0 0 1120 320" role="img" aria-labelledby="title desc">
+<title id="title">OpenPDF Studio V549 — contrôle lexical de destination</title>
+<desc id="desc">Diagramme d'architecture, pas une capture d'écran de l'application. Contrôle de chaque composant avant opération et publication exclusive.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#24566b"/></marker></defs>
+<rect x="18" y="82" width="174" height="86" rx="12" fill="#e8f3f5" stroke="#24566b" stroke-width="2"/>
+<text x="105" y="117" text-anchor="middle" font-family="Segoe UI,Arial" font-size="16" fill="#153747">Destination</text><text x="105" y="140" text-anchor="middle" font-family="Segoe UI,Arial" font-size="13" fill="#153747">lexicale</text>
+<path d="M192 125 L230 125" stroke="#24566b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="237" y="70" width="196" height="110" rx="12" fill="#e8f3f5" stroke="#24566b" stroke-width="2"/>
+<text x="335" y="101" text-anchor="middle" font-family="Segoe UI,Arial" font-size="15" fill="#153747">Inspecter chaque</text><text x="335" y="123" text-anchor="middle" font-family="Segoe UI,Arial" font-size="15" fill="#153747">composant avant</text><text x="335" y="145" text-anchor="middle" font-family="Segoe UI,Arial" font-size="15" fill="#153747">normalisation</text>
+<path d="M433 125 L471 125" stroke="#24566b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="478" y="70" width="198" height="110" rx="12" fill="#fff3df" stroke="#a75c19" stroke-width="2"/>
+<text x="577" y="99" text-anchor="middle" font-family="Segoe UI,Arial" font-size="15" fill="#75410d">Lien / jonction ?</text><text x="577" y="122" text-anchor="middle" font-family="Segoe UI,Arial" font-size="14" fill="#75410d">Refus sans écriture</text><text x="577" y="145" text-anchor="middle" font-family="Segoe UI,Arial" font-size="12" fill="#75410d">même avant ..</text>
+<path d="M676 125 L714 125" stroke="#24566b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="721" y="82" width="166" height="86" rx="12" fill="#e8f3f5" stroke="#24566b" stroke-width="2"/>
+<text x="804" y="115" text-anchor="middle" font-family="Segoe UI,Arial" font-size="15" fill="#153747">Opération</text><text x="804" y="138" text-anchor="middle" font-family="Segoe UI,Arial" font-size="13" fill="#153747">et vérifications</text>
+<path d="M887 125 L925 125" stroke="#24566b" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="932" y="82" width="170" height="86" rx="12" fill="#e7f5e9" stroke="#2b7545" stroke-width="2"/>
+<text x="1017" y="115" text-anchor="middle" font-family="Segoe UI,Arial" font-size="15" fill="#1d5833">Publication</text><text x="1017" y="138" text-anchor="middle" font-family="Segoe UI,Arial" font-size="13" fill="#1d5833">exclusive</text>
+<rect x="237" y="220" width="865" height="62" rx="8" fill="#fbe7e7" stroke="#a33333" stroke-width="1.5"/>
+<text x="669" y="244" text-anchor="middle" font-family="Segoe UI,Arial" font-size="14" fill="#8b2525">Limite explicite : le précontrôle ne supprime pas la course TOCTOU après vérification.</text>
+<text x="669" y="265" text-anchor="middle" font-family="Segoe UI,Arial" font-size="12" fill="#8b2525">Diagramme d'architecture — aucune capture réelle de l'interface n'est revendiquée.</text>
+</svg>

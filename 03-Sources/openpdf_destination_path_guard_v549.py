@@ -53,6 +53,9 @@ def guard_destination_path(path, *, directory=False, allow_existing=False):
 
             current = current / component
             if _is_link_or_junction(current):
+                if index == len(parts) - 1:
+                    # Preserve the legacy API contract for a linked final output.
+                    raise FileExistsError("Destination lien symbolique interdite")
                 raise ValueError(_LINK_ERROR)
             try:
                 info = current.lstat()

@@ -30,7 +30,7 @@ class GenerateDocsV555Tests(unittest.TestCase):
             try:
                 self.assertGreaterEqual(pdf.page_count, 1)
                 text = "\n".join(page.get_text() for page in pdf)
-                for expected in (sha, "V555", "Abdelhalim Talbi", "ZIP local-record"):
+                for expected in (sha, "V555", "Abdelhalim Talbi", "ZIP local-record", "non indexés"):
                     self.assertIn(expected, text)
             finally:
                 pdf.close()

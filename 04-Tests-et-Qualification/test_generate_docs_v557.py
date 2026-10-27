@@ -17,7 +17,7 @@ class GenerateDocsV557Tests(unittest.TestCase):
     def test_docx_pdf_and_diagrams_include_exact_sha_and_limits(self):
         sha = "a" * 40
         with tempfile.TemporaryDirectory() as temporary:
-            out = GEN.generate(temporary, commit_sha=sha, pr_number=63, workflow_run_id=40400504995)
+            out = GEN.generate(temporary, commit_sha=sha, pr_number=63)
             for key in ("docx", "pdf", "png", "svg"):
                 path = Path(out[key])
                 self.assertTrue(path.is_file(), key)
@@ -47,7 +47,7 @@ class GenerateDocsV557Tests(unittest.TestCase):
                 self.assertEqual(image.size, (1120, 360))
 
     def test_invalid_sha_is_explicitly_unqualified(self):
-        context = GEN.build_context(commit_sha="not-a-sha", pr_number=63, workflow_run_id=40400504995)
+        context = GEN.build_context(commit_sha="not-a-sha", pr_number=63)
         sections = dict(GEN.build_sections(context))
         self.assertEqual(context["commit_sha"], "NOT-VERIFIED")
         self.assertIn("non qualifié", sections["Traçabilité"])

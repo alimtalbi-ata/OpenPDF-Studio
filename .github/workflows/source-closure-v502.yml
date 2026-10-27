@@ -275,6 +275,9 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'V551 native Windows handle-publication tests did not reconcile to this exact source SHA' }
       - name: Generate versioned Word/PDF guide from reconciled evidence
         shell: pwsh
+        env:
+          OPENPDF_PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number || '' }}
+          OPENPDF_RUN_ID: ${{ github.run_id }}
         run: |
           py -3.12 02-Compilation/generate_release_docs.py
           if ($LASTEXITCODE -ne 0) { throw 'Versioned Word/PDF generation failed' }

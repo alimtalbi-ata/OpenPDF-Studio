@@ -25,16 +25,14 @@ class GenerateDocsV557Tests(unittest.TestCase):
             with zipfile.ZipFile(out["docx"]) as archive:
                 self.assertIsNone(archive.testzip())
                 xml = archive.read("word/document.xml").decode("utf-8")
-                for expected in (sha, "V557", "Abdelhalim Talbi", "duplicate", "NaN", "Traçabilité"):
+                for expected in (sha, "V557", "Abdelhalim Talbi", "dupliquées", "NaN", "Traçabilité"):
                     self.assertIn(expected, xml)
             import fitz
             pdf = fitz.open(out["pdf"])
             try:
                 self.assertGreaterEqual(pdf.page_count, 1)
                 text = "\n".join(page.get_text() for page in pdf)
-                for expected in (sha, "V557", "Abdelhalim Talbi", "duplicate", "NaN", "Traçabilité", "not qualified"):
-                    if expected == "not qualified":
-                        continue
+                for expected in (sha, "V557", "Abdelhalim Talbi", "dupliquées", "NaN", "Traçabilité"):
                     self.assertIn(expected, text)
                 trace_pages = [page.get_text() for page in pdf if "Traçabilité" in page.get_text()]
                 self.assertTrue(trace_pages, "PDF traceability section must be present")

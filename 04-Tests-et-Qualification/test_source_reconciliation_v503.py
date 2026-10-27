@@ -130,7 +130,7 @@ class SourceReconciliationV503Tests(unittest.TestCase):
             "generate_docs_v549.py",
             "write_v551_ci_qualification.py --root .",
             "generate_docs_v551.py",
-            "V557-Cumulative-Windows",
+            "V558-Cumulative-Windows",
             "generate_docs_v554.py",
             "test_generate_docs_v554.py",
             "test_package_expansion_ratio_v554.py",
@@ -144,6 +144,9 @@ class SourceReconciliationV503Tests(unittest.TestCase):
             "test_package_strict_json_v557.py",
             "generate_docs_v557.py",
             "test_generate_docs_v557.py",
+            "test_package_bounded_json_v558.py",
+            "generate_docs_v558.py",
+            "test_generate_docs_v558.py",
         ):
             with self.subTest(contract=contract):
                 self.assertIn(contract, workflow)

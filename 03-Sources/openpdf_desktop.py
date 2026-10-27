@@ -140,6 +140,7 @@ class OpenPDFStudio(tk.Tk):
         ttk.Label(header,text=f'V{APP_VERSION}  •  Espace de travail',font=('Segoe UI',10)).pack(side='right')
         self.ocr_quality_button=ttk.Button(header,text='Qualité OCR',command=self._ocr_quality_dialog);self.ocr_quality_button.pack(side='right',padx=5)
         self.office_quality_button=ttk.Button(header,text='Qualité Office',command=self._office_quality_dialog);self.office_quality_button.pack(side='right',padx=5)
+        self.visual_fidelity_button=ttk.Button(header,text='Fidélité Office',command=self._office_visual_fidelity_dialog);self.visual_fidelity_button.pack(side='right',padx=5)
         self.audit_button=ttk.Button(header,text='Audit',command=self._audit_dialog);self.audit_button.pack(side='right',padx=5)
         body=ttk.Panedwindow(self,orient='horizontal');body.pack(fill='both',expand=True,padx=14,pady=6)
         left_host=ttk.Frame(body);right=ttk.Frame(body,padding=10)
@@ -256,7 +257,7 @@ class OpenPDFStudio(tk.Tk):
     def _set_busy(self, busy):
         self.busy=busy
         state='disabled' if busy else 'normal'
-        for widget in (self.go,self.add_button,self.remove_button,self.browse_button,self.recover_button,self.audit_button,self.ocr_quality_button,self.office_quality_button,self.destination_shortcut,self.ocr_office_check,self.xlsx_tables_check,*self.operation_buttons):
+        for widget in (self.go,self.add_button,self.remove_button,self.browse_button,self.recover_button,self.audit_button,self.ocr_quality_button,self.office_quality_button,self.visual_fidelity_button,self.destination_shortcut,self.ocr_office_check,self.xlsx_tables_check,*self.operation_buttons):
             widget.configure(state=state)
         self.files.configure(state=state)
 
@@ -508,6 +509,126 @@ class OpenPDFStudio(tk.Tk):
             window.after(100, poll)
         run_button = ttk.Button(actions, text='Analyser', command=run)
         run_button.pack(side='left')
+
+
+    def _office_visual_fidelity_dialog(self):
+        """V558: compare source PDF and a rendered Office candidate without leaking documents."""
+        if self.busy:
+            return
+        from openpdf_office_visual_fidelity_v558 import (
+            safe_visual_fidelity_receipt, format_visual_fidelity_summary,
+            serialize_visual_fidelity_receipt)
+        window = tk.Toplevel(self)
+        window.title('Fidelite PDF / Office - raster, geometrie et texte')
+        window.geometry('700x530')
+        window.transient(self)
+        frame = ttk.Frame(window, padding=16)
+        frame.pack(fill='both', expand=True)
+        ttk.Label(frame, text='Fidelite PDF vers Word / Excel / PowerPoint',
+                  font=('Segoe UI', 13, 'bold')).pack(anchor='w')
+        ttk.Label(frame, text=(
+            'Compare le PDF source au PDF rendu du candidat Office : pages, dimensions, '
+            'raster en niveaux de gris, boites de mots et sequence de texte. Le PDF rendu '
+            'doit deja exister. Le moteur declare n’est pas atteste; les scores ne remplacent '
+            'pas une revue visuelle humaine. Les tests de developpement utilisent des fixtures synthetiques.'
+        ), wraplength=650).pack(anchor='w', pady=8)
+        manifest = tk.StringVar()
+        selection = ttk.Frame(frame)
+        selection.pack(fill='x', pady=6)
+        entry = ttk.Entry(selection, textvariable=manifest)
+        entry.pack(side='left', fill='x', expand=True)
+        def browse():
+            selected = filedialog.askopenfilename(
+                parent=window, title='Manifeste de fidelite PDF / Office',
+                filetypes=[('JSON', '*.json')])
+            if selected:
+                manifest.set(selected)
+        browse_button = ttk.Button(selection, text='Manifeste…', command=browse)
+        browse_button.pack(side='left', padx=6)
+        output = tk.Text(frame, height=14, wrap='word', state='disabled')
+        output.pack(fill='both', expand=True, pady=8)
+        actions = ttk.Frame(frame)
+        actions.pack(fill='x')
+        result_holder = {'report': None}
+        replies = queue.Queue()
+
+        def show(message):
+            output.configure(state='normal')
+            output.delete('1.0', 'end')
+            output.insert('end', message)
+            output.configure(state='disabled')
+
+        def export():
+            report = result_holder['report']
+            if report is None:
+                return
+            destination = filedialog.asksaveasfilename(
+                parent=window, title='Exporter le recu agrege de fidelite',
+                defaultextension='.json', filetypes=[('JSON', '*.json')])
+            if not destination:
+                return
+            try:
+                # Exclusive create prevents overwriting even if the destination exists.
+                with Path(destination).open('x', encoding='utf-8') as stream:
+                    stream.write(serialize_visual_fidelity_receipt(report))
+                messagebox.showinfo(
+                    'Fidelite Office', 'Recu agrege exporte sans texte PDF ni chemins.', parent=window)
+            except (ValueError, OSError):
+                messagebox.showerror(
+                    'Export refuse', 'Destination deja existante ou non accessible.', parent=window)
+
+        export_button = ttk.Button(actions, text='Exporter le recu', command=export, state='disabled')
+        export_button.pack(side='right')
+
+        def poll():
+            if not window.winfo_exists():
+                return
+            try:
+                status, payload = replies.get_nowait()
+            except queue.Empty:
+                window.after(100, poll)
+                return
+            browse_button.configure(state='normal')
+            run_button.configure(state='normal')
+            entry.configure(state='normal')
+            if status == 'success':
+                result_holder['report'] = payload
+                show(format_visual_fidelity_summary(payload))
+                export_button.configure(state='normal')
+            else:
+                show(
+                    'Audit impossible : preuves invalides, illisibles ou hors budget. '
+                    'Aucun contenu PDF, nom de document ou chemin ne sera affiche.'
+                )
+
+        def run():
+            selected = manifest.get().strip()
+            if not selected:
+                messagebox.showwarning(
+                    'Fidelite Office', 'Choisissez un manifeste JSON.', parent=window)
+                return
+            result_holder['report'] = None
+            export_button.configure(state='disabled')
+            run_button.configure(state='disabled')
+            browse_button.configure(state='disabled')
+            entry.configure(state='disabled')
+            show('Comparaison locale en cours…')
+
+            def worker():
+                try:
+                    from openpdf_office_visual_fidelity_v558 import evaluate_office_visual_fidelity_corpus
+                    result = safe_visual_fidelity_receipt(evaluate_office_visual_fidelity_corpus(selected))
+                    replies.put(('success', result))
+                except Exception:
+                    # Do not leak paths or document contents through library exceptions.
+                    replies.put(('error', None))
+
+            threading.Thread(target=worker, daemon=True).start()
+            window.after(100, poll)
+
+        run_button = ttk.Button(actions, text='Analyser', command=run)
+        run_button.pack(side='left')
+
 
     def _recover_dialog(self):
         folder=filedialog.askdirectory(parent=self,title="Dossier à récupérer")

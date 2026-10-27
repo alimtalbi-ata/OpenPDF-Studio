@@ -44,12 +44,26 @@ MAX_ARCHIVE_EXPANSION_RATIO = 100
 RATIO_CHECK_MIN_UNCOMPRESSED = 1024 * 1024
 
 
+MAX_STRICT_JSON_BYTES = 32 * 1024 * 1024
+MAX_STRICT_JSON_NESTING = 128
+_JSON_INT_MIN = -(1 << 63)
+_JSON_INT_MAX = (1 << 63) - 1
+
+
 class _DuplicateJSONKeyError(ValueError):
     """Internal marker: JSON object keys must be unique at every nesting level."""
 
 
 class _NonFiniteJSONConstantError(ValueError):
-    """Internal marker: NaN and Infinity are not valid interoperable JSON values."""
+    """Internal marker: JSON numbers must be finite and interoperable."""
+
+
+class _JSONResourceLimitError(ValueError):
+    """Internal marker: a JSON numeric or structural resource limit was exceeded."""
+
+
+class _InvalidJSONUnicodeError(ValueError):
+    """Internal marker: JSON strings must contain Unicode scalar values."""
 
 
 def _json_object_without_duplicate_keys(pairs):
@@ -72,31 +86,110 @@ def _strict_json_float(value):
     return parsed
 
 
-def strict_json_loads(payload, *, label="JSON"):
-    """Parse UTF-8 JSON without duplicate keys or non-standard numeric constants.
+def _strict_json_integer(value):
+    digits = value[1:] if value.startswith("-") else value
+    # Release metadata has no legitimate need for arbitrarily large integers.
+    # Bound token length before int() so huge decimal strings cannot consume
+    # disproportionate CPU or trigger interpreter digit-limit errors.
+    if len(digits) > 19:
+        raise _JSONResourceLimitError()
+    parsed = int(value)
+    if parsed < _JSON_INT_MIN or parsed > _JSON_INT_MAX:
+        raise _JSONResourceLimitError()
+    return parsed
 
-    Python's default json.loads silently keeps the last duplicate object key and
-    accepts NaN/Infinity by default. Those behaviours make release evidence
-    ambiguous across tools. This parser fails closed for inventories and receipts.
+
+def _ensure_json_nesting_is_bounded(payload):
+    """Count JSON containers outside strings before invoking the recursive parser."""
+    depth = 0
+    in_string = False
+    escaped = False
+    for char in payload:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+        elif char in "[{":
+            depth += 1
+            if depth > MAX_STRICT_JSON_NESTING:
+                raise _JSONResourceLimitError()
+        elif char in "]}":
+            if depth:
+                depth -= 1
+
+
+def _ensure_unicode_scalar_values(value):
+    """Reject escaped lone UTF-16 surrogates that behave inconsistently across tools."""
+    stack = [value]
+    while stack:
+        current = stack.pop()
+        if isinstance(current, str):
+            if any(0xD800 <= ord(char) <= 0xDFFF for char in current):
+                raise _InvalidJSONUnicodeError()
+        elif isinstance(current, dict):
+            for key, item in current.items():
+                if not isinstance(key, str) or any(0xD800 <= ord(char) <= 0xDFFF for char in key):
+                    raise _InvalidJSONUnicodeError()
+                stack.append(item)
+        elif isinstance(current, list):
+            stack.extend(current)
+
+
+def strict_json_loads(payload, *, label="JSON"):
+    """Parse small, bounded, interoperable JSON used as release integrity evidence.
+
+    Besides duplicate keys and non-finite numbers, release JSON is bounded to
+    32 MiB, 128 nested arrays/objects, and signed 64-bit integer values. Lone
+    Unicode surrogate escapes are rejected because different consumers disagree
+    about how they map to filesystem paths and text. UTF-8 BOM input remains valid.
     """
     if isinstance(payload, bytes):
+        if len(payload) > MAX_STRICT_JSON_BYTES:
+            raise ValueError("JSON payload exceeds 32 MiB: " + label)
         try:
             payload = payload.decode("utf-8-sig")
         except UnicodeDecodeError:
             raise ValueError("Invalid UTF-8 JSON: " + label) from None
-    elif not isinstance(payload, str):
+    elif isinstance(payload, str):
+        if len(payload) > MAX_STRICT_JSON_BYTES:
+            raise ValueError("JSON payload exceeds 32 MiB: " + label)
+        try:
+            if len(payload.encode("utf-8")) > MAX_STRICT_JSON_BYTES:
+                raise ValueError("JSON payload exceeds 32 MiB: " + label)
+        except UnicodeEncodeError:
+            raise ValueError("Invalid Unicode scalar value: " + label) from None
+    else:
         raise ValueError("Invalid JSON input: " + label)
+
     try:
-        return json.loads(
+        _ensure_json_nesting_is_bounded(payload)
+    except _JSONResourceLimitError:
+        raise ValueError("JSON nesting limit exceeded: " + label) from None
+
+    try:
+        result = json.loads(
             payload,
             object_pairs_hook=_json_object_without_duplicate_keys,
             parse_constant=_reject_nonfinite_json_constant,
             parse_float=_strict_json_float,
+            parse_int=_strict_json_integer,
         )
+        _ensure_unicode_scalar_values(result)
+        return result
     except _DuplicateJSONKeyError:
         raise ValueError("Duplicate JSON object key: " + label) from None
     except _NonFiniteJSONConstantError:
         raise ValueError("Non-finite JSON number: " + label) from None
+    except _JSONResourceLimitError:
+        raise ValueError("JSON integer out of signed 64-bit range: " + label) from None
+    except _InvalidJSONUnicodeError:
+        raise ValueError("Unpaired Unicode surrogate in JSON: " + label) from None
     except (json.JSONDecodeError, RecursionError):
         raise ValueError("Invalid JSON: " + label) from None
 

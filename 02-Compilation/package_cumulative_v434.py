@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import math
 import os
 import re
 import shutil
@@ -41,6 +42,63 @@ MAX_MEMBER = 4 * 1024**3
 MAX_MEMBER_EXPANSION_RATIO = 200
 MAX_ARCHIVE_EXPANSION_RATIO = 100
 RATIO_CHECK_MIN_UNCOMPRESSED = 1024 * 1024
+
+
+class _DuplicateJSONKeyError(ValueError):
+    """Internal marker: JSON object keys must be unique at every nesting level."""
+
+
+class _NonFiniteJSONConstantError(ValueError):
+    """Internal marker: NaN and Infinity are not valid interoperable JSON values."""
+
+
+def _json_object_without_duplicate_keys(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise _DuplicateJSONKeyError()
+        result[key] = value
+    return result
+
+
+def _reject_nonfinite_json_constant(value):
+    raise _NonFiniteJSONConstantError()
+
+
+def _strict_json_float(value):
+    parsed = float(value)
+    if not math.isfinite(parsed):
+        raise _NonFiniteJSONConstantError()
+    return parsed
+
+
+def strict_json_loads(payload, *, label="JSON"):
+    """Parse UTF-8 JSON without duplicate keys or non-standard numeric constants.
+
+    Python's default json.loads silently keeps the last duplicate object key and
+    accepts NaN/Infinity by default. Those behaviours make release evidence
+    ambiguous across tools. This parser fails closed for inventories and receipts.
+    """
+    if isinstance(payload, bytes):
+        try:
+            payload = payload.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            raise ValueError("Invalid UTF-8 JSON: " + label) from None
+    elif not isinstance(payload, str):
+        raise ValueError("Invalid JSON input: " + label)
+    try:
+        return json.loads(
+            payload,
+            object_pairs_hook=_json_object_without_duplicate_keys,
+            parse_constant=_reject_nonfinite_json_constant,
+            parse_float=_strict_json_float,
+        )
+    except _DuplicateJSONKeyError:
+        raise ValueError("Duplicate JSON object key: " + label) from None
+    except _NonFiniteJSONConstantError:
+        raise ValueError("Non-finite JSON number: " + label) from None
+    except (json.JSONDecodeError, RecursionError):
+        raise ValueError("Invalid JSON: " + label) from None
 
 
 def validate_archive_resources(infos):
@@ -213,7 +271,7 @@ def evidence(version, read, size):
             raise ValueError('Missing qualified Windows artifact or documentation: ' + name)
     if any(size(name) > 512 * 1024**2 for name in required[:2]) or any(size(name) > 32 * 1024**2 for name in required[2:]):
         raise ValueError('Oversized qualified artifact or documentation')
-    manifest = json.loads(read(required[2]).decode('utf-8-sig'))
+    manifest = strict_json_loads(read(required[2]), label=required[2])
     if str(manifest.get('version')) != version or not isinstance(manifest.get('binaries'), list):
         raise ValueError('Stale binary manifest')
     for mode, filename in (('installer', names(version)[0]), ('portable', names(version)[1])):
@@ -225,10 +283,11 @@ def evidence(version, read, size):
         entries = [x for x in manifest['binaries'] if isinstance(x, dict) and x.get('filename') == filename]
         if len(entries) != 1 or entries[0].get('sha256') != sha or entries[0].get('size_bytes') != size(path) or entries[0].get('pe_mz_header') is not True:
             raise ValueError('Unbound binary manifest: ' + filename)
-        smoke = json.loads(read(prefix + f'windows-smoke-{mode}.json').decode('utf-8-sig'))
+        smoke_name = prefix + f'windows-smoke-{mode}.json'
+        smoke = strict_json_loads(read(smoke_name), label=smoke_name)
         validate_smoke_receipt(smoke, version=version, mode=mode,
                                filename=filename, sha256=sha)
-    installation = json.loads(read(required[3]).decode('utf-8-sig'))
+    installation = strict_json_loads(read(required[3]), label=required[3])
     if (str(installation.get('version')) != version or installation.get('passed') is not True or installation.get('artifact_name') != names(version)[0] or installation.get('artifact_sha256') != hashlib.sha256(read(required[0])).hexdigest() or not isinstance(installation.get('steps'), list) or not {'silent_install_pass', 'installed_launch_pass', 'silent_uninstall_pass'}.issubset(set(installation['steps']))):
         raise ValueError('Unbound Windows installation evidence')
     if read(required[-1])[:5] != b'%PDF-':
@@ -436,7 +495,7 @@ def verify(path):
                     directory_sources[parent_key] = raw_parent
             if INVENTORY not in members or CHECKSUMS not in members or members[INVENTORY].file_size > 32 * 1024**2:
                 raise ValueError('Integrity inventory or current checksum list missing/oversized')
-            rows = json.loads(archive.read(INVENTORY).decode('utf-8-sig'))
+            rows = strict_json_loads(archive.read(INVENTORY), label=INVENTORY)
             if not isinstance(rows, list):
                 raise ValueError('Invalid integrity inventory')
             recorded = {}

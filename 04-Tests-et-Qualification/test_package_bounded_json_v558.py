@@ -106,12 +106,14 @@ class BoundedStrictJSONReleaseParsingV558Tests(unittest.TestCase):
     def test_payload_limit_is_checked_before_json_parser(self):
         with mock.patch.object(package, "MAX_STRICT_JSON_BYTES", 8):
             with mock.patch.object(package.json, "loads", side_effect=AssertionError("parser should not run")):
-                with self.assertRaisesRegex(ValueError, "exceeds 32 MiB"):
+                with self.assertRaisesRegex(ValueError, "JSON payload exceeds"):
                     package.strict_json_loads(" " * 9, label="oversized fixture")
 
     def test_nesting_limit_is_checked_before_json_parser(self):
         with mock.patch.object(package, "MAX_STRICT_JSON_NESTING", 2):
             self.assertEqual(package.strict_json_loads("[[0]]", label="depth fixture"), [[0]])
+            self.assertEqual(package.strict_json_loads('{"quoted":"[[[{{{"}', label="string bracket fixture"),
+                             {"quoted": "[[[{{{"})
             with mock.patch.object(package.json, "loads", side_effect=AssertionError("parser should not run")):
                 with self.assertRaisesRegex(ValueError, "JSON nesting limit exceeded"):
                     package.strict_json_loads("[[[0]]]", label="deep fixture")

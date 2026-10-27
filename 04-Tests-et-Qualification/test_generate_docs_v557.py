@@ -36,7 +36,7 @@ class GenerateDocsV557Tests(unittest.TestCase):
                     self.assertIn(expected, text)
                 trace_pages = [page.get_text() for page in pdf if "Traçabilité" in page.get_text()]
                 self.assertTrue(trace_pages, "PDF traceability section must be present")
-                self.assertTrue(any("Commit:" in page for page in trace_pages))
+                self.assertIn("Commit:", text, "PDF must include provenance text even if the paragraph spans pages")
             finally:
                 pdf.close()
             svg = Path(out["svg"]).read_text(encoding="utf-8")

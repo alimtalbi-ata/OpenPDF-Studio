@@ -88,7 +88,7 @@ class StrictJSONReleaseIntegrityV557Tests(unittest.TestCase):
                     package.strict_json_loads(payload, label="fixture")
 
     def test_non_finite_constants_are_rejected(self):
-        for token in ("NaN", "Infinity", "-Infinity"):
+        for token in ("NaN", "Infinity", "-Infinity", "1e9999", "-1e9999"):
             with self.subTest(token=token):
                 with self.assertRaisesRegex(ValueError, "Non-finite JSON number"):
                     package.strict_json_loads('{"value":' + token + '}', label="fixture")

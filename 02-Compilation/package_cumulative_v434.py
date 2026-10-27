@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import math
 import os
 import re
 import shutil
@@ -64,6 +65,13 @@ def _reject_nonfinite_json_constant(value):
     raise _NonFiniteJSONConstantError()
 
 
+def _strict_json_float(value):
+    parsed = float(value)
+    if not math.isfinite(parsed):
+        raise _NonFiniteJSONConstantError()
+    return parsed
+
+
 def strict_json_loads(payload, *, label="JSON"):
     """Parse UTF-8 JSON without duplicate keys or non-standard numeric constants.
 
@@ -83,6 +91,7 @@ def strict_json_loads(payload, *, label="JSON"):
             payload,
             object_pairs_hook=_json_object_without_duplicate_keys,
             parse_constant=_reject_nonfinite_json_constant,
+            parse_float=_strict_json_float,
         )
     except _DuplicateJSONKeyError:
         raise ValueError("Duplicate JSON object key: " + label) from None

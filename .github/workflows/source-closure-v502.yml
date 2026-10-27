@@ -276,6 +276,7 @@ jobs:
       - name: Generate versioned Word/PDF guide from reconciled evidence
         shell: pwsh
         env:
+          OPENPDF_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           OPENPDF_PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number || '' }}
           OPENPDF_RUN_ID: ${{ github.run_id }}
         run: |
